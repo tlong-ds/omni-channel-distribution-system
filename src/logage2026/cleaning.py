@@ -1,0 +1,412 @@
+import pandas as pd
+
+from .geography import add_distance_columns, normalize_text, parse_hcmc_district, parse_province, region_group
+
+
+DEMAND_DOCUMENT_TYPES = {"A/R INVOICE"}
+
+
+def _replace_blank_like_values(frame: pd.DataFrame) -> pd.DataFrame:
+    return frame.replace(r"^\s*$", pd.NA, regex=True)
+
+
+def _to_nullable_code(series: pd.Series) -> pd.Series:
+    numeric = pd.to_numeric(series, errors="coerce").astype("Int64")
+    return numeric.astype("string")
+
+
+def _to_nullable_int(series: pd.Series) -> pd.Series:
+    return pd.to_numeric(series, errors="coerce").round().astype("Int64")
+
+
+def _to_float(series: pd.Series) -> pd.Series:
+    return pd.to_numeric(series, errors="coerce").astype("Float64")
+
+
+def _zero_to_na(series: pd.Series) -> pd.Series:
+    return series.mask(series.eq(0))
+
+
+def _append_imputation_note(notes: pd.Series, mask: pd.Series, note: str) -> pd.Series:
+    notes = notes.copy()
+    empty_mask = mask & notes.isna()
+    existing_mask = mask & notes.notna()
+    notes.loc[empty_mask] = note
+    notes.loc[existing_mask] = notes.loc[existing_mask] + f";{note}"
+    return notes
+
+
+def _normalize_string(series: pd.Series, default: str = "") -> pd.Series:
+    normalized = series.astype("string").fillna(default).str.strip()
+    normalized = normalized.mask(normalized.eq(""), default)
+    return normalized
+
+
+def _normalize_document_type(series: pd.Series) -> pd.Series:
+    return _normalize_string(series).str.upper()
+
+
+def _analysis_document_flag(document_type: pd.Series) -> pd.Series:
+    return document_type.isin(DEMAND_DOCUMENT_TYPES)
+
+
+def _analysis_exclusion_reason(document_type: pd.Series, flag: pd.Series) -> pd.Series:
+    reasons = pd.Series(pd.NA, index=document_type.index, dtype="string")
+    reasons.loc[~flag] = "excluded_document_type:" + document_type.loc[~flag].fillna("UNKNOWN")
+    return reasons
+
+
+def clean_sku_master(raw: pd.DataFrame) -> pd.DataFrame:
+    frame = _replace_blank_like_values(raw.copy())
+    valid_rows = _to_float(frame["SAP Code (2)"]).notna() & frame["Product Name (VN)"].notna()
+    frame = frame.loc[valid_rows].copy()
+
+    text_cols = ["No", "Type", "COM Code", "Product Name (VN)", "Unit", "Category"]
+    for column in text_cols:
+        frame[column] = frame[column].astype("string").str.strip()
+
+    frame["Updated Date"] = pd.to_datetime(frame["Updated Date"], errors="coerce")
+    frame["sap_code"] = _to_nullable_code(frame["SAP Code"])
+    frame["sap_code_2"] = _to_nullable_code(frame["SAP Code (2)"])
+    frame["sku_code"] = frame["sap_code_2"]
+
+    int_cols = [
+        "Pcs per Carton",
+        "Carton Length (mm)",
+        "Carton Width (mm)",
+        "Carton Height (mm)",
+        "Pcs per Pallet",
+        "Cartons per Layer",
+        "Layers per Pallet",
+        "Loose Pcs per Pallet",
+    ]
+    for column in int_cols:
+        frame[column] = _to_nullable_int(frame[column])
+
+    float_cols = ["Volume (m³)", "CBM incl. Flap (m³)", "Pcs Weight (kg)", "Carton Weight (kg)"]
+    for column in float_cols:
+        frame[column] = _to_float(frame[column])
+
+    placeholder_zero_cols = [
+        "Carton Length (mm)",
+        "Carton Width (mm)",
+        "Carton Height (mm)",
+        "Pcs per Pallet",
+        "Cartons per Layer",
+        "Layers per Pallet",
+        "Volume (m³)",
+        "Pcs Weight (kg)",
+        "Carton Weight (kg)",
+    ]
+    for column in placeholder_zero_cols:
+        frame[column] = _zero_to_na(frame[column])
+
+    frame["carton_volume_from_dims_m3"] = (
+        frame["Carton Length (mm)"] * frame["Carton Width (mm)"] * frame["Carton Height (mm)"]
+    ) / 1_000_000_000
+    frame["carton_volume_from_dims_m3"] = frame["carton_volume_from_dims_m3"].where(
+        frame[["Carton Length (mm)", "Carton Width (mm)", "Carton Height (mm)"]].notna().all(axis=1)
+    )
+
+    frame["pallet_base_pcs_capacity"] = (
+        frame["Pcs per Carton"] * frame["Cartons per Layer"] * frame["Layers per Pallet"]
+    )
+    frame["pallet_base_pcs_capacity"] = frame["pallet_base_pcs_capacity"].where(
+        frame[["Pcs per Carton", "Cartons per Layer", "Layers per Pallet"]].notna().all(axis=1)
+    )
+
+    loose_residual = frame["Pcs per Pallet"] - frame["pallet_base_pcs_capacity"]
+    valid_loose_residual = loose_residual.notna() & loose_residual.ge(0) & loose_residual.eq(loose_residual.round())
+    imputation_notes = pd.Series(pd.NA, index=frame.index, dtype="string")
+    missing_loose = frame["Loose Pcs per Pallet"].isna()
+    frame.loc[missing_loose & valid_loose_residual, "Loose Pcs per Pallet"] = (
+        loose_residual.loc[missing_loose & valid_loose_residual].round().astype("Int64")
+    )
+    imputation_notes = _append_imputation_note(
+        imputation_notes,
+        missing_loose & frame["Loose Pcs per Pallet"].notna(),
+        "loose_pcs_from_pallet_residual",
+    )
+
+    derived_carton_weight = frame["Pcs Weight (kg)"] * frame["Pcs per Carton"]
+    derived_piece_weight = frame["Carton Weight (kg)"] / frame["Pcs per Carton"]
+    can_derive_carton = (
+        frame["Carton Weight (kg)"].isna()
+        & frame["Pcs Weight (kg)"].notna()
+        & frame["Pcs per Carton"].notna()
+    )
+    can_derive_piece = (
+        frame["Pcs Weight (kg)"].isna()
+        & frame["Carton Weight (kg)"].notna()
+        & frame["Pcs per Carton"].notna()
+    )
+    frame.loc[can_derive_carton, "Carton Weight (kg)"] = derived_carton_weight.loc[can_derive_carton]
+    frame.loc[can_derive_piece, "Pcs Weight (kg)"] = derived_piece_weight.loc[can_derive_piece]
+    imputation_notes = _append_imputation_note(imputation_notes, can_derive_carton, "carton_weight_from_piece_weight")
+    imputation_notes = _append_imputation_note(imputation_notes, can_derive_piece, "piece_weight_from_carton_weight")
+
+    both_weights_present = (
+        frame["Pcs Weight (kg)"].notna()
+        & frame["Carton Weight (kg)"].notna()
+        & frame["Pcs per Carton"].notna()
+    )
+    weight_delta = (frame["Carton Weight (kg)"] - (frame["Pcs Weight (kg)"] * frame["Pcs per Carton"])).abs()
+    frame["weight_conflict_flag"] = (both_weights_present & weight_delta.gt(1e-9)).astype("Int64")
+    frame["imputation_notes"] = imputation_notes
+
+    rename = {
+        "Updated Date": "updated_date",
+        "No": "sku_row_no",
+        "Type": "type",
+        "COM Code": "com_code",
+        "Product Name (VN)": "product_name",
+        "Unit": "unit",
+        "Category": "category",
+        "Pcs per Carton": "pcs_per_carton",
+        "Carton Length (mm)": "carton_length_mm",
+        "Carton Width (mm)": "carton_width_mm",
+        "Carton Height (mm)": "carton_height_mm",
+        "Pcs per Pallet": "pcs_per_pallet",
+        "Cartons per Layer": "cartons_per_layer",
+        "Layers per Pallet": "layers_per_pallet",
+        "Loose Pcs per Pallet": "loose_pcs_per_pallet",
+        "Volume (m³)": "volume_m3",
+        "CBM incl. Flap (m³)": "cbm_incl_flap_m3",
+        "Pcs Weight (kg)": "pcs_weight_kg",
+        "Carton Weight (kg)": "carton_weight_kg",
+    }
+    frame = frame.rename(columns=rename)
+    keep = [
+        "sku_code",
+        "sap_code",
+        "sap_code_2",
+        "updated_date",
+        "sku_row_no",
+        "type",
+        "com_code",
+        "product_name",
+        "unit",
+        "category",
+        "pcs_per_carton",
+        "carton_length_mm",
+        "carton_width_mm",
+        "carton_height_mm",
+        "pcs_per_pallet",
+        "cartons_per_layer",
+        "layers_per_pallet",
+        "loose_pcs_per_pallet",
+        "volume_m3",
+        "carton_volume_from_dims_m3",
+        "cbm_incl_flap_m3",
+        "pcs_weight_kg",
+        "carton_weight_kg",
+        "pallet_base_pcs_capacity",
+        "weight_conflict_flag",
+        "imputation_notes",
+    ]
+    for column in keep:
+        if column not in frame.columns:
+            frame[column] = pd.NA
+    frame = frame[keep].drop_duplicates("sku_code", keep="first")
+    return frame
+
+
+def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
+    frame = _replace_blank_like_values(raw.copy())
+    frame["Customer Name"] = frame["Customer Name"].ffill()
+    frame = frame.dropna(subset=["Customer Name", "Delivery Address"]).copy()
+    frame["customer_name"] = _normalize_string(frame["Customer Name"])
+    frame["customer_key"] = frame["customer_name"].map(normalize_text)
+    frame["delivery_address"] = _normalize_string(frame["Delivery Address"])
+    frame["customer_location_key"] = (
+        frame["customer_key"] + " | " + frame["delivery_address"].map(normalize_text)
+    )
+    frame["province"] = frame["delivery_address"].map(parse_province)
+    frame["hcmc_district"] = frame["delivery_address"].map(parse_hcmc_district)
+    frame["region"] = frame["province"].map(region_group)
+    dedupe_columns = ["customer_key", "delivery_address", "province", "hcmc_district", "region"]
+    frame = frame.drop_duplicates(subset=dedupe_columns).copy()
+    frame["customer_location_count"] = frame.groupby("customer_key")["customer_location_key"].transform("nunique")
+    frame["customer_key_is_ambiguous"] = frame["customer_location_count"].gt(1)
+    frame["customer_match_status"] = "unique_resolvable_customer_geography"
+    frame.loc[frame["customer_key_is_ambiguous"], "customer_match_status"] = "ambiguous_multi_location_customer"
+    unusable_geo = frame["province"].eq("Unknown")
+    frame.loc[unusable_geo, "customer_match_status"] = "unusable_or_missing_geography"
+    frame = add_distance_columns(frame)
+    keep = [
+        "customer_name",
+        "customer_key",
+        "customer_location_key",
+        "delivery_address",
+        "customer_location_count",
+        "customer_key_is_ambiguous",
+        "customer_match_status",
+        "province",
+        "hcmc_district",
+        "region",
+        "latitude",
+        "longitude",
+        "distance_from_my_phuoc_km",
+        "distance_from_vinh_loc_km",
+        "Source Sheet",
+    ]
+    return frame[keep].reset_index(drop=True)
+
+
+def clean_shipments(raw: pd.DataFrame, distributors: pd.DataFrame) -> pd.DataFrame:
+    frame = _replace_blank_like_values(raw.copy())
+    frame["sku_code"] = pd.to_numeric(frame["SKU Code (CMMF)"], errors="coerce").astype("Int64").astype("string")
+    frame["document_no"] = _normalize_string(frame["Document No."], default="unknown")
+    frame["source_warehouse"] = _normalize_string(frame["Source Warehouse"], default="unknown")
+    frame["order_id"] = frame["source_warehouse"] + "-" + frame["document_no"]
+    frame["document_type"] = _normalize_document_type(frame["Document Type"])
+    frame["unit"] = _normalize_string(frame["Unit"], default="")
+    frame["quantity"] = pd.to_numeric(frame["Quantity"], errors="coerce").fillna(0.0)
+    frame["cbm_total"] = pd.to_numeric(frame["CBM Total"], errors="coerce").fillna(0.0)
+    frame["created_date"] = pd.to_datetime(frame["Created Date"], errors="coerce")
+    frame["ship_to_customer"] = _normalize_string(frame["Ship-to Customer"], default="unknown")
+    frame["customer_key"] = frame["ship_to_customer"].map(normalize_text)
+    frame.loc[frame["ship_to_customer"].eq("unknown"), "customer_key"] = "UNKNOWN"
+    frame["analysis_document_flag"] = _analysis_document_flag(frame["document_type"])
+    frame["exclusion_reason"] = _analysis_exclusion_reason(frame["document_type"], frame["analysis_document_flag"])
+
+    distributor_match = _build_distributor_match_table(distributors)
+    frame = frame.merge(distributor_match, on="customer_key", how="left")
+    frame["customer_match_status"] = frame["customer_match_status"].fillna("unmatched_customer_key")
+    frame["customer_location_count"] = frame["customer_location_count"].fillna(0).astype("Int64")
+    frame["customer_key_is_ambiguous"] = frame["customer_key_is_ambiguous"].astype("boolean").fillna(False)
+
+    parsed_province = frame["ship_to_customer"].map(parse_province)
+    parsed_district = frame["ship_to_customer"].map(parse_hcmc_district)
+    parsed_has_geo = parsed_province.ne("Unknown")
+
+    frame["geography_source"] = "unresolved"
+    distributor_geo_mask = frame["customer_match_status"].eq("unique_resolvable_customer_geography")
+    transaction_geo_mask = ~distributor_geo_mask & parsed_has_geo
+
+    frame["province"] = "Unknown"
+    frame["hcmc_district"] = ""
+    frame["region"] = "Unknown"
+    frame.loc[distributor_geo_mask, "province"] = frame.loc[distributor_geo_mask, "province_distributor"]
+    frame.loc[distributor_geo_mask, "hcmc_district"] = frame.loc[distributor_geo_mask, "hcmc_district_distributor"]
+    frame.loc[distributor_geo_mask, "region"] = frame.loc[distributor_geo_mask, "region_distributor"]
+    frame.loc[distributor_geo_mask, "geography_source"] = "distributor_match"
+
+    frame.loc[transaction_geo_mask, "province"] = parsed_province.loc[transaction_geo_mask]
+    frame.loc[transaction_geo_mask, "hcmc_district"] = parsed_district.loc[transaction_geo_mask]
+    frame.loc[transaction_geo_mask, "region"] = frame.loc[transaction_geo_mask, "province"].map(region_group)
+    frame.loc[transaction_geo_mask, "geography_source"] = "transaction_text_parse"
+
+    frame.loc[frame["ship_to_customer"].eq("unknown"), "customer_match_status"] = "missing_customer_name"
+    frame.loc[frame["province"].eq("Unknown"), "hcmc_district"] = ""
+
+    frame["known_geography_flag"] = frame["province"].ne("Unknown")
+    frame["segment_source"] = "unresolved"
+    frame["customer_segment"] = "Unknown"
+    eligible_segment_mask = frame["analysis_document_flag"] & frame["ship_to_customer"].ne("unknown")
+    derived_segment = frame.loc[eligible_segment_mask, "ship_to_customer"].map(classify_customer_segment)
+    frame.loc[eligible_segment_mask, "customer_segment"] = derived_segment
+    resolved_segment_idx = derived_segment[derived_segment.ne("Unknown")].index
+    unresolved_segment_idx = derived_segment[derived_segment.eq("Unknown")].index
+    frame.loc[resolved_segment_idx, "segment_source"] = "customer_name_rule"
+    frame.loc[unresolved_segment_idx, "segment_source"] = "unresolved"
+
+    frame = add_distance_columns(frame)
+    keep = [
+        "order_id",
+        "document_no",
+        "document_type",
+        "analysis_document_flag",
+        "exclusion_reason",
+        "source_warehouse",
+        "sku_code",
+        "unit",
+        "quantity",
+        "cbm_total",
+        "ship_to_customer",
+        "customer_key",
+        "customer_match_status",
+        "customer_location_count",
+        "customer_key_is_ambiguous",
+        "geography_source",
+        "known_geography_flag",
+        "customer_segment",
+        "segment_source",
+        "created_date",
+        "province",
+        "hcmc_district",
+        "region",
+        "latitude",
+        "longitude",
+        "distance_from_my_phuoc_km",
+        "distance_from_vinh_loc_km",
+    ]
+    return frame[keep]
+
+
+def _build_distributor_match_table(distributors: pd.DataFrame) -> pd.DataFrame:
+    unique = distributors[distributors["customer_match_status"].eq("unique_resolvable_customer_geography")].copy()
+    unique = unique.sort_values(["customer_key", "Source Sheet", "customer_location_key"])
+    unique = unique.drop_duplicates("customer_key", keep="first")
+    counts = (
+        distributors.groupby("customer_key")
+        .agg(
+            customer_location_count=("customer_location_key", "nunique"),
+            customer_key_is_ambiguous=("customer_key_is_ambiguous", "max"),
+            customer_match_status=("customer_match_status", "first"),
+        )
+        .reset_index()
+    )
+    match = counts.merge(
+        unique[
+            [
+                "customer_key",
+                "province",
+                "hcmc_district",
+                "region",
+                "latitude",
+                "longitude",
+                "distance_from_my_phuoc_km",
+                "distance_from_vinh_loc_km",
+            ]
+        ].rename(
+            columns={
+                "province": "province_distributor",
+                "hcmc_district": "hcmc_district_distributor",
+                "region": "region_distributor",
+                "latitude": "latitude_distributor",
+                "longitude": "longitude_distributor",
+                "distance_from_my_phuoc_km": "distance_from_my_phuoc_km_distributor",
+                "distance_from_vinh_loc_km": "distance_from_vinh_loc_km_distributor",
+            }
+        ),
+        on="customer_key",
+        how="left",
+    )
+    return match
+
+
+def classify_customer_segment(customer: object) -> str:
+    text = normalize_text(customer)
+    modern_keywords = [
+        "AEON",
+        "BIG C",
+        "CENTRAL RETAIL",
+        "CO.OP",
+        "COOP",
+        "DIEN MAY XANH",
+        "FPT",
+        "GO!",
+        "KOHNAN",
+        "LOTTE",
+        "MM MEGA",
+        "NGUYEN KIM",
+        "THAP NHAT PHONG",
+        "THE GIOI DI DONG",
+        "WINCOMMERCE",
+    ]
+    if any(keyword in text for keyword in modern_keywords):
+        return "Modern Trade"
+    if text == "UNKNOWN":
+        return "Unknown"
+    return "Traditional Trade / Distributor"

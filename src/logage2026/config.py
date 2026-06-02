@@ -1,0 +1,35 @@
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+SKU_MASTER_FILE = ROOT_DIR / "[LOGage2026] File 01_SKU Master Data.xlsx"
+TRANSACTION_FILE = ROOT_DIR / "[LOGage2026] File 02_Transaction Log (My Phuoc & Vinh Loc Warehouses).xlsx"
+DISTRIBUTOR_FILE = ROOT_DIR / "[LOGage 2026] File 03_Distributor Network.xlsx"
+
+OUTPUT_DIR = ROOT_DIR / "outputs" / "round2"
+CLEANED_DIR = OUTPUT_DIR / "cleaned"
+TABLES_DIR = OUTPUT_DIR / "tables"
+CHARTS_DIR = OUTPUT_DIR / "charts"
+NOTES_DIR = OUTPUT_DIR / "notes"
+
+WAREHOUSE_COORDINATES = {
+    "My Phuoc": (11.152, 106.615),
+    "Vinh Loc": (10.785, 106.565),
+}
+
+HCMC_DISTRICT_COORDINATES = {
+    "Binh Chanh": (10.750, 106.515),
+    "Binh Tan": (10.765, 106.603),
+    "District 1": (10.776, 106.701),
+    "District 3": (10.784, 106.684),
+    "District 5": (10.754, 106.663),
+    "District 7": (10.735, 106.721),
+    "District 10": (10.773, 106.668),
+    "District 12": (10.863, 106.658),
+    "Go Vap": (10.838, 106.665),
+    "Phu Nhuan": (10.800, 106.677),
+    "Tan Binh": (10.802, 106.652),
+    "Tan Phu": (10.790, 106.628),
+    "Thu Duc": (10.849, 106.772),
+}
+

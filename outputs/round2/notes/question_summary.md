@@ -1,0 +1,16 @@
+# Round 2 Question Summary
+
+## Data basis
+
+## Q1.1 Demand pattern classification
+![Q1.1 ABC quantity distribution](../charts/abc_quantity_distribution.png)
+
+![Q1.1 ABC-XYZ matrix](../charts/abc_xyz_matrix.png)
+
+## Q1.2 Demand geography with ambiguity-safe matching
+![Q1.2 Regional quantity](../charts/regional_quantity_density.png)
+
+![Q1.2 Warehouse-region split](../charts/warehouse_region_split.png)
+
+## Q1.3 Order profile analysis
+![Q1.3 Order profile comparison](../charts/order_profile_comparison.png)

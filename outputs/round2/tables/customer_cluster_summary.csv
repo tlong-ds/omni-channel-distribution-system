@@ -1,0 +1,15 @@
+geography_level,geography_name,orders,quantity,rank_by_orders,rank_by_quantity
+hcmc_district,HCMC unspecified,230,20367.775,1,1
+hcmc_district,District 1,184,452.28333333333336,2,3
+hcmc_district,Tan Phu,36,5834.0,3,2
+province,Ho Chi Minh City,446,26654.058333333334,1,1
+province,Binh Duong,194,16923.333333333332,2,2
+province,Can Tho,114,2267.75,3,8
+province,Tien Giang,110,8338.416666666666,4,3
+province,Khanh Hoa,94,6356.666666666667,5,4
+province,Ha Noi,85,5978.383333333333,6,5
+province,Hai Phong,75,3233.875,7,7
+province,Quang Nam,58,4144.75,8,6
+province,An Giang,52,557.5,9,11
+province,Kien Giang,29,576.1666666666666,10,10
+province,Binh Thuan,10,1059.0,17,9

@@ -1,0 +1,57 @@
+source_warehouse,region,province,hcmc_district,geography_source,shipment_lines,orders,customers,quantity,cbm_total
+My Phuoc,HCMC,Ho Chi Minh City,HCMC unspecified,transaction_text_parse,170,66,2,16120.0,1016.111403
+My Phuoc,Southeast / HCMC fringe,Binh Duong,,transaction_text_parse,595,129,6,15353.0,954.1785875503334
+My Phuoc,Southeast / HCMC fringe,Tien Giang,,transaction_text_parse,203,64,2,7609.0,480.82992825
+My Phuoc,HCMC,Ho Chi Minh City,Tan Phu,distributor_match,106,36,1,5834.0,290.4592215
+My Phuoc,North,Ha Noi,,transaction_text_parse,121,41,2,5159.0,341.2672409
+My Phuoc,Central,Khanh Hoa,,transaction_text_parse,117,46,1,4563.0,282.54563210000003
+My Phuoc,Central,Quang Nam,,distributor_match,49,25,2,3837.0,191.1421775
+My Phuoc,North,Hai Phong,,transaction_text_parse,115,42,2,3123.0,214.39166378333334
+My Phuoc,HCMC,Ho Chi Minh City,HCMC unspecified,distributor_match,332,18,2,2168.0,75.24926494233334
+Vinh Loc,HCMC,Ho Chi Minh City,HCMC unspecified,transaction_text_parse,401,119,22,1933.3416666666667,110.61083302943334
+Vinh Loc,Southeast / HCMC fringe,Binh Duong,,transaction_text_parse,233,65,4,1570.3333333333333,78.09052775383334
+My Phuoc,Mekong Delta,Can Tho,,transaction_text_parse,511,60,4,1554.0,77.64172674373334
+My Phuoc,Central,Khanh Hoa,,distributor_match,51,8,1,1348.0,83.91003900000001
+My Phuoc,Central,Binh Thuan,,distributor_match,46,10,3,1059.0,43.051947500000004
+Vinh Loc,Southeast / HCMC fringe,Tien Giang,,transaction_text_parse,112,45,3,710.4166666666666,37.184179815
+Vinh Loc,Mekong Delta,Can Tho,,distributor_match,110,44,1,659.9166666666666,32.460859475
+My Phuoc,Mekong Delta,Kien Giang,,transaction_text_parse,147,21,2,496.0,23.065438414600003
+Vinh Loc,North,Ha Noi,,transaction_text_parse,141,40,4,391.96666666666664,19.208849039433336
+Vinh Loc,Central,Khanh Hoa,,transaction_text_parse,110,35,2,385.41666666666663,20.156645408333333
+Vinh Loc,North,Ha Noi,,distributor_match,6,2,2,314.4166666666667,16.113282
+Vinh Loc,HCMC,Ho Chi Minh City,District 1,distributor_match,270,80,4,313.28333333333336,18.24136669736667
+My Phuoc,Central,Quang Nam,,transaction_text_parse,130,27,2,293.0,13.800226858333334
+My Phuoc,Mekong Delta,An Giang,,distributor_match,39,8,2,276.0,14.712876000000001
+My Phuoc,Southeast / HCMC fringe,Long An,,transaction_text_parse,115,23,2,267.0,12.053498166666667
+My Phuoc,Mekong Delta,An Giang,,transaction_text_parse,82,16,1,199.0,10.204042025
+My Phuoc,Mekong Delta,Vinh Long,,transaction_text_parse,74,15,2,171.0,7.9440363000000005
+My Phuoc,Southeast / HCMC fringe,Ba Ria - Vung Tau,,transaction_text_parse,54,14,2,166.0,9.175681742333333
+Vinh Loc,HCMC,Ho Chi Minh City,HCMC unspecified,distributor_match,84,31,7,146.43333333333334,7.5950489196666675
+My Phuoc,HCMC,Ho Chi Minh City,District 1,distributor_match,112,104,1,139.0,5.824091848622222
+My Phuoc,North,Ha Noi,,distributor_match,2,2,1,113.0,10.271248
+Vinh Loc,North,Hai Phong,,transaction_text_parse,58,31,3,105.45833333333333,6.507103091666667
+My Phuoc,Central,Nghe An,,transaction_text_parse,25,8,1,81.0,4.353646395833334
+Vinh Loc,Central,Khanh Hoa,,distributor_match,8,5,1,60.25,2.754381
+Vinh Loc,Mekong Delta,An Giang,,transaction_text_parse,49,23,3,56.5,3.4176381250000003
+My Phuoc,Mekong Delta,Kien Giang,,distributor_match,5,2,1,54.0,3.2456500000000004
+My Phuoc,Southeast / HCMC fringe,Binh Phuoc,,transaction_text_parse,18,3,1,50.0,2.5548216666666668
+My Phuoc,North,Bac Giang,,transaction_text_parse,5,3,1,46.0,3.0404250000000004
+My Phuoc,North,Bac Ninh,,transaction_text_parse,12,5,1,43.0,2.626029125
+My Phuoc,Mekong Delta,Can Tho,,distributor_match,8,5,1,37.0,1.74445
+Vinh Loc,Mekong Delta,Kien Giang,,transaction_text_parse,12,6,2,26.166666666666664,2.066935457
+Vinh Loc,Mekong Delta,An Giang,,distributor_match,11,5,2,26.0,1.8168789166666668
+Vinh Loc,Southeast / HCMC fringe,Ba Ria - Vung Tau,,transaction_text_parse,14,5,2,20.5,1.3936866037500002
+Vinh Loc,Southeast / HCMC fringe,Binh Phuoc,,transaction_text_parse,10,5,1,19.75,2.0663287183333336
+My Phuoc,Southeast / HCMC fringe,Tien Giang,,distributor_match,3,1,1,19.0,1.5134025000000002
+Vinh Loc,Mekong Delta,Can Tho,,transaction_text_parse,11,5,2,16.833333333333332,0.8321261666666666
+Vinh Loc,North,Bac Ninh,,transaction_text_parse,19,9,1,14.416666666666666,0.9335480250000001
+Vinh Loc,Central,Quang Nam,,transaction_text_parse,9,3,2,11.416666666666668,1.0498940416666667
+Vinh Loc,Mekong Delta,Vinh Long,,transaction_text_parse,12,3,2,10.083333333333334,0.7632745206666667
+Vinh Loc,Central,Nghe An,,transaction_text_parse,10,6,1,7.583333333333333,0.50554175
+Vinh Loc,Central,Nghe An,,distributor_match,4,1,1,5.833333333333334,0.6013013333333334
+Vinh Loc,Mekong Delta,Vinh Long,,distributor_match,4,1,1,5.833333333333333,0.6013013333333334
+Vinh Loc,Southeast / HCMC fringe,Binh Phuoc,,distributor_match,4,2,1,5.583333333333333,0.5530313333333333
+Vinh Loc,Southeast / HCMC fringe,Long An,,transaction_text_parse,4,2,1,5.5,0.573222
+Vinh Loc,North,Hai Phong,,distributor_match,4,2,1,5.416666666666666,0.5716846666666667
+Vinh Loc,Central,Quang Nam,,distributor_match,3,3,1,3.333333333333333,0.3614175
+Vinh Loc,North,Bac Giang,,transaction_text_parse,4,2,1,2.8333333333333335,0.16892200000000002
