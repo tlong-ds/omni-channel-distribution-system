@@ -7,6 +7,9 @@ import pandas as pd
 from src.logage2026.config import NOTES_DIR
 
 
+NOTE_FILENAME = "part1_question_summary.md"
+
+
 def write_notes(
     shipments: pd.DataFrame,
     abc_xyz: pd.DataFrame,
@@ -55,20 +58,20 @@ def write_notes(
         else "- Missing shipment rows excluded: unavailable",
         "",
         "## Q1.1 Demand pattern classification",
-        "![Q1.1 ABC quantity distribution](../charts/abc_quantity_distribution.png)",
+        "![Q1.1 ABC quantity distribution](../charts/q11_abc_quantity_distribution.png)",
         "",
-        "![Q1.1 ABC-XYZ matrix](../charts/abc_xyz_matrix.png)",
+        "![Q1.1 ABC-XYZ matrix](../charts/q11_abc_xyz_matrix.png)",
         "",
         "## Q1.2 Demand geography with ambiguity-safe matching",
-        "![Q1.2 Vietnam regioning map](../charts/vietnam_regions_map.png)",
+        "![Q1.2 Vietnam regioning map](../charts/q12_region_reference_map.png)",
         "",
-        "![Q1.2 Regional quantity](../charts/regional_quantity_density.png)",
+        "![Q1.2 Regional quantity](../charts/q12_region_quantity_orders.png)",
         "",
-        "![Q1.2 Warehouse-region split](../charts/warehouse_region_split.png)",
+        "![Q1.2 Warehouse-region split](../charts/q12_warehouse_region_quantity_split.png)",
         "",
-        "![Q1.2 Province demand clusters](../charts/q12_province_clusters.png)",
+        "![Q1.2 Top demand provinces map](../charts/q12_top_demand_provinces_map.png)",
         "",
-        "![Q1.2 Province demand maps](../charts/q12_province_demand_maps.png)",
+        "![Q1.2 Province demand maps](../charts/q12_province_demand_choropleths.png)",
         "",
         "![Q1.2 Warehouse dominance map](../charts/q12_warehouse_dominance_map.png)",
         "",
@@ -81,7 +84,7 @@ def write_notes(
         "![Q1.2 Warehouse imbalance](../charts/q12_warehouse_imbalance.png)",
         "",
         "## Q1.3 Order profile analysis",
-        "![Q1.3 Order profile comparison](../charts/order_profile_comparison.png)",
+        "![Q1.3 Order profile comparison](../charts/q13_order_profile_comparison.png)",
         "",
         "![Q1.3 Packaging mix](../charts/q13_packaging_mix.png)",
         "",
@@ -89,7 +92,7 @@ def write_notes(
         "",
         "![Q1.3 Segment geography maps](../charts/q13_segment_geographic_maps.png)",
     ]
-    (NOTES_DIR / "question_summary.md").write_text("\n".join(text) + "\n", encoding="utf-8")
+    (NOTES_DIR / NOTE_FILENAME).write_text("\n".join(text) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
@@ -103,17 +106,17 @@ if __name__ == "__main__":
     print("Loading static cleaned data from disk...")
     try:
         shipments = pd.read_csv(CLEANED_DIR / "shipments_cleaned.csv")
-        abc_xyz = pd.read_csv(TABLES_DIR / "abc_xyz.csv")
-        abc_xyz_matrix = pd.read_csv(TABLES_DIR / "abc_xyz_matrix_summary.csv")
-        fast_moving_summary = pd.read_csv(TABLES_DIR / "fast_moving_summary.csv")
-        classification_metadata = pd.read_csv(TABLES_DIR / "classification_metadata.csv")
-        missing_data_summary = pd.read_csv(TABLES_DIR / "missing_data_summary.csv")
-        geography_coverage_summary = pd.read_csv(TABLES_DIR / "geography_coverage_summary.csv")
-        warehouse_region_summary = pd.read_csv(TABLES_DIR / "warehouse_region_summary.csv")
-        customer_cluster_summary = pd.read_csv(TABLES_DIR / "customer_cluster_summary.csv")
-        warehouse_imbalance_summary = pd.read_csv(TABLES_DIR / "warehouse_imbalance_summary.csv")
-        q12_region_orders_quantity_summary = pd.read_csv(TABLES_DIR / "q12_region_orders_quantity_summary.csv")
-        q12_province_cluster_summary = pd.read_csv(TABLES_DIR / "q12_province_cluster_summary.csv")
+        abc_xyz = pd.read_csv(TABLES_DIR / "q11_sku_abc_xyz.csv")
+        abc_xyz_matrix = pd.read_csv(TABLES_DIR / "q11_abc_xyz_matrix_summary.csv")
+        fast_moving_summary = pd.read_csv(TABLES_DIR / "q11_fast_moving_summary.csv")
+        classification_metadata = pd.read_csv(TABLES_DIR / "q11_classification_metadata.csv")
+        missing_data_summary = pd.read_csv(TABLES_DIR / "shared_missing_data_summary.csv")
+        geography_coverage_summary = pd.read_csv(TABLES_DIR / "q12_geography_coverage_summary.csv")
+        warehouse_region_summary = pd.read_csv(TABLES_DIR / "q12_warehouse_region_summary.csv")
+        customer_cluster_summary = pd.read_csv(TABLES_DIR / "q12_customer_cluster_summary.csv")
+        warehouse_imbalance_summary = pd.read_csv(TABLES_DIR / "q12_warehouse_imbalance_summary.csv")
+        q12_region_orders_quantity_summary = pd.read_csv(TABLES_DIR / "q12_region_quantity_orders_summary.csv")
+        q12_province_cluster_summary = pd.read_csv(TABLES_DIR / "q12_top_demand_provinces_summary.csv")
         q12_province_demand_summary = pd.read_csv(TABLES_DIR / "q12_province_demand_summary.csv")
         q12_province_warehouse_dominance_summary = pd.read_csv(TABLES_DIR / "q12_province_warehouse_dominance_summary.csv")
         q12_urban_provincial_summary = pd.read_csv(TABLES_DIR / "q12_urban_provincial_summary.csv")
@@ -132,11 +135,12 @@ if __name__ == "__main__":
             warehouse_region_summary, customer_cluster_summary, warehouse_imbalance_summary,
             q12_region_orders_quantity_summary, q12_province_cluster_summary,
             q12_province_demand_summary, q12_province_warehouse_dominance_summary,
-            q12_urban_provincial_summary, q12_warehouse_imbalance_visual_summary,
+            q12_urban_provincial_summary,
+            q12_warehouse_imbalance_visual_summary,
             q13_segment_profile_summary, q13_segment_packaging_summary,
             q13_segment_geographic_spread_summary
         )
-        print("Report written successfully to outputs/round2/notes/question_summary.md!")
+        print(f"Report written successfully to outputs/round2/notes/{NOTE_FILENAME}!")
     except Exception as e:
         print(f"Error loading static output: {e}")
         print("Please run run_analysis.py first to generate the outputs.")

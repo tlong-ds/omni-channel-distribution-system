@@ -196,6 +196,49 @@ def _add_top_labels(ax, merged, label_column: str, value_column: str, top_n: int
         ax.text(point.x, point.y, str(row[label_column]), fontsize=7.5, color="#0f172a", ha="center", va="center")
 
 
+def _add_callout_labels(ax, merged, label_column: str, value_column: str, top_n: int = 10) -> None:
+    available = merged.dropna(subset=[value_column]).sort_values(value_column, ascending=False).head(top_n).copy()
+    if available.empty:
+        return
+    points = available.geometry.representative_point()
+    x_mid = float(points.x.median())
+    overrides = {
+        "Đồng Nai": {"dx": 1.0, "dy": -0.45, "ha": "left"},
+        "Đà Nẵng": {"dx": -1.55, "dy": 0.15, "ha": "right"},
+        "Quảng Nam": {"dx": -1.75, "dy": -0.05, "ha": "right"},
+        "Khánh Hòa": {"dx": -1.45, "dy": 0.2, "ha": "right"},
+        "Bình Thuận": {"dx": 1.15, "dy": -0.35, "ha": "left"},
+        "Hà Nội": {"dx": -1.55, "dy": 0.0, "ha": "right"},
+        "Hải Phòng": {"dx": 1.2, "dy": 0.35, "ha": "left"},
+        "Nghệ An": {"dx": -1.3, "dy": -0.1, "ha": "right"},
+        "Hòa Bình": {"dx": -1.2, "dy": -0.45, "ha": "right"},
+        "Đắk Lắk": {"dx": -1.2, "dy": 0.15, "ha": "right"},
+        "Cần Thơ": {"dx": -1.35, "dy": -0.35, "ha": "right"},
+        "Tiền Giang": {"dx": -1.1, "dy": 0.02, "ha": "right"},
+        "Bình Dương": {"dx": -1.15, "dy": 0.15, "ha": "right"},
+        "Hồ Chí Minh": {"dx": -1.1, "dy": -0.3, "ha": "right"},
+    }
+    for idx, ((_, row), point) in enumerate(zip(available.iterrows(), points, strict=False)):
+        side = 1 if point.x >= x_mid else -1
+        default = {"dx": 1.6 * side, "dy": 0.0, "ha": "left" if side > 0 else "right"}
+        custom = overrides.get(str(row[label_column]), {})
+        dx = custom.get("dx", default["dx"])
+        dy = custom.get("dy", default["dy"])
+        ha = custom.get("ha", default["ha"])
+        ax.annotate(
+            str(row[label_column]),
+            xy=(point.x, point.y),
+            xytext=(point.x + dx, point.y + dy),
+            textcoords="data",
+            fontsize=8,
+            color="#0f172a",
+            ha=ha,
+            va="center",
+            arrowprops={"arrowstyle": "-", "color": "#334155", "linewidth": 1.1, "shrinkA": 0, "shrinkB": 0},
+            bbox={"boxstyle": "round,pad=0.12", "facecolor": "white", "edgecolor": "none", "alpha": 0.9},
+        )
+
+
 def boundary_province_names() -> set[str]:
     return set(_prepare_vietnam_province_layer()["province"].dropna().astype(str))
 
@@ -209,7 +252,7 @@ def _abc_bar(abc_xyz: pd.DataFrame) -> None:
     ax.set_ylabel("Quantity")
     ax.grid(axis="y", alpha=0.25)
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "abc_quantity_distribution.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q11_abc_quantity_distribution.png", dpi=160)
     plt.close(fig)
 
 
@@ -231,7 +274,7 @@ def _abc_xyz_matrix_chart(abc_xyz_matrix: pd.DataFrame) -> None:
             ax.text(col_idx, row_idx, f"{int(pivot.loc[row_label, col_label])}", ha="center", va="center", color="#102a43")
     fig.colorbar(image, ax=ax, shrink=0.85, label="SKU count")
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "abc_xyz_matrix.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q11_abc_xyz_matrix.png", dpi=160)
     plt.close(fig)
 
 
@@ -253,7 +296,7 @@ def _region_bar(summary: pd.DataFrame) -> None:
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax.legend(lines + lines2, labels + labels2, loc="lower right")
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "regional_quantity_density.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q12_region_quantity_orders.png", dpi=160)
     plt.close(fig)
 
 
@@ -269,24 +312,33 @@ def _warehouse_quantity_bar(shipments: pd.DataFrame) -> None:
     ax.tick_params(axis="x", rotation=35)
     ax.grid(axis="y", alpha=0.25)
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "warehouse_region_split.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q12_warehouse_region_quantity_split.png", dpi=160)
     plt.close(fig)
 
 
 def _q12_province_cluster_chart(summary: pd.DataFrame) -> None:
-    ordered = summary.sort_values(["orders", "quantity"], ascending=False).copy()
-    sizes = 40 + (ordered["quantity"] / ordered["quantity"].max()).fillna(0) * 500 if not ordered.empty else []
-    colors = ordered["dominant_warehouse"].map(WAREHOUSE_COLOR_MAP)
-    fig, ax = plt.subplots(figsize=(10, 6.5))
-    ax.scatter(ordered["orders"], ordered["quantity"], s=sizes, c=colors, alpha=0.8, edgecolors="white", linewidth=0.8)
-    for _, row in ordered.iterrows():
-        ax.annotate(row["province"], (row["orders"], row["quantity"]), xytext=(4, 4), textcoords="offset points", fontsize=8)
-    ax.set_title(f"Top province demand clusters\n{_window_label()}")
-    ax.set_xlabel("Orders")
-    ax.set_ylabel("Quantity")
-    ax.grid(alpha=0.25)
+    province_layer = _prepare_vietnam_province_layer()
+    ordered = summary.sort_values(["rank_by_quantity", "rank_by_orders", "quantity"], ascending=[True, True, False]).copy()
+    merged = _province_layer_with_data(province_layer, ordered, ["quantity", "orders", "region"])
+    fig, ax = plt.subplots(figsize=(8.5, 12))
+    province_layer.plot(ax=ax, color="#f3f4f6", edgecolor="#cbd5e1", linewidth=0.45)
+    hotspots = merged.dropna(subset=["quantity"]).sort_values("quantity", ascending=False).copy()
+    if not hotspots.empty:
+        hotspots.plot(
+            ax=ax,
+            column="quantity",
+            cmap="YlOrRd",
+            edgecolor="#0f172a",
+            linewidth=0.9,
+            alpha=0.92,
+            legend=True,
+            legend_kwds={"shrink": 0.75, "label": "Quantity"},
+        )
+        hotspots.boundary.plot(ax=ax, color="#0f172a", linewidth=1.1)
+    _add_callout_labels(ax, hotspots, "province", "quantity", top_n=min(14, len(hotspots)))
+    _style_map_axis(ax, f"Top demand provinces map\n{_window_label()}")
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "q12_province_clusters.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q12_top_demand_provinces_map.png", dpi=160)
     plt.close(fig)
 
 
@@ -314,7 +366,7 @@ def _q12_province_demand_maps_chart(province_layer, summary: pd.DataFrame) -> No
             _add_top_labels(ax, merged, "province", "quantity")
     fig.suptitle(f"Q1.2 Province demand choropleths\n{_window_label()}", y=0.98, fontsize=14, weight="bold")
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "q12_province_demand_maps.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q12_province_demand_choropleths.png", dpi=160)
     plt.close(fig)
 
 
@@ -334,7 +386,7 @@ def _q12_province_warehouse_dominance_map_chart(province_layer, summary: pd.Data
         edgecolor="#9ca3af",
         hatch="///",
     )
-    _style_map_axis(ax, f"Province warehouse dominance\n{_window_label()}")
+    _style_map_axis(ax, f"Province warehouse dominance map\n{_window_label()}")
     from matplotlib.patches import Patch
 
     legend_items = [
@@ -456,7 +508,7 @@ def _order_profile_chart(summary: pd.DataFrame) -> None:
         ax.grid(axis="y", alpha=0.25)
     fig.suptitle(f"Segment order profile dashboard\n{_window_label()}", y=0.99, fontsize=14, weight="bold")
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "order_profile_comparison.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q13_order_profile_comparison.png", dpi=160)
     plt.close(fig)
 
 
@@ -531,7 +583,7 @@ def _vietnam_region_reference_map_chart(province_layer) -> None:
     legend_items = [Patch(facecolor=color, edgecolor="#1e293b", label=region) for region, color in REGION_COLOR_MAP.items()]
     ax.legend(handles=legend_items, loc="lower left", frameon=True, fontsize=9)
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "vietnam_regions_map.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q12_region_reference_map.png", dpi=160)
     plt.close(fig)
 
 
@@ -541,11 +593,11 @@ if __name__ == "__main__":
     print("Loading static cleaned data from disk...")
     try:
         shipments = pd.read_csv(CLEANED_DIR / "shipments_cleaned.csv")
-        abc_xyz = pd.read_csv(TABLES_DIR / "abc_xyz.csv")
-        abc_xyz_matrix = pd.read_csv(TABLES_DIR / "abc_xyz_matrix_summary.csv")
-        warehouse_region_summary = pd.read_csv(TABLES_DIR / "warehouse_region_summary.csv")
-        q12_region_orders_quantity_summary = pd.read_csv(TABLES_DIR / "q12_region_orders_quantity_summary.csv")
-        q12_province_cluster_summary = pd.read_csv(TABLES_DIR / "q12_province_cluster_summary.csv")
+        abc_xyz = pd.read_csv(TABLES_DIR / "q11_sku_abc_xyz.csv")
+        abc_xyz_matrix = pd.read_csv(TABLES_DIR / "q11_abc_xyz_matrix_summary.csv")
+        warehouse_region_summary = pd.read_csv(TABLES_DIR / "q12_warehouse_region_summary.csv")
+        q12_region_orders_quantity_summary = pd.read_csv(TABLES_DIR / "q12_region_quantity_orders_summary.csv")
+        q12_province_cluster_summary = pd.read_csv(TABLES_DIR / "q12_top_demand_provinces_summary.csv")
         q12_province_demand_summary = pd.read_csv(TABLES_DIR / "q12_province_demand_summary.csv")
         q12_province_warehouse_dominance_summary = pd.read_csv(TABLES_DIR / "q12_province_warehouse_dominance_summary.csv")
         q12_province_correlation_input_summary = pd.read_csv(TABLES_DIR / "q12_province_correlation_input_summary.csv")

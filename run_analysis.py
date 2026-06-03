@@ -45,12 +45,39 @@ from src.logage2026.visuals import boundary_province_names, save_charts
 EXPECTED_ASSIGNMENT_ROWS = 43_894
 EXPECTED_ASSIGNMENT_QUANTITY = 355_364.80
 EXPECTED_ASSIGNMENT_CBM = 19_653.78
+NOTE_FILENAME = "part1_question_summary.md"
 
 STALE_OUTPUTS = [
     TABLES_DIR / "safety_stock_class_a.csv",
     TABLES_DIR / "slotting_plan.csv",
     NOTES_DIR / "recommendations.md",
     NOTES_DIR / "pick_pack_flowchart.md",
+    NOTES_DIR / "question_summary.md",
+    TABLES_DIR / "abc_xyz.csv",
+    TABLES_DIR / "abc_xyz_matrix_summary.csv",
+    TABLES_DIR / "fast_moving_summary.csv",
+    TABLES_DIR / "classification_metadata.csv",
+    TABLES_DIR / "missing_data_summary.csv",
+    TABLES_DIR / "geography_coverage_summary.csv",
+    TABLES_DIR / "geography_diagnostics_summary.csv",
+    TABLES_DIR / "unresolved_candidate_region_summary.csv",
+    TABLES_DIR / "warehouse_region_summary.csv",
+    TABLES_DIR / "customer_cluster_summary.csv",
+    TABLES_DIR / "warehouse_imbalance_summary.csv",
+    TABLES_DIR / "q12_region_orders_quantity_summary.csv",
+    TABLES_DIR / "q12_province_cluster_summary.csv",
+    TABLES_DIR / "order_profile_segments.csv",
+    TABLES_DIR / "document_type_summary.csv",
+    TABLES_DIR / "customer_match_quality_summary.csv",
+    TABLES_DIR / "geography_source_summary.csv",
+    TABLES_DIR / "unresolved_customer_summary.csv",
+    CHARTS_DIR / "abc_quantity_distribution.png",
+    CHARTS_DIR / "abc_xyz_matrix.png",
+    CHARTS_DIR / "regional_quantity_density.png",
+    CHARTS_DIR / "warehouse_region_split.png",
+    CHARTS_DIR / "q12_province_demand_maps.png",
+    CHARTS_DIR / "order_profile_comparison.png",
+    CHARTS_DIR / "vietnam_regions_map.png",
 ]
 
 
@@ -101,19 +128,19 @@ def main() -> None:
     distributors.to_csv(CLEANED_DIR / "distributors_cleaned.csv", index=False)
     shipments.to_csv(CLEANED_DIR / "shipments_cleaned.csv", index=False)
 
-    abc_xyz.to_csv(TABLES_DIR / "abc_xyz.csv", index=False)
-    abc_xyz_matrix.to_csv(TABLES_DIR / "abc_xyz_matrix_summary.csv", index=False)
-    fast_moving_summary.to_csv(TABLES_DIR / "fast_moving_summary.csv", index=False)
-    classification_metadata.to_csv(TABLES_DIR / "classification_metadata.csv", index=False)
-    missing_data_summary.to_csv(TABLES_DIR / "missing_data_summary.csv", index=False)
-    geography_coverage_summary.to_csv(TABLES_DIR / "geography_coverage_summary.csv", index=False)
-    geography_diagnostics_summary.to_csv(TABLES_DIR / "geography_diagnostics_summary.csv", index=False)
-    unresolved_candidate_region_summary.to_csv(TABLES_DIR / "unresolved_candidate_region_summary.csv", index=False)
-    warehouse_region_summary.to_csv(TABLES_DIR / "warehouse_region_summary.csv", index=False)
-    customer_cluster_summary.to_csv(TABLES_DIR / "customer_cluster_summary.csv", index=False)
-    warehouse_imbalance_summary.to_csv(TABLES_DIR / "warehouse_imbalance_summary.csv", index=False)
-    q12_region_orders_quantity_summary.to_csv(TABLES_DIR / "q12_region_orders_quantity_summary.csv", index=False)
-    q12_province_cluster_summary.to_csv(TABLES_DIR / "q12_province_cluster_summary.csv", index=False)
+    abc_xyz.to_csv(TABLES_DIR / "q11_sku_abc_xyz.csv", index=False)
+    abc_xyz_matrix.to_csv(TABLES_DIR / "q11_abc_xyz_matrix_summary.csv", index=False)
+    fast_moving_summary.to_csv(TABLES_DIR / "q11_fast_moving_summary.csv", index=False)
+    classification_metadata.to_csv(TABLES_DIR / "q11_classification_metadata.csv", index=False)
+    missing_data_summary.to_csv(TABLES_DIR / "shared_missing_data_summary.csv", index=False)
+    geography_coverage_summary.to_csv(TABLES_DIR / "q12_geography_coverage_summary.csv", index=False)
+    geography_diagnostics_summary.to_csv(TABLES_DIR / "q12_geography_diagnostics_summary.csv", index=False)
+    unresolved_candidate_region_summary.to_csv(TABLES_DIR / "q12_unresolved_candidate_region_summary.csv", index=False)
+    warehouse_region_summary.to_csv(TABLES_DIR / "q12_warehouse_region_summary.csv", index=False)
+    customer_cluster_summary.to_csv(TABLES_DIR / "q12_customer_cluster_summary.csv", index=False)
+    warehouse_imbalance_summary.to_csv(TABLES_DIR / "q12_warehouse_imbalance_summary.csv", index=False)
+    q12_region_orders_quantity_summary.to_csv(TABLES_DIR / "q12_region_quantity_orders_summary.csv", index=False)
+    q12_province_cluster_summary.to_csv(TABLES_DIR / "q12_top_demand_provinces_summary.csv", index=False)
     q12_province_demand_summary.to_csv(TABLES_DIR / "q12_province_demand_summary.csv", index=False)
     q12_province_warehouse_dominance_summary.to_csv(
         TABLES_DIR / "q12_province_warehouse_dominance_summary.csv", index=False
@@ -127,11 +154,11 @@ def main() -> None:
     q13_segment_packaging_summary.to_csv(TABLES_DIR / "q13_segment_packaging_summary.csv", index=False)
     q13_segment_geographic_spread_summary.to_csv(TABLES_DIR / "q13_segment_geographic_spread_summary.csv", index=False)
     q13_segment_province_spread_summary.to_csv(TABLES_DIR / "q13_segment_province_spread_summary.csv", index=False)
-    order_profile_segments.to_csv(TABLES_DIR / "order_profile_segments.csv", index=False)
-    document_type_summary.to_csv(TABLES_DIR / "document_type_summary.csv", index=False)
-    customer_match_quality_summary.to_csv(TABLES_DIR / "customer_match_quality_summary.csv", index=False)
-    geography_source_summary.to_csv(TABLES_DIR / "geography_source_summary.csv", index=False)
-    unresolved_customer_summary.to_csv(TABLES_DIR / "unresolved_customer_summary.csv", index=False)
+    order_profile_segments.to_csv(TABLES_DIR / "q13_order_profile_segments.csv", index=False)
+    document_type_summary.to_csv(TABLES_DIR / "shared_document_type_summary.csv", index=False)
+    customer_match_quality_summary.to_csv(TABLES_DIR / "q12_customer_match_quality_summary.csv", index=False)
+    geography_source_summary.to_csv(TABLES_DIR / "q12_geography_source_summary.csv", index=False)
+    unresolved_customer_summary.to_csv(TABLES_DIR / "q12_unresolved_customer_summary.csv", index=False)
 
     _remove_stale_outputs()
     save_charts(
@@ -341,19 +368,19 @@ def verify_outputs(
         CLEANED_DIR / "sku_master_cleaned.csv",
         CLEANED_DIR / "distributors_cleaned.csv",
         CLEANED_DIR / "shipments_cleaned.csv",
-        TABLES_DIR / "abc_xyz.csv",
-        TABLES_DIR / "abc_xyz_matrix_summary.csv",
-        TABLES_DIR / "fast_moving_summary.csv",
-        TABLES_DIR / "classification_metadata.csv",
-        TABLES_DIR / "missing_data_summary.csv",
-        TABLES_DIR / "geography_coverage_summary.csv",
-        TABLES_DIR / "geography_diagnostics_summary.csv",
-        TABLES_DIR / "unresolved_candidate_region_summary.csv",
-        TABLES_DIR / "warehouse_region_summary.csv",
-        TABLES_DIR / "customer_cluster_summary.csv",
-        TABLES_DIR / "warehouse_imbalance_summary.csv",
-        TABLES_DIR / "q12_region_orders_quantity_summary.csv",
-        TABLES_DIR / "q12_province_cluster_summary.csv",
+        TABLES_DIR / "q11_sku_abc_xyz.csv",
+        TABLES_DIR / "q11_abc_xyz_matrix_summary.csv",
+        TABLES_DIR / "q11_fast_moving_summary.csv",
+        TABLES_DIR / "q11_classification_metadata.csv",
+        TABLES_DIR / "shared_missing_data_summary.csv",
+        TABLES_DIR / "q12_geography_coverage_summary.csv",
+        TABLES_DIR / "q12_geography_diagnostics_summary.csv",
+        TABLES_DIR / "q12_unresolved_candidate_region_summary.csv",
+        TABLES_DIR / "q12_warehouse_region_summary.csv",
+        TABLES_DIR / "q12_customer_cluster_summary.csv",
+        TABLES_DIR / "q12_warehouse_imbalance_summary.csv",
+        TABLES_DIR / "q12_region_quantity_orders_summary.csv",
+        TABLES_DIR / "q12_top_demand_provinces_summary.csv",
         TABLES_DIR / "q12_province_demand_summary.csv",
         TABLES_DIR / "q12_province_warehouse_dominance_summary.csv",
         TABLES_DIR / "q12_province_correlation_input_summary.csv",
@@ -363,19 +390,19 @@ def verify_outputs(
         TABLES_DIR / "q13_segment_packaging_summary.csv",
         TABLES_DIR / "q13_segment_geographic_spread_summary.csv",
         TABLES_DIR / "q13_segment_province_spread_summary.csv",
-        TABLES_DIR / "order_profile_segments.csv",
-        TABLES_DIR / "document_type_summary.csv",
-        TABLES_DIR / "customer_match_quality_summary.csv",
-        TABLES_DIR / "geography_source_summary.csv",
-        TABLES_DIR / "unresolved_customer_summary.csv",
-        NOTES_DIR / "question_summary.md",
-        CHARTS_DIR / "abc_quantity_distribution.png",
-        CHARTS_DIR / "abc_xyz_matrix.png",
-        CHARTS_DIR / "regional_quantity_density.png",
-        CHARTS_DIR / "warehouse_region_split.png",
-        CHARTS_DIR / "order_profile_comparison.png",
-        CHARTS_DIR / "q12_province_clusters.png",
-        CHARTS_DIR / "q12_province_demand_maps.png",
+        TABLES_DIR / "q13_order_profile_segments.csv",
+        TABLES_DIR / "shared_document_type_summary.csv",
+        TABLES_DIR / "q12_customer_match_quality_summary.csv",
+        TABLES_DIR / "q12_geography_source_summary.csv",
+        TABLES_DIR / "q12_unresolved_customer_summary.csv",
+        NOTES_DIR / NOTE_FILENAME,
+        CHARTS_DIR / "q11_abc_quantity_distribution.png",
+        CHARTS_DIR / "q11_abc_xyz_matrix.png",
+        CHARTS_DIR / "q12_region_quantity_orders.png",
+        CHARTS_DIR / "q12_warehouse_region_quantity_split.png",
+        CHARTS_DIR / "q13_order_profile_comparison.png",
+        CHARTS_DIR / "q12_top_demand_provinces_map.png",
+        CHARTS_DIR / "q12_province_demand_choropleths.png",
         CHARTS_DIR / "q12_warehouse_dominance_map.png",
         CHARTS_DIR / "q12_geography_coverage_map.png",
         CHARTS_DIR / "q12_province_distance_correlation.png",
@@ -384,7 +411,7 @@ def verify_outputs(
         CHARTS_DIR / "q13_packaging_mix.png",
         CHARTS_DIR / "q13_geographic_spread.png",
         CHARTS_DIR / "q13_segment_geographic_maps.png",
-        CHARTS_DIR / "vietnam_regions_map.png",
+        CHARTS_DIR / "q12_region_reference_map.png",
     ]
     missing_files = [path for path in required_outputs if not path.exists()]
     if missing_files:
