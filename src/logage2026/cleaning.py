@@ -3,8 +3,6 @@ import pandas as pd
 from .geography import (
     add_distance_columns,
     normalize_text,
-    parse_hcmc_district,
-    parse_hcmc_district_with_alias,
     parse_province,
     parse_province_with_alias,
     region_group,
@@ -239,20 +237,20 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
             print(f"Parsing address {i}/{len(unique_addresses)}...")
         address_cache[addr] = parse_address_components(addr)
     
-    components = frame["Delivery Address"].map(lambda a: address_cache.get(a, parse_address_components(a)))
+    # Map from the address cache directly to avoid eager evaluation / re-parsing
+    components = list(frame["Delivery Address"].map(address_cache))
 
-    frame["address_street"] = _normalize_string(components.map(lambda c: c["street"]))
-    frame["address_ward"] = _normalize_string(components.map(lambda c: c["ward"]))
-    frame["address_province"] = _normalize_string(components.map(lambda c: c["province"]))
-    
-    # Reconstruct delivery_address using the standardized string
-    frame["delivery_address"] = _normalize_string(components.map(lambda c: c["full_address"]))
+    frame["address_street"] = _normalize_string(pd.Series([c["street"] for c in components], index=frame.index))
+    frame["address_ward"] = _normalize_string(pd.Series([c["ward"] for c in components], index=frame.index))
+    frame["address_province"] = _normalize_string(pd.Series([c["province"] for c in components], index=frame.index))
+    frame["latitude"] = [c.get("latitude") for c in components]
+    frame["longitude"] = [c.get("longitude") for c in components]
+    frame["delivery_address"] = _normalize_string(pd.Series([c["full_address"] for c in components], index=frame.index))
     
     frame["customer_location_key"] = (
         frame["customer_key"] + " | " + frame["delivery_address"].map(normalize_text)
     )
-    frame["province"] = frame["delivery_address"].map(parse_province)
-    frame["hcmc_district"] = frame["delivery_address"].map(parse_hcmc_district)
+    frame["province"] = frame["address_province"]
     frame["region"] = frame["province"].map(region_group)
     dedupe_columns = ["customer_key", "address_street", "address_ward", "address_province", "region"]
     frame = frame.drop_duplicates(subset=dedupe_columns).copy()
@@ -272,7 +270,6 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
         "customer_key_is_ambiguous",
         "customer_match_status",
         "province",
-        "hcmc_district",
         "region",
         "latitude",
         "longitude",
@@ -337,9 +334,8 @@ def clean_shipments(
     parsed_province = frame["ship_to_customer"].map(parse_province_with_alias)
     frame["parsed_province"] = parsed_province.map(lambda item: item[0])
     frame["province_alias_match_flag"] = parsed_province.map(lambda item: bool(item[1]))
-    parsed_district = frame["ship_to_customer"].map(parse_hcmc_district_with_alias)
-    frame["parsed_hcmc_district"] = parsed_district.map(lambda item: item[0])
-    frame["hcmc_district_alias_match_flag"] = parsed_district.map(lambda item: bool(item[1]))
+    frame["parsed_hcmc_district"] = ""
+    frame["hcmc_district_alias_match_flag"] = False
     parsed_has_geo = frame["parsed_province"].ne("Unknown")
 
     frame["geography_source"] = "unresolved"
@@ -350,7 +346,6 @@ def clean_shipments(
     frame["hcmc_district"] = ""
     frame["region"] = "Unknown"
     frame.loc[distributor_geo_mask, "province"] = frame.loc[distributor_geo_mask, "province_distributor"]
-    frame.loc[distributor_geo_mask, "hcmc_district"] = frame.loc[distributor_geo_mask, "hcmc_district_distributor"]
     frame.loc[distributor_geo_mask, "region"] = frame.loc[distributor_geo_mask, "region_distributor"]
     frame.loc[distributor_geo_mask, "geography_source"] = "distributor_match"
 
@@ -441,7 +436,6 @@ def _build_distributor_match_table(distributors: pd.DataFrame) -> pd.DataFrame:
             [
                 "customer_key",
                 "province",
-                "hcmc_district",
                 "region",
                 "latitude",
                 "longitude",
@@ -451,7 +445,6 @@ def _build_distributor_match_table(distributors: pd.DataFrame) -> pd.DataFrame:
         ].rename(
             columns={
                 "province": "province_distributor",
-                "hcmc_district": "hcmc_district_distributor",
                 "region": "region_distributor",
                 "latitude": "latitude_distributor",
                 "longitude": "longitude_distributor",

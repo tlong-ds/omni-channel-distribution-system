@@ -5,98 +5,151 @@ import vietnamadminunits as vau
 
 import pandas as pd
 
-from .config import HCMC_DISTRICT_COORDINATES, WAREHOUSE_COORDINATES
+from .config import WAREHOUSE_COORDINATES
 
 
-PROVINCE_ALIASES = {
-    "AN GIANG": "An Giang",
-    "BA RIA": "Ba Ria - Vung Tau",
-    "BAC GIANG": "Bac Giang",
-    "BAC NINH": "Bac Ninh",
-    "BINH DINH": "Binh Dinh",
-    "BINH DUONG": "Binh Duong",
-    "BINH PHUOC": "Binh Phuoc",
-    "BINH THUAN": "Binh Thuan",
-    "CAN THO": "Can Tho",
-    "DA NANG": "Da Nang",
-    "DONG NAI": "Dong Nai",
-    "DONG THAP": "Dong Thap",
-    "HA NOI": "Ha Noi",
-    "HAI PHONG": "Hai Phong",
-    "HO CHI MINH": "Ho Chi Minh City",
-    "HCM": "Ho Chi Minh City",
-    "KHANH HOA": "Khanh Hoa",
-    "KIEN GIANG": "Kien Giang",
-    "LAM DONG": "Lam Dong",
-    "LONG AN": "Long An",
-    "NGHE AN": "Nghe An",
-    "QUANG NAM": "Quang Nam",
-    "TIEN GIANG": "Tien Giang",
-    "TP HCM": "Ho Chi Minh City",
-    "TP. HCM": "Ho Chi Minh City",
-    "TPHCM": "Ho Chi Minh City",
-    "VINH LONG": "Vinh Long",
+# Mapping of old district names that became wards post-2025 reform
+# Value is (new_ward_name, province_to_append_if_no_province_present)
+_DISTRICT_TO_WARD_RENAMES: dict[str, tuple[str, str]] = {
+    "hà đông": ("Phường Hà Đông", "Thành phố Hà Nội"),
 }
 
-PROVINCE_COORDINATES = {
-    "An Giang": (10.521, 105.125),
-    "Ba Ria - Vung Tau": (10.541, 107.243),
-    "Bac Giang": (21.273, 106.194),
-    "Bac Ninh": (21.186, 106.076),
-    "Binh Dinh": (13.782, 109.219),
-    "Binh Duong": (11.050, 106.667),
-    "Binh Phuoc": (11.751, 106.723),
-    "Binh Thuan": (10.933, 108.101),
-    "Can Tho": (10.045, 105.746),
-    "Da Nang": (16.067, 108.221),
-    "Dong Nai": (10.957, 106.843),
-    "Dong Thap": (10.493, 105.689),
-    "Ha Noi": (21.028, 105.854),
-    "Hai Phong": (20.844, 106.688),
-    "Ho Chi Minh City": (10.776, 106.701),
-    "Khanh Hoa": (12.238, 109.196),
-    "Kien Giang": (10.012, 105.080),
-    "Lam Dong": (11.575, 108.142),
-    "Long An": (10.695, 106.243),
-    "Nghe An": (18.679, 105.681),
-    "Quang Nam": (15.539, 108.019),
-    "Tien Giang": (10.449, 106.342),
-    "Vinh Long": (10.254, 105.973),
+# Regex to detect a city/town inside a province address
+# e.g. "Thành phố Mỹ Tho, Tỉnh Tiền Giang"  →  strip "Thành phố Mỹ Tho,"
+_CITY_IN_PROVINCE_RE = re.compile(
+    r"(?:Thành\s+ph[oố]\s+\S[\w\s]*?|Th[iị]\s+x[aã]\s+\S[\w\s]*?)"
+    r",\s*(?=(?:Tỉnh|Th[aà]nh\s+ph[oố]\s+(?!Hồ\s+Chí\s+Minh|Hà\s+Nội|Hải\s+Phòng|Đà\s+Nẵng|Huế)))",
+    re.IGNORECASE,
+)
+
+
+def preprocess_address(address: str) -> str:
+    """Normalise a raw distributor address before passing it to vietnamadminunits.
+
+    Steps applied (in order):
+    1. Strip parenthetical comments – e.g. "(Gần Vòng Xoay An Lạc)".
+    2. Remove a sub-city level ("Thành phố X" or "Thị xã X") when the address
+       already contains a Tỉnh/Thành phố top-level province.  These inner cities
+       were abolished by the 2025 administrative reform.
+    3. Apply known district→ward renames (e.g. "Hà Đông" → "Phường Hà Đông").
+    """
+    # 1. Remove bracketed comments
+    address = re.sub(r"\(.*?\)", "", address).strip().rstrip(",").strip()
+
+    # 2. Remove inner city/town when a province is present
+    address = _CITY_IN_PROVINCE_RE.sub("", address).strip().rstrip(",").strip()
+
+    # 3. District→ward renames — only replace if not already preceded by "Phường"
+    for old_token, (new_ward, province_hint) in _DISTRICT_TO_WARD_RENAMES.items():
+        pattern = r"(?<![Pp]h[\u01b0\u01a1][\u1edd]ng\s)\b" + re.escape(old_token) + r"\b"
+        if re.search(pattern, address, flags=re.IGNORECASE):
+            address = re.sub(pattern, new_ward, address, flags=re.IGNORECASE)
+            # Append province if no province keyword already present
+            if not re.search(r"(?:Tỉnh|Thành\s+phố|Tp\.?)", address, re.IGNORECASE):
+                address = address.rstrip(",").strip() + ", " + province_hint
+
+    return address.strip()
+
+
+_PROVINCE_EXTRACT_RE = re.compile(
+    r"(?:Tỉnh|Th[aà]nh\s+ph[oố])\s+([\w\s\-]+?)(?:,|$)",
+    re.IGNORECASE,
+)
+
+# Bare province/city abbreviations with no Tỉnh/Thành phố prefix
+# Also includes known old district names (Quận/Huyện) that imply a province
+_BARE_PROVINCE_RE = re.compile(
+    r"(?:^|,\s*)(?:TP\.?\s*|Tp\.?\s*|Quận\s*|Q\.?\s*)?(?P<name>"
+    r"Hà\s*Nội|Hà\s*nội|HN|H\.?N\.?"
+    r"|Hồ\s*Chí\s*Minh|TP\.?\s*HCM|Tp\.?\s*HCM|HCM|TP\.?HCM"
+    r"|Hải\s*Phòng|Đà\s*Nẵng|Huế"
+    r"|Bình\s*Dương|Đồng\s*Nai|Bắc\s*Ninh|Bắc\s*Giang"
+    r"|Hưng\s*Yên|Hải\s*Dương|Vĩnh\s*Phúc|Thái\s*Nguyên"
+    r"|Hoàng\s*Mai|Thanh\s*Xuân|Cầu\s*Giấy|Long\s*Biên|Nam\s*Từ\s*Liêm|Bắc\s*Từ\s*Liêm|Tây\s*Hồ|Ba\s*Đình|Hoàn\s*Kiếm|Hai\s*Bà\s*Trưng|Hà\s*Đông"
+    r"|Tân\s*Bình|Tân\s*Phú|Bình\s*Tân|Gò\s*Vấp|Bình\s*Thạnh|Phú\s*Nhuận|Quận\s*12|Quận\s*9"
+    r")(?:\s*,|\s*$)",
+    re.IGNORECASE,
+)
+
+_BARE_PROVINCE_MAP: dict[str, str] = {
+    "hà nội": "Hà Nội", "hn": "Hà Nội", "h.n.": "Hà Nội",
+    "hồ chí minh": "Hồ Chí Minh", "hcm": "Hồ Chí Minh", "tp.hcm": "Hồ Chí Minh",
+    "tp hcm": "Hồ Chí Minh",
+    "hải phòng": "Hải Phòng", "đà nẵng": "Đà Nẵng", "huế": "Huế",
+    "bình dương": "Bình Dương", "đồng nai": "Đồng Nai",
+    "bắc ninh": "Bắc Ninh", "bắc giang": "Bắc Giang",
+    "hưng yên": "Hưng Yên", "hải dương": "Hải Dương",
+    "vĩnh phúc": "Vĩnh Phúc", "thái nguyên": "Thái Nguyên",
+    # Old Hà Nội districts — imply Hà Nội province
+    "hoàng mai": "Hà Nội", "thanh xuân": "Hà Nội", "cầu giấy": "Hà Nội",
+    "long biên": "Hà Nội", "nam từ liêm": "Hà Nội", "bắc từ liêm": "Hà Nội",
+    "tây hồ": "Hà Nội", "ba đình": "Hà Nội", "hoàn kiếm": "Hà Nội",
+    "hai bà trưng": "Hà Nội", "hà đông": "Hà Nội",
+    # Old HCM districts — imply Hồ Chí Minh province
+    "tân bình": "Hồ Chí Minh", "tân phú": "Hồ Chí Minh",
+    "bình tân": "Hồ Chí Minh", "gò vấp": "Hồ Chí Minh",
+    "bình thạnh": "Hồ Chí Minh", "phú nhuận": "Hồ Chí Minh",
+    "quận 12": "Hồ Chí Minh", "quận 9": "Hồ Chí Minh",
+}
+
+_PROVINCE_SHORT_NAMES: dict[str, str] = {
+    "yên bái": "Yên Bái",
+    "tiền giang": "Tiền Giang",
+    "quảng nam": "Quảng Nam",
+    "quảng bình": "Quảng Bình",
+    "quảng trị": "Quảng Trị",
+    "bình phước": "Bình Phước",
+    "bình dương": "Bình Dương",
+    "trà vinh": "Trà Vinh",
+    "sóc trăng": "Sóc Trăng",
+    "bến tre": "Bến Tre",
+    "hậu giang": "Hậu Giang",
+    "bạc liêu": "Bạc Liêu",
+    "đồng tháp": "Đồng Tháp",
+    "vĩnh long": "Vĩnh Long",
+    "an giang": "An Giang",
+    "kiên giang": "Kiên Giang",
+    "đắk nông": "Đắk Nông",
+    "kon tum": "Kon Tum",
+    "ninh bình": "Ninh Bình",
+    "nam định": "Nam Định",
+    "hà nam": "Hà Nam",
+    "thái bình": "Thái Bình",
+    "hải dương": "Hải Dương",
+    "hưng yên": "Hưng Yên",
+    "vĩnh phúc": "Vĩnh Phúc",
+    "bắc kạn": "Bắc Kạn",
+    "hà giang": "Hà Giang",
+    "yên bái": "Yên Bái",
+    "lào cai": "Lào Cai",
+    "lai châu": "Lai Châu",
+    "điện biên": "Điện Biên",
 }
 
 
-PROVINCE_MERGES_2025 = {
-    "Ba Ria - Vung Tau": "Ho Chi Minh City",
-    "Binh Duong": "Ho Chi Minh City",
-    "Dong Nai": "Binh Phuoc",
-    "Tay Ninh": "Long An",
-    "Can Tho": "Can Tho City", 
-    "Soc Trang": "Can Tho City",
-    "Hau Giang": "Can Tho City",
-    "Vinh Long": "Ben Tre", 
-    "Tra Vinh": "Ben Tre",
-    "Dong Thap": "Tien Giang",
-    "Ca Mau": "Bac Lieu",
-    "An Giang": "Kien Giang",
-    "Ha Giang": "Tuyen Quang",
-    "Yen Bai": "Lao Cai",
-    "Bac Kan": "Thai Nguyen",
-    "Vinh Phuc": "Phu Tho",
-    "Hoa Binh": "Phu Tho",
-    "Bac Giang": "Bac Ninh",
-    "Thai Binh": "Hung Yen",
-    "Hai Duong": "Hai Phong",
-    "Ha Nam": "Ninh Binh",
-    "Nam Dinh": "Ninh Binh",
-    "Quang Binh": "Quang Tri",
-    "Quang Nam": "Da Nang",
-    "Kon Tum": "Quang Ngai",
-    "Binh Dinh": "Gia Lai",
-    "Ninh Thuan": "Khanh Hoa",
-    "Dak Nong": "Lam Dong",
-    "Binh Thuan": "Lam Dong",
-    "Phu Yen": "Dak Lak",
-}
+def _extract_province_from_text(address: str) -> str:
+    """Extract a short province name from raw address text as a last-resort fallback.
+
+    Tries two strategies:
+    1. Look for explicit Tỉnh/Thành phố prefix.
+    2. Look for a bare known province/city name at the end of the address.
+    """
+    # Strategy 1: explicit Tỉnh/Thành phố prefix
+    m = _PROVINCE_EXTRACT_RE.search(address)
+    if m:
+        raw = m.group(1).strip().lower()
+        raw = re.sub(r"\s*việt\s*nam\s*$", "", raw, flags=re.IGNORECASE).strip()
+        return _PROVINCE_SHORT_NAMES.get(raw, raw.title())
+
+    # Strategy 2: bare province name (no prefix)
+    m2 = _BARE_PROVINCE_RE.search(address)
+    if m2:
+        raw = m2.group("name").strip().lower()
+        raw = re.sub(r"\s+", " ", raw)
+        return _BARE_PROVINCE_MAP.get(raw, raw.title())
+
+    return "Unknown"
+
 
 def parse_address_components(address: object) -> dict:
     if not isinstance(address, str) or not address.strip():
@@ -104,58 +157,53 @@ def parse_address_components(address: object) -> dict:
             "street": "",
             "ward": "",
             "province": "",
-            "full_address": str(address) if not pd.isna(address) else ""
+            "full_address": str(address) if not pd.isna(address) else "",
+            "latitude": None,
+            "longitude": None
         }
     try:
-        converted = vau.convert_address(address)
+        address = preprocess_address(address)
+
+        # Step 1: Parse with LEGACY mode — recognises all pre-2025 provinces
+        # (Tiền Giang, Yên Bái, Quảng Nam, etc.) that FROM_2025 misses entirely.
+        legacy = vau.parse_address(address, mode=vau.ParseMode.LEGACY)
+
+        if legacy.district:
+            # Old format (has district) → convert to new 2025 address
+            result = vau.convert_address(address)
+        elif legacy.province:
+            # Already a new-format address or province-only match → use as-is
+            # but re-parse with FROM_2025 to get accurate new ward/coordinates
+            result = vau.parse_address(address, mode=vau.ParseMode.FROM_2025)
+            # If FROM_2025 loses the province, fall back to legacy result
+            if not result.short_province:
+                result = legacy
+        else:
+            # LEGACY found nothing — try FROM_2025 directly
+            result = vau.parse_address(address, mode=vau.ParseMode.FROM_2025)
+
+        province = result.short_province or ""
+        if not province:
+            province = _extract_province_from_text(address)
+
         return {
-            "street": converted.street or "",
-            "ward": converted.ward or "",
-            "province": converted.province or "",
-            "full_address": converted.get_address() or str(address)
+            "street": result.street or "",
+            "ward": result.ward or "",
+            "province": province,
+            "full_address": result.get_address() or str(address),
+            "latitude": result.latitude,
+            "longitude": result.longitude
         }
     except Exception:
-        # If parsing fails, fall back to the raw address
         return {
             "street": str(address),
             "ward": "",
-            "province": "",
-            "full_address": str(address)
+            "province": _extract_province_from_text(address),
+            "full_address": str(address),
+            "latitude": None,
+            "longitude": None
         }
 
-HCMC_DISTRICT_ALIASES = {
-    "BINH CHANH": "Binh Chanh",
-    "BINH TAN": "Binh Tan",
-    "QUAN 1": "District 1",
-    "Q 1": "District 1",
-    "QUAN 2": "Thu Duc",
-    "Q 2": "Thu Duc",
-    "QUAN 3": "District 3",
-    "Q 3": "District 3",
-    "QUAN 4": "District 4",
-    "Q 4": "District 4",
-    "QUAN 5": "District 5",
-    "Q 5": "District 5",
-    "QUAN 6": "District 6",
-    "Q 6": "District 6",
-    "QUAN 7": "District 7",
-    "Q 7": "District 7",
-    "QUAN 8": "District 8",
-    "Q 8": "District 8",
-    "QUAN 9": "Thu Duc",
-    "Q 9": "Thu Duc",
-    "QUAN 10": "District 10",
-    "Q 10": "District 10",
-    "QUAN 11": "District 11",
-    "Q 11": "District 11",
-    "QUAN 12": "District 12",
-    "Q 12": "District 12",
-    "GO VAP": "Go Vap",
-    "PHU NHUAN": "Phu Nhuan",
-    "TAN BINH": "Tan Binh",
-    "TAN PHU": "Tan Phu",
-    "THU DUC": "Thu Duc",
-}
 
 
 def normalize_text(value: object) -> str:
@@ -164,17 +212,17 @@ def normalize_text(value: object) -> str:
     text = str(value).upper().strip()
     text = unicodedata.normalize("NFKD", text)
     text = "".join(char for char in text if not unicodedata.combining(char))
-    return re.sub(r"\s+", " ", text)
+    return re.sub(r"\s+", " ", text).replace("Đ", "D")
 
 
 def parse_province_with_alias(text: object) -> tuple[str, str]:
-    normalized = normalize_text(text)
-    for needle, province in PROVINCE_ALIASES.items():
-        if needle in normalized:
-            # Apply 2025 law province merges
-            merged_province = PROVINCE_MERGES_2025.get(province, province)
-            return merged_province, needle
-    return "Unknown", ""
+    if pd.isna(text) or not str(text).strip():
+        return "Unknown", ""
+    try:
+        parsed = vau.parse_address(str(text))
+        return parsed.short_province or "Unknown", str(text)
+    except Exception:
+        return "Unknown", ""
 
 
 def parse_province(text: object) -> str:
@@ -182,51 +230,97 @@ def parse_province(text: object) -> str:
     return province
 
 
-def parse_hcmc_district_with_alias(text: object) -> tuple[str, str]:
-    normalized = normalize_text(text)
-    if parse_province(text) != "Ho Chi Minh City":
-        return "", ""
-        
-    # Sort aliases by length descending to prevent substring bugs (e.g., 'Q 1' matching 'Q 10')
-    sorted_aliases = sorted(HCMC_DISTRICT_ALIASES.items(), key=lambda item: len(item[0]), reverse=True)
-    
-    for needle, district in sorted_aliases:
-        if needle in normalized:
-            return district, needle
-    return "HCMC unspecified", ""
-
-
-def parse_hcmc_district(text: object) -> str:
-    district, _ = parse_hcmc_district_with_alias(text)
-    return district
-
-
 def region_group(province: str) -> str:
-    if province == "Unknown":
-        return "Unknown"
-    if province == "Ho Chi Minh City":
-        return "HCMC"
-    if province in {"Binh Duong", "Dong Nai", "Long An", "Ba Ria - Vung Tau", "Binh Phuoc", "Tien Giang"}:
-        return "Southeast / HCMC fringe"
-    if province in {"Can Tho", "An Giang", "Dong Thap", "Kien Giang", "Vinh Long"}:
-        return "Mekong Delta"
-    if province in {"Ha Noi", "Hai Phong", "Bac Ninh", "Bac Giang"}:
-        return "North"
-    if province in {"Da Nang", "Quang Nam", "Binh Dinh", "Khanh Hoa", "Binh Thuan", "Nghe An"}:
-        return "Central"
-    return "Other Vietnam"
+    prov = normalize_text(province)
+    if prov in {"", "UNKNOWN"}:
+        return "Không xác định"
 
+    # 1. Trung du và miền núi phía Bắc
+    if prov in {
+        "CAO BANG",
+        "DIEN BIEN",
+        "LAI CHAU",
+        "LANG SON", 
+        "LAO CAI",
+        "PHU THO",
+        "SON LA",
+        "THAI NGUYEN",
+        "TUYEN QUANG",
 
-def coordinates_for(province: str, district: str = "") -> tuple[float, float] | tuple[None, None]:
-    if district in HCMC_DISTRICT_COORDINATES:
-        return HCMC_DISTRICT_COORDINATES[district]
-    return PROVINCE_COORDINATES.get(province, (None, None))
+    }:
+
+        return "Trung du và miền núi phía Bắc"
+
+    # 2. Đồng bằng sông Hồng
+    if prov in {
+        "HA NOI",
+        "HAI PHONG",
+        "BAC NINH",
+        "HUNG YEN",
+        "NINH BINH",
+        "QUANG NINH",
+
+    }:
+
+        return "Đồng bằng sông Hồng"
+
+    # 3. Bắc Trung Bộ và Duyên hải miền Trung
+    if prov in {
+        "THANH HOA",
+        "NGHE AN",
+        "HA TINH",
+        "QUANG TRI",
+        "HUE",
+        "DA NANG",
+        "QUANG NGAI",
+        "GIA LAI",      
+        "KHANH HOA",    
+
+    }:
+
+        return "Bắc Trung Bộ và Duyên hải miền Trung"
+
+    # 4. Tây Nguyên
+
+    if prov in {
+        "DAK LAK",      # Đắk Lắk mới + Phú Yên
+        "LAM DONG",     # Lâm Đồng mới + Đắk Nông + Bình Thuận
+    }:
+
+        return "Tây Nguyên"
+
+    # 5. Đông Nam Bộ
+
+    if prov in {
+        "HO CHI MINH",
+        "HO CHI MINH CITY",
+        "DONG NAI",
+        "TAY NINH",
+
+    }:
+
+        return "Đông Nam Bộ"
+
+    # 6. Đồng bằng sông Cửu Long
+
+    if prov in {
+        "CAN THO",
+        "VINH LONG",
+        "DONG THAP",
+        "CA MAU",
+        "AN GIANG",
+
+    }:
+
+        return "Đồng bằng sông Cửu Long"
+
+    return "Khác"
 
 
 def haversine_km(origin: tuple[float, float], destination: tuple[float, float]) -> float:
     lat1, lon1 = origin
     lat2, lon2 = destination
-    if lat2 is None or lon2 is None:
+    if lat2 is None or lon2 is None or pd.isna(lat2) or pd.isna(lon2):
         return float("nan")
     radius = 6371.0
     dlat = math.radians(lat2 - lat1)
@@ -237,9 +331,10 @@ def haversine_km(origin: tuple[float, float], destination: tuple[float, float]) 
 
 def add_distance_columns(frame: pd.DataFrame) -> pd.DataFrame:
     result = frame.copy()
-    coords = result.apply(lambda row: coordinates_for(row["province"], row.get("hcmc_district", "")), axis=1)
-    result["latitude"] = [coord[0] for coord in coords]
-    result["longitude"] = [coord[1] for coord in coords]
+    if "latitude" not in result.columns or "longitude" not in result.columns:
+        # Fallback if somehow latitude and longitude aren't in the dataframe (shouldn't happen for distributors)
+        return result
+        
     for warehouse, origin in WAREHOUSE_COORDINATES.items():
         result[f"distance_from_{warehouse.lower().replace(' ', '_')}_km"] = [
             haversine_km(origin, (lat, lon)) for lat, lon in zip(result["latitude"], result["longitude"])
