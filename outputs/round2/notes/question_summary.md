@@ -2,6 +2,11 @@
 
 ## Data basis
 
+- ABC thresholds: A≤0.80, B≤0.95
+- XYZ CV thresholds: X≤0.50, Y≤1.00
+- Low-sample XYZ rule: min nonzero weeks = 4
+- Missing shipment rows excluded: 0 (0.00% of rows)
+
 ## Q1.1 Demand pattern classification
 ![Q1.1 ABC quantity distribution](../charts/abc_quantity_distribution.png)
 

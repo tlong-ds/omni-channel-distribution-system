@@ -283,3 +283,46 @@ def test_clean_shipments_uses_demand_only_and_avoids_ambiguous_distributor_geo()
     assert parsed["geography_source"] == "transaction_text_parse"
     assert parsed["province"] == "Ho Chi Minh City"
     assert parsed["hcmc_district"] == "District 1"
+
+
+def test_clean_shipments_applies_segment_overrides() -> None:
+    distributors = clean_distributors(
+        pd.DataFrame(
+            [
+                {
+                    "Customer Name": "Alpha Co",
+                    "Delivery Address": "123 Nguyen Trai, Quan 1, TP HCM",
+                    "Source Sheet": "pivot",
+                }
+            ]
+        )
+    )
+    raw = pd.DataFrame(
+        [
+            {
+                "SKU Code (CMMF)": "1001",
+                "Document No.": "1",
+                "Source Warehouse": "My Phuoc",
+                "Document Type": "A/R Invoice",
+                "Unit": "pcs",
+                "Quantity": 10,
+                "CBM Total": 1.5,
+                "Created Date": "2025-07-10",
+                "Ship-to Customer": "Alpha Co",
+            }
+        ]
+    )
+    overrides = pd.DataFrame(
+        [
+            {
+                "customer_name": "Alpha Co",
+                "customer_segment": "Modern Trade",
+            }
+        ]
+    )
+
+    cleaned = clean_shipments(raw, distributors, segment_overrides=overrides).iloc[0]
+
+    assert cleaned["customer_segment"] == "Modern Trade"
+    assert cleaned["segment_source"] == "override_mapping"
+    assert cleaned["segment_confidence"] == "override"

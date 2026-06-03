@@ -1,6 +1,6 @@
 customer_match_status,shipment_rows,orders,customers,quantity
-missing_customer_name,24859,5432,1,159864.81661706348
-ambiguous_multi_location_customer,11353,2439,221,120891.76388888889
-unusable_or_missing_geography,5622,1427,132,58899.479166666664
-unique_resolvable_customer_geography,1261,390,34,16430.3
-unmatched_customer_key,860,359,5,16247.439880952381
+missing_customer_name,24839,5421,1,146949.81661706348
+ambiguous_multi_location_customer,10290,2213,164,119438.29722222222
+unusable_or_missing_geography,5976,1494,145,61145.729166666664
+unique_resolvable_customer_geography,1935,579,78,14635.516666666666
+unmatched_customer_key,854,356,5,13195.439880952381

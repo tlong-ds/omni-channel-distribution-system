@@ -1,6 +1,6 @@
 ship_to_customer,customer_key,customer_match_status,shipment_rows,orders,quantity
-unknown,UNKNOWN,missing_customer_name,24859,5432,159864.81661706348
-NHÂN VIÊN MUA HÀNG HAPPY GOODS,NHAN VIEN MUA HANG HAPPY GOODS,unmatched_customer_key,591,277,1885.0
+unknown,UNKNOWN,missing_customer_name,24839,5421,146949.81661706348
+NHÂN VIÊN MUA HÀNG HAPPY GOODS,NHAN VIEN MUA HANG HAPPY GOODS,unmatched_customer_key,590,277,1883.0
 CÔNG TY CỔ PHẦN MEDIAMART VIỆT NAM,CONG TY CO PHAN MEDIAMART VIET NAM,ambiguous_multi_location_customer,387,120,765.2916666666666
 CÔNG TY TNHH THƯƠNG MẠI DỊCH VỤ TUVINA,CONG TY TNHH THUONG MAI DICH VU TUVINA,ambiguous_multi_location_customer,307,111,12219.0
 CHI NHÁNH CÔNG TY TNHH CAO PHONG QUẬN TÂN PHÚ - SIÊU THỊ ĐIỆN MÁY NỘI THẤT CHỢ LỚN,CHI NHANH CONG TY TNHH CAO PHONG QUAN TAN PHU - SIEU THI ĐIEN MAY NOI THAT CHO LON,ambiguous_multi_location_customer,281,33,1549.0

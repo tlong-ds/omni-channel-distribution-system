@@ -1,0 +1,8 @@
+source_warehouse,document_type,shipment_rows,rows_missing_quantity,rows_missing_cbm,rows_missing_either,missing_row_share
+My Phuoc,A/P CREDIT MEMO,1,0,0,0,0.0
+My Phuoc,A/R INVOICE,19722,0,0,0,0.0
+My Phuoc,GOODS ISSUE,263,0,0,0,0.0
+My Phuoc,INVENTORY TRANSFERS,1158,0,0,0,0.0
+My Phuoc,STOCK COUNT,30,0,0,0,0.0
+Vinh Loc,A/R INVOICE,29555,0,0,0,0.0
+All,All,50729,0,0,0,0.0

@@ -3,13 +3,17 @@ from src.logage2026.analysis import (
     ASSIGNMENT_START,
     build_abc_xyz,
     build_abc_xyz_matrix_summary,
+    build_classification_metadata,
     build_customer_match_quality_summary,
     build_customer_cluster_summary,
     build_document_type_summary,
     build_fast_moving_summary,
+    build_geography_diagnostics_summary,
     build_geography_coverage_summary,
     build_geography_source_summary,
+    build_missing_data_summary,
     build_order_profile_segments,
+    build_unresolved_candidate_region_summary,
     build_unresolved_customer_summary,
     build_warehouse_imbalance_summary,
     build_warehouse_region_summary,
@@ -17,14 +21,19 @@ from src.logage2026.analysis import (
 )
 from src.logage2026.cleaning import clean_distributors, clean_shipments, clean_sku_master
 from src.logage2026.config import CHARTS_DIR, CLEANED_DIR, NOTES_DIR, OUTPUT_DIR, TABLES_DIR
-from src.logage2026.loading import load_distributors, load_sku_master, load_transactions
+from src.logage2026.loading import (
+    load_distributors,
+    load_segment_overrides,
+    load_sku_master,
+    load_transactions,
+)
 from src.logage2026.notes import write_notes
 from src.logage2026.visuals import save_charts
 
 
-EXPECTED_ASSIGNMENT_ROWS = 43_955
-EXPECTED_ASSIGNMENT_QUANTITY = 372_333.80
-EXPECTED_ASSIGNMENT_CBM = 20_565.06
+EXPECTED_ASSIGNMENT_ROWS = 43_894
+EXPECTED_ASSIGNMENT_QUANTITY = 355_364.80
+EXPECTED_ASSIGNMENT_CBM = 19_653.78
 
 STALE_OUTPUTS = [
     TABLES_DIR / "safety_stock_class_a.csv",
@@ -40,13 +49,23 @@ def main() -> None:
 
     sku_master = clean_sku_master(load_sku_master())
     distributors = clean_distributors(load_distributors())
-    shipments = clean_shipments(load_transactions(), distributors)
+    segment_overrides = load_segment_overrides()
+    shipments = clean_shipments(load_transactions(), distributors, segment_overrides=segment_overrides)
+    
+    # Filter out unverified SKUs that are not present in the SKU Master
+    valid_skus = set(sku_master["sap_code_2"].dropna())
+    shipments = shipments[shipments["sku_code"].isin(valid_skus)].copy()
+
     assignment_shipments = filter_assignment_shipments(shipments)
 
     abc_xyz = build_abc_xyz(assignment_shipments, sku_master)
     abc_xyz_matrix = build_abc_xyz_matrix_summary(abc_xyz)
     fast_moving_summary = build_fast_moving_summary(abc_xyz)
+    classification_metadata = build_classification_metadata()
+    missing_data_summary = build_missing_data_summary(shipments)
     geography_coverage_summary = build_geography_coverage_summary(assignment_shipments)
+    geography_diagnostics_summary = build_geography_diagnostics_summary(assignment_shipments)
+    unresolved_candidate_region_summary = build_unresolved_candidate_region_summary(assignment_shipments)
     warehouse_region_summary = build_warehouse_region_summary(assignment_shipments)
     customer_cluster_summary = build_customer_cluster_summary(assignment_shipments)
     warehouse_imbalance_summary = build_warehouse_imbalance_summary(assignment_shipments)
@@ -63,7 +82,11 @@ def main() -> None:
     abc_xyz.to_csv(TABLES_DIR / "abc_xyz.csv", index=False)
     abc_xyz_matrix.to_csv(TABLES_DIR / "abc_xyz_matrix_summary.csv", index=False)
     fast_moving_summary.to_csv(TABLES_DIR / "fast_moving_summary.csv", index=False)
+    classification_metadata.to_csv(TABLES_DIR / "classification_metadata.csv", index=False)
+    missing_data_summary.to_csv(TABLES_DIR / "missing_data_summary.csv", index=False)
     geography_coverage_summary.to_csv(TABLES_DIR / "geography_coverage_summary.csv", index=False)
+    geography_diagnostics_summary.to_csv(TABLES_DIR / "geography_diagnostics_summary.csv", index=False)
+    unresolved_candidate_region_summary.to_csv(TABLES_DIR / "unresolved_candidate_region_summary.csv", index=False)
     warehouse_region_summary.to_csv(TABLES_DIR / "warehouse_region_summary.csv", index=False)
     customer_cluster_summary.to_csv(TABLES_DIR / "customer_cluster_summary.csv", index=False)
     warehouse_imbalance_summary.to_csv(TABLES_DIR / "warehouse_imbalance_summary.csv", index=False)
@@ -80,6 +103,8 @@ def main() -> None:
         abc_xyz,
         abc_xyz_matrix,
         fast_moving_summary,
+        classification_metadata,
+        missing_data_summary,
         geography_coverage_summary,
         warehouse_region_summary,
         customer_cluster_summary,
@@ -90,7 +115,11 @@ def main() -> None:
         assignment_shipments,
         abc_xyz,
         abc_xyz_matrix,
+        classification_metadata,
+        missing_data_summary,
         geography_coverage_summary,
+        geography_diagnostics_summary,
+        unresolved_candidate_region_summary,
         warehouse_region_summary,
         customer_cluster_summary,
         warehouse_imbalance_summary,
@@ -121,7 +150,11 @@ def verify_outputs(
     assignment_shipments,
     abc_xyz,
     abc_xyz_matrix,
+    classification_metadata,
+    missing_data_summary,
     geography_coverage_summary,
+    geography_diagnostics_summary,
+    unresolved_candidate_region_summary,
     warehouse_region_summary,
     customer_cluster_summary,
     warehouse_imbalance_summary,
@@ -142,6 +175,8 @@ def verify_outputs(
         raise ValueError("Assignment-window filter leaked rows outside 2025-07-01 to 2025-12-31")
     if not assignment_shipments["analysis_document_flag"].all():
         raise ValueError("Excluded document types leaked into assignment demand shipments")
+    if "data_error_flag" in assignment_shipments.columns and assignment_shipments["data_error_flag"].any():
+        raise ValueError("Assignment-window shipments contain rows flagged as data errors")
 
     observed_skus = set(assignment_shipments["sku_code"].dropna().astype(str))
     classified_skus = set(abc_xyz["sku_code"].dropna().astype(str))
@@ -187,7 +222,11 @@ def verify_outputs(
         TABLES_DIR / "abc_xyz.csv",
         TABLES_DIR / "abc_xyz_matrix_summary.csv",
         TABLES_DIR / "fast_moving_summary.csv",
+        TABLES_DIR / "classification_metadata.csv",
+        TABLES_DIR / "missing_data_summary.csv",
         TABLES_DIR / "geography_coverage_summary.csv",
+        TABLES_DIR / "geography_diagnostics_summary.csv",
+        TABLES_DIR / "unresolved_candidate_region_summary.csv",
         TABLES_DIR / "warehouse_region_summary.csv",
         TABLES_DIR / "customer_cluster_summary.csv",
         TABLES_DIR / "warehouse_imbalance_summary.csv",
@@ -197,6 +236,11 @@ def verify_outputs(
         TABLES_DIR / "geography_source_summary.csv",
         TABLES_DIR / "unresolved_customer_summary.csv",
         NOTES_DIR / "question_summary.md",
+        CHARTS_DIR / "abc_quantity_distribution.png",
+        CHARTS_DIR / "abc_xyz_matrix.png",
+        CHARTS_DIR / "regional_quantity_density.png",
+        CHARTS_DIR / "warehouse_region_split.png",
+        CHARTS_DIR / "order_profile_comparison.png",
     ]
     missing_files = [path for path in required_outputs if not path.exists()]
     if missing_files:

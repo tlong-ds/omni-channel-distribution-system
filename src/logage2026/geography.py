@@ -1,6 +1,7 @@
 import math
 import re
 import unicodedata
+import vietnamadminunits as vau
 
 import pandas as pd
 
@@ -63,19 +64,90 @@ PROVINCE_COORDINATES = {
     "Vinh Long": (10.254, 105.973),
 }
 
+
+PROVINCE_MERGES_2025 = {
+    "Ba Ria - Vung Tau": "Ho Chi Minh City",
+    "Binh Duong": "Ho Chi Minh City",
+    "Dong Nai": "Binh Phuoc",
+    "Tay Ninh": "Long An",
+    "Can Tho": "Can Tho City", 
+    "Soc Trang": "Can Tho City",
+    "Hau Giang": "Can Tho City",
+    "Vinh Long": "Ben Tre", 
+    "Tra Vinh": "Ben Tre",
+    "Dong Thap": "Tien Giang",
+    "Ca Mau": "Bac Lieu",
+    "An Giang": "Kien Giang",
+    "Ha Giang": "Tuyen Quang",
+    "Yen Bai": "Lao Cai",
+    "Bac Kan": "Thai Nguyen",
+    "Vinh Phuc": "Phu Tho",
+    "Hoa Binh": "Phu Tho",
+    "Bac Giang": "Bac Ninh",
+    "Thai Binh": "Hung Yen",
+    "Hai Duong": "Hai Phong",
+    "Ha Nam": "Ninh Binh",
+    "Nam Dinh": "Ninh Binh",
+    "Quang Binh": "Quang Tri",
+    "Quang Nam": "Da Nang",
+    "Kon Tum": "Quang Ngai",
+    "Binh Dinh": "Gia Lai",
+    "Ninh Thuan": "Khanh Hoa",
+    "Dak Nong": "Lam Dong",
+    "Binh Thuan": "Lam Dong",
+    "Phu Yen": "Dak Lak",
+}
+
+def parse_address_components(address: object) -> dict:
+    if not isinstance(address, str) or not address.strip():
+        return {
+            "street": "",
+            "ward": "",
+            "province": "",
+            "full_address": str(address) if not pd.isna(address) else ""
+        }
+    try:
+        converted = vau.convert_address(address)
+        return {
+            "street": converted.street or "",
+            "ward": converted.ward or "",
+            "province": converted.province or "",
+            "full_address": converted.get_address() or str(address)
+        }
+    except Exception:
+        # If parsing fails, fall back to the raw address
+        return {
+            "street": str(address),
+            "ward": "",
+            "province": "",
+            "full_address": str(address)
+        }
+
 HCMC_DISTRICT_ALIASES = {
     "BINH CHANH": "Binh Chanh",
     "BINH TAN": "Binh Tan",
     "QUAN 1": "District 1",
     "Q 1": "District 1",
+    "QUAN 2": "Thu Duc",
+    "Q 2": "Thu Duc",
     "QUAN 3": "District 3",
     "Q 3": "District 3",
+    "QUAN 4": "District 4",
+    "Q 4": "District 4",
     "QUAN 5": "District 5",
     "Q 5": "District 5",
+    "QUAN 6": "District 6",
+    "Q 6": "District 6",
     "QUAN 7": "District 7",
     "Q 7": "District 7",
+    "QUAN 8": "District 8",
+    "Q 8": "District 8",
+    "QUAN 9": "Thu Duc",
+    "Q 9": "Thu Duc",
     "QUAN 10": "District 10",
     "Q 10": "District 10",
+    "QUAN 11": "District 11",
+    "Q 11": "District 11",
     "QUAN 12": "District 12",
     "Q 12": "District 12",
     "GO VAP": "Go Vap",
@@ -95,22 +167,38 @@ def normalize_text(value: object) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-def parse_province(text: object) -> str:
+def parse_province_with_alias(text: object) -> tuple[str, str]:
     normalized = normalize_text(text)
     for needle, province in PROVINCE_ALIASES.items():
         if needle in normalized:
-            return province
-    return "Unknown"
+            # Apply 2025 law province merges
+            merged_province = PROVINCE_MERGES_2025.get(province, province)
+            return merged_province, needle
+    return "Unknown", ""
+
+
+def parse_province(text: object) -> str:
+    province, _ = parse_province_with_alias(text)
+    return province
+
+
+def parse_hcmc_district_with_alias(text: object) -> tuple[str, str]:
+    normalized = normalize_text(text)
+    if parse_province(text) != "Ho Chi Minh City":
+        return "", ""
+        
+    # Sort aliases by length descending to prevent substring bugs (e.g., 'Q 1' matching 'Q 10')
+    sorted_aliases = sorted(HCMC_DISTRICT_ALIASES.items(), key=lambda item: len(item[0]), reverse=True)
+    
+    for needle, district in sorted_aliases:
+        if needle in normalized:
+            return district, needle
+    return "HCMC unspecified", ""
 
 
 def parse_hcmc_district(text: object) -> str:
-    normalized = normalize_text(text)
-    if parse_province(text) != "Ho Chi Minh City":
-        return ""
-    for needle, district in HCMC_DISTRICT_ALIASES.items():
-        if needle in normalized:
-            return district
-    return "HCMC unspecified"
+    district, _ = parse_hcmc_district_with_alias(text)
+    return district
 
 
 def region_group(province: str) -> str:
@@ -157,4 +245,3 @@ def add_distance_columns(frame: pd.DataFrame) -> pd.DataFrame:
             haversine_km(origin, (lat, lon)) for lat, lon in zip(result["latitude"], result["longitude"])
         ]
     return result
-

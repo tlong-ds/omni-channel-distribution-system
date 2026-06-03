@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .config import DISTRIBUTOR_FILE, SKU_MASTER_FILE, TRANSACTION_FILE
+from .config import CUSTOMER_SEGMENT_OVERRIDE_FILE, DISTRIBUTOR_FILE, SKU_MASTER_FILE, TRANSACTION_FILE
 
 
 def load_sku_master() -> pd.DataFrame:
@@ -31,3 +31,8 @@ def load_distributors() -> pd.DataFrame:
         frames.append(frame)
     return pd.concat(frames, ignore_index=True)
 
+
+def load_segment_overrides() -> pd.DataFrame:
+    if CUSTOMER_SEGMENT_OVERRIDE_FILE.exists():
+        return pd.read_csv(CUSTOMER_SEGMENT_OVERRIDE_FILE)
+    return pd.DataFrame()

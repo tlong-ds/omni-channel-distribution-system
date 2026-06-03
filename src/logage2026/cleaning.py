@@ -1,6 +1,15 @@
 import pandas as pd
 
-from .geography import add_distance_columns, normalize_text, parse_hcmc_district, parse_province, region_group
+from .geography import (
+    add_distance_columns,
+    normalize_text,
+    parse_hcmc_district,
+    parse_hcmc_district_with_alias,
+    parse_province,
+    parse_province_with_alias,
+    region_group,
+    parse_address_components,
+)
 
 
 DEMAND_DOCUMENT_TYPES = {"A/R INVOICE"}
@@ -11,8 +20,8 @@ def _replace_blank_like_values(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def _to_nullable_code(series: pd.Series) -> pd.Series:
-    numeric = pd.to_numeric(series, errors="coerce").astype("Int64")
-    return numeric.astype("string")
+    code = series.astype("string").str.strip().str.replace(r"\.0$", "", regex=True)
+    return code.replace("", pd.NA)
 
 
 def _to_nullable_int(series: pd.Series) -> pd.Series:
@@ -58,7 +67,8 @@ def _analysis_exclusion_reason(document_type: pd.Series, flag: pd.Series) -> pd.
 
 def clean_sku_master(raw: pd.DataFrame) -> pd.DataFrame:
     frame = _replace_blank_like_values(raw.copy())
-    valid_rows = _to_float(frame["SAP Code (2)"]).notna() & frame["Product Name (VN)"].notna()
+    sap_code_2 = _to_nullable_code(frame["SAP Code (2)"])
+    valid_rows = sap_code_2.notna() & frame["Product Name (VN)"].notna()
     frame = frame.loc[valid_rows].copy()
 
     text_cols = ["No", "Type", "COM Code", "Product Name (VN)", "Unit", "Category"]
@@ -128,6 +138,12 @@ def clean_sku_master(raw: pd.DataFrame) -> pd.DataFrame:
         "loose_pcs_from_pallet_residual",
     )
 
+    both_weights_present = (
+        frame["Pcs Weight (kg)"].notna()
+        & frame["Carton Weight (kg)"].notna()
+        & frame["Pcs per Carton"].notna()
+    )
+
     derived_carton_weight = frame["Pcs Weight (kg)"] * frame["Pcs per Carton"]
     derived_piece_weight = frame["Carton Weight (kg)"] / frame["Pcs per Carton"]
     can_derive_carton = (
@@ -145,11 +161,6 @@ def clean_sku_master(raw: pd.DataFrame) -> pd.DataFrame:
     imputation_notes = _append_imputation_note(imputation_notes, can_derive_carton, "carton_weight_from_piece_weight")
     imputation_notes = _append_imputation_note(imputation_notes, can_derive_piece, "piece_weight_from_carton_weight")
 
-    both_weights_present = (
-        frame["Pcs Weight (kg)"].notna()
-        & frame["Carton Weight (kg)"].notna()
-        & frame["Pcs per Carton"].notna()
-    )
     weight_delta = (frame["Carton Weight (kg)"] - (frame["Pcs Weight (kg)"] * frame["Pcs per Carton"])).abs()
     frame["weight_conflict_flag"] = (both_weights_present & weight_delta.gt(1e-9)).astype("Int64")
     frame["imputation_notes"] = imputation_notes
@@ -217,14 +228,33 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
     frame = frame.dropna(subset=["Customer Name", "Delivery Address"]).copy()
     frame["customer_name"] = _normalize_string(frame["Customer Name"])
     frame["customer_key"] = frame["customer_name"].map(normalize_text)
-    frame["delivery_address"] = _normalize_string(frame["Delivery Address"])
+    
+    # Parse the address components using vietnamadminunits
+    
+    # Cache addresses to speed up vietnamadminunits
+    unique_addresses = frame["Delivery Address"].dropna().unique()
+    address_cache = {}
+    for i, addr in enumerate(unique_addresses):
+        if i % 100 == 0:
+            print(f"Parsing address {i}/{len(unique_addresses)}...")
+        address_cache[addr] = parse_address_components(addr)
+    
+    components = frame["Delivery Address"].map(lambda a: address_cache.get(a, parse_address_components(a)))
+
+    frame["address_street"] = _normalize_string(components.map(lambda c: c["street"]))
+    frame["address_ward"] = _normalize_string(components.map(lambda c: c["ward"]))
+    frame["address_province"] = _normalize_string(components.map(lambda c: c["province"]))
+    
+    # Reconstruct delivery_address using the standardized string
+    frame["delivery_address"] = _normalize_string(components.map(lambda c: c["full_address"]))
+    
     frame["customer_location_key"] = (
         frame["customer_key"] + " | " + frame["delivery_address"].map(normalize_text)
     )
     frame["province"] = frame["delivery_address"].map(parse_province)
     frame["hcmc_district"] = frame["delivery_address"].map(parse_hcmc_district)
     frame["region"] = frame["province"].map(region_group)
-    dedupe_columns = ["customer_key", "delivery_address", "province", "hcmc_district", "region"]
+    dedupe_columns = ["customer_key", "address_street", "address_ward", "address_province", "region"]
     frame = frame.drop_duplicates(subset=dedupe_columns).copy()
     frame["customer_location_count"] = frame.groupby("customer_key")["customer_location_key"].transform("nunique")
     frame["customer_key_is_ambiguous"] = frame["customer_location_count"].gt(1)
@@ -253,16 +283,44 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
     return frame[keep].reset_index(drop=True)
 
 
-def clean_shipments(raw: pd.DataFrame, distributors: pd.DataFrame) -> pd.DataFrame:
+def _build_segment_override_map(overrides: pd.DataFrame | None) -> dict[str, str]:
+    if overrides is None or overrides.empty:
+        return {}
+    columns = {col.strip().lower(): col for col in overrides.columns}
+    if "customer_segment" not in columns:
+        raise ValueError("Segment overrides must include a 'customer_segment' column")
+    if "customer_key" in columns:
+        keys = overrides[columns["customer_key"]].map(normalize_text)
+    elif "customer_name" in columns:
+        keys = overrides[columns["customer_name"]].map(normalize_text)
+    else:
+        raise ValueError("Segment overrides must include 'customer_key' or 'customer_name'")
+    segments = overrides[columns["customer_segment"]].astype("string")
+    mapping = {
+        key: segment
+        for key, segment in zip(keys, segments, strict=False)
+        if pd.notna(key) and pd.notna(segment) and str(segment).strip()
+    }
+    return mapping
+
+
+def clean_shipments(
+    raw: pd.DataFrame, distributors: pd.DataFrame, segment_overrides: pd.DataFrame | None = None
+) -> pd.DataFrame:
     frame = _replace_blank_like_values(raw.copy())
-    frame["sku_code"] = pd.to_numeric(frame["SKU Code (CMMF)"], errors="coerce").astype("Int64").astype("string")
-    frame["document_no"] = _normalize_string(frame["Document No."], default="unknown")
+    frame["sku_code"] = _to_nullable_code(frame["SKU Code (CMMF)"])
+    frame["document_no"] = _to_nullable_code(frame["Document No."]).fillna("unknown")
     frame["source_warehouse"] = _normalize_string(frame["Source Warehouse"], default="unknown")
     frame["order_id"] = frame["source_warehouse"] + "-" + frame["document_no"]
     frame["document_type"] = _normalize_document_type(frame["Document Type"])
     frame["unit"] = _normalize_string(frame["Unit"], default="")
-    frame["quantity"] = pd.to_numeric(frame["Quantity"], errors="coerce").fillna(0.0)
-    frame["cbm_total"] = pd.to_numeric(frame["CBM Total"], errors="coerce").fillna(0.0)
+    quantity = pd.to_numeric(frame["Quantity"], errors="coerce")
+    cbm_total = pd.to_numeric(frame["CBM Total"], errors="coerce")
+    frame["quantity"] = quantity
+    frame["cbm_total"] = cbm_total
+    frame["quantity_missing_flag"] = quantity.isna()
+    frame["cbm_missing_flag"] = cbm_total.isna()
+    frame["data_error_flag"] = frame["quantity_missing_flag"] | frame["cbm_missing_flag"]
     frame["created_date"] = pd.to_datetime(frame["Created Date"], errors="coerce")
     frame["ship_to_customer"] = _normalize_string(frame["Ship-to Customer"], default="unknown")
     frame["customer_key"] = frame["ship_to_customer"].map(normalize_text)
@@ -276,9 +334,13 @@ def clean_shipments(raw: pd.DataFrame, distributors: pd.DataFrame) -> pd.DataFra
     frame["customer_location_count"] = frame["customer_location_count"].fillna(0).astype("Int64")
     frame["customer_key_is_ambiguous"] = frame["customer_key_is_ambiguous"].astype("boolean").fillna(False)
 
-    parsed_province = frame["ship_to_customer"].map(parse_province)
-    parsed_district = frame["ship_to_customer"].map(parse_hcmc_district)
-    parsed_has_geo = parsed_province.ne("Unknown")
+    parsed_province = frame["ship_to_customer"].map(parse_province_with_alias)
+    frame["parsed_province"] = parsed_province.map(lambda item: item[0])
+    frame["province_alias_match_flag"] = parsed_province.map(lambda item: bool(item[1]))
+    parsed_district = frame["ship_to_customer"].map(parse_hcmc_district_with_alias)
+    frame["parsed_hcmc_district"] = parsed_district.map(lambda item: item[0])
+    frame["hcmc_district_alias_match_flag"] = parsed_district.map(lambda item: bool(item[1]))
+    parsed_has_geo = frame["parsed_province"].ne("Unknown")
 
     frame["geography_source"] = "unresolved"
     distributor_geo_mask = frame["customer_match_status"].eq("unique_resolvable_customer_geography")
@@ -292,8 +354,8 @@ def clean_shipments(raw: pd.DataFrame, distributors: pd.DataFrame) -> pd.DataFra
     frame.loc[distributor_geo_mask, "region"] = frame.loc[distributor_geo_mask, "region_distributor"]
     frame.loc[distributor_geo_mask, "geography_source"] = "distributor_match"
 
-    frame.loc[transaction_geo_mask, "province"] = parsed_province.loc[transaction_geo_mask]
-    frame.loc[transaction_geo_mask, "hcmc_district"] = parsed_district.loc[transaction_geo_mask]
+    frame.loc[transaction_geo_mask, "province"] = frame.loc[transaction_geo_mask, "parsed_province"]
+    frame.loc[transaction_geo_mask, "hcmc_district"] = frame.loc[transaction_geo_mask, "parsed_hcmc_district"]
     frame.loc[transaction_geo_mask, "region"] = frame.loc[transaction_geo_mask, "province"].map(region_group)
     frame.loc[transaction_geo_mask, "geography_source"] = "transaction_text_parse"
 
@@ -303,6 +365,7 @@ def clean_shipments(raw: pd.DataFrame, distributors: pd.DataFrame) -> pd.DataFra
     frame["known_geography_flag"] = frame["province"].ne("Unknown")
     frame["segment_source"] = "unresolved"
     frame["customer_segment"] = "Unknown"
+    frame["segment_confidence"] = "unknown"
     eligible_segment_mask = frame["analysis_document_flag"] & frame["ship_to_customer"].ne("unknown")
     derived_segment = frame.loc[eligible_segment_mask, "ship_to_customer"].map(classify_customer_segment)
     frame.loc[eligible_segment_mask, "customer_segment"] = derived_segment
@@ -310,6 +373,14 @@ def clean_shipments(raw: pd.DataFrame, distributors: pd.DataFrame) -> pd.DataFra
     unresolved_segment_idx = derived_segment[derived_segment.eq("Unknown")].index
     frame.loc[resolved_segment_idx, "segment_source"] = "customer_name_rule"
     frame.loc[unresolved_segment_idx, "segment_source"] = "unresolved"
+    frame.loc[resolved_segment_idx, "segment_confidence"] = "rule"
+
+    override_map = _build_segment_override_map(segment_overrides)
+    if override_map:
+        override_idx = frame["customer_key"].isin(override_map.keys()) & eligible_segment_mask
+        frame.loc[override_idx, "customer_segment"] = frame.loc[override_idx, "customer_key"].map(override_map)
+        frame.loc[override_idx, "segment_source"] = "override_mapping"
+        frame.loc[override_idx, "segment_confidence"] = "override"
 
     frame = add_distance_columns(frame)
     keep = [
@@ -323,6 +394,9 @@ def clean_shipments(raw: pd.DataFrame, distributors: pd.DataFrame) -> pd.DataFra
         "unit",
         "quantity",
         "cbm_total",
+        "quantity_missing_flag",
+        "cbm_missing_flag",
+        "data_error_flag",
         "ship_to_customer",
         "customer_key",
         "customer_match_status",
@@ -332,10 +406,15 @@ def clean_shipments(raw: pd.DataFrame, distributors: pd.DataFrame) -> pd.DataFra
         "known_geography_flag",
         "customer_segment",
         "segment_source",
+        "segment_confidence",
         "created_date",
         "province",
         "hcmc_district",
         "region",
+        "parsed_province",
+        "parsed_hcmc_district",
+        "province_alias_match_flag",
+        "hcmc_district_alias_match_flag",
         "latitude",
         "longitude",
         "distance_from_my_phuoc_km",

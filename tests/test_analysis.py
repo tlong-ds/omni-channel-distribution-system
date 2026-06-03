@@ -11,10 +11,12 @@ from logage2026.analysis import (
     ASSIGNMENT_START,
     build_abc_xyz,
     build_abc_xyz_matrix_summary,
+    build_classification_metadata,
     build_customer_cluster_summary,
     build_customer_match_quality_summary,
     build_document_type_summary,
     build_fast_moving_summary,
+    build_missing_data_summary,
     build_geography_coverage_summary,
     build_geography_source_summary,
     build_order_profile_segments,
@@ -214,6 +216,79 @@ def test_assignment_filter_excludes_out_of_window_and_non_demand_rows() -> None:
     assert "1004" not in set(filtered["sku_code"])
     assert "1003" not in set(filtered["sku_code"])
     assert filtered["analysis_document_flag"].all()
+
+
+def test_missing_data_summary_counts_errors() -> None:
+    shipments = pd.DataFrame(
+        [
+            {
+                "source_warehouse": "My Phuoc",
+                "document_type": "A/R INVOICE",
+                "sku_code": "1001",
+                "quantity_missing_flag": False,
+                "cbm_missing_flag": False,
+                "data_error_flag": False,
+            },
+            {
+                "source_warehouse": "My Phuoc",
+                "document_type": "A/R INVOICE",
+                "sku_code": "1002",
+                "quantity_missing_flag": True,
+                "cbm_missing_flag": False,
+                "data_error_flag": True,
+            },
+            {
+                "source_warehouse": "Vinh Loc",
+                "document_type": "A/R INVOICE",
+                "sku_code": "1003",
+                "quantity_missing_flag": False,
+                "cbm_missing_flag": True,
+                "data_error_flag": True,
+            },
+        ]
+    )
+    summary = build_missing_data_summary(shipments)
+    total = summary.loc[
+        summary["source_warehouse"].eq("All") & summary["document_type"].eq("All")
+    ].iloc[0]
+
+    assert int(total["shipment_rows"]) == 3
+    assert int(total["rows_missing_quantity"]) == 1
+    assert int(total["rows_missing_cbm"]) == 1
+    assert int(total["rows_missing_either"]) == 2
+
+
+def test_xyz_low_sample_forces_z_class() -> None:
+    shipments = pd.DataFrame(
+        [
+            {
+                "order_id": "MP-1",
+                "source_warehouse": "My Phuoc",
+                "sku_code": "2001",
+                "quantity": 10.0,
+                "cbm_total": 1.0,
+                "created_date": pd.Timestamp("2025-07-05"),
+            },
+            {
+                "order_id": "MP-2",
+                "source_warehouse": "My Phuoc",
+                "sku_code": "2001",
+                "quantity": 5.0,
+                "cbm_total": 0.5,
+                "created_date": pd.Timestamp("2025-07-06"),
+            },
+        ]
+    )
+    sku_master = pd.DataFrame([{"sku_code": "2001"}])
+    abc_xyz = build_abc_xyz(shipments, sku_master).set_index("sku_code")
+
+    assert int(abc_xyz.loc["2001", "xyz_low_sample_flag"]) == 1
+    assert abc_xyz.loc["2001", "xyz"] == "Z"
+
+
+def test_classification_metadata_contains_thresholds() -> None:
+    metadata = build_classification_metadata().iloc[0]
+    assert 0 < metadata["abc_a_threshold"] < metadata["abc_b_threshold"] <= 1
 
 
 def test_q11_outputs_use_filtered_demand_data_and_fast_mover_is_a_a_intersection() -> None:

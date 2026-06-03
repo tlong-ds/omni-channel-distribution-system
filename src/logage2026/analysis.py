@@ -1,25 +1,41 @@
 import numpy as np
 import pandas as pd
 
+from .config import (
+    ABC_A_THRESHOLD,
+    ABC_B_THRESHOLD,
+    FAST_MOVING_ABC_FREQUENCY,
+    FAST_MOVING_ABC_QUANTITY,
+    WINSORIZE_LIMITS,
+    XYZ_CV_X_MAX,
+    XYZ_CV_Y_MAX,
+    XYZ_MIN_NONZERO_WEEKS,
+)
+from .geography import region_group
+
 
 ASSIGNMENT_START = pd.Timestamp("2025-07-01")
 ASSIGNMENT_END = pd.Timestamp("2025-12-31")
 
 
-def classify_cumulative_share(share: float) -> str:
-    if share <= 0.80:
+def classify_cumulative_share(
+    share: float, a_threshold: float = ABC_A_THRESHOLD, b_threshold: float = ABC_B_THRESHOLD
+) -> str:
+    if share <= a_threshold:
         return "A"
-    if share <= 0.95:
+    if share <= b_threshold:
         return "B"
     return "C"
 
 
-def classify_xyz(cv: float) -> str:
+def classify_xyz(
+    cv: float, x_max: float = XYZ_CV_X_MAX, y_max: float = XYZ_CV_Y_MAX
+) -> str:
     if pd.isna(cv) or np.isinf(cv):
         return "Z"
-    if cv <= 0.50:
+    if cv <= x_max:
         return "X"
-    if cv <= 1.00:
+    if cv <= y_max:
         return "Y"
     return "Z"
 
@@ -30,10 +46,36 @@ def filter_assignment_shipments(
     end_date: pd.Timestamp = ASSIGNMENT_END,
 ) -> pd.DataFrame:
     mask = shipments["analysis_document_flag"] & shipments["created_date"].between(start_date, end_date, inclusive="both")
+    if "data_error_flag" in shipments.columns:
+        mask = mask & ~shipments["data_error_flag"]
     return shipments.loc[mask].copy()
 
 
+def _winsorize_weekly(weekly: pd.DataFrame, limits: tuple[float, float] | None) -> pd.DataFrame:
+    if limits is None:
+        return weekly
+    lower, upper = limits
+    if not 0 <= lower < upper <= 1:
+        raise ValueError("Winsorize limits must be between 0 and 1 with lower < upper")
+    lower_bounds = weekly.quantile(lower, axis=1)
+    upper_bounds = weekly.quantile(upper, axis=1)
+    return weekly.clip(lower=lower_bounds, upper=upper_bounds, axis=0)
+
+
 def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
+    sku_master = sku_master.copy()
+    required_sku_columns = [
+        "product_name",
+        "category",
+        "pcs_per_carton",
+        "pcs_per_pallet",
+        "cbm_incl_flap_m3",
+        "pcs_weight_kg",
+        "carton_weight_kg",
+    ]
+    for column in required_sku_columns:
+        if column not in sku_master.columns:
+            sku_master[column] = pd.NA
     sku = shipments.groupby("sku_code").agg(
         quantity=("quantity", "sum"),
         order_frequency=("order_id", "nunique"),
@@ -46,9 +88,12 @@ def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataF
         .sum()
         .unstack(fill_value=0)
     )
-    sku["weekly_mean_quantity"] = weekly.mean(axis=1)
-    sku["weekly_std_quantity"] = weekly.std(axis=1)
+    sku["weekly_nonzero_weeks"] = weekly.gt(0).sum(axis=1)
+    winsorized = _winsorize_weekly(weekly, WINSORIZE_LIMITS)
+    sku["weekly_mean_quantity"] = winsorized.mean(axis=1)
+    sku["weekly_std_quantity"] = winsorized.std(axis=1)
     sku["demand_cv"] = sku["weekly_std_quantity"] / sku["weekly_mean_quantity"].replace(0, np.nan)
+    sku["xyz_low_sample_flag"] = sku["weekly_nonzero_weeks"].lt(XYZ_MIN_NONZERO_WEEKS).astype(int)
     sku = sku.reset_index().sort_values("quantity", ascending=False)
     sku["quantity_share"] = sku["quantity"] / sku["quantity"].sum()
     sku["quantity_cumulative_share"] = sku["quantity_share"].cumsum()
@@ -59,8 +104,13 @@ def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataF
     sku["frequency_cumulative_share"] = sku["frequency_share"].cumsum()
     sku["abc_frequency"] = sku["frequency_cumulative_share"].map(classify_cumulative_share)
     sku["xyz"] = sku["demand_cv"].map(classify_xyz)
+    low_sample_mask = sku["xyz_low_sample_flag"].eq(1)
+    sku.loc[low_sample_mask, "xyz"] = "Z"
     sku["abc_xyz"] = sku["abc_quantity"] + sku["xyz"]
-    sku["fast_moving_flag"] = (sku["abc_quantity"].eq("A") & sku["abc_frequency"].eq("A")).astype(int)
+    sku["fast_moving_flag"] = (
+        sku["abc_quantity"].eq(FAST_MOVING_ABC_QUANTITY)
+        & sku["abc_frequency"].eq(FAST_MOVING_ABC_FREQUENCY)
+    ).astype(int)
     sku = sku.merge(sku_master, on="sku_code", how="left")
     ordered_columns = [
         "sku_code",
@@ -77,6 +127,8 @@ def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataF
         "weekly_mean_quantity",
         "weekly_std_quantity",
         "demand_cv",
+        "weekly_nonzero_weeks",
+        "xyz_low_sample_flag",
         "xyz",
         "abc_xyz",
         "fast_moving_flag",
@@ -111,7 +163,7 @@ def build_fast_moving_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
     summary = pd.DataFrame(
         [
             {
-                "group": "Fast Moving: ABC quantity A and ABC frequency A",
+                "group": f"Fast Moving: ABC quantity {FAST_MOVING_ABC_QUANTITY} and ABC frequency {FAST_MOVING_ABC_FREQUENCY}",
                 "sku_count": int(fast["sku_code"].nunique()),
                 "quantity": fast["quantity"].sum(),
                 "quantity_share": fast["quantity"].sum() / total_quantity if total_quantity else 0.0,
@@ -122,6 +174,54 @@ def build_fast_moving_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
         ]
     )
     return summary
+
+
+def build_classification_metadata() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "abc_a_threshold": ABC_A_THRESHOLD,
+                "abc_b_threshold": ABC_B_THRESHOLD,
+                "fast_moving_abc_quantity": FAST_MOVING_ABC_QUANTITY,
+                "fast_moving_abc_frequency": FAST_MOVING_ABC_FREQUENCY,
+                "xyz_cv_x_max": XYZ_CV_X_MAX,
+                "xyz_cv_y_max": XYZ_CV_Y_MAX,
+                "xyz_min_nonzero_weeks": XYZ_MIN_NONZERO_WEEKS,
+                "winsorize_limits": str(WINSORIZE_LIMITS),
+            }
+        ]
+    )
+
+
+def build_missing_data_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    summary = (
+        shipments.groupby(["source_warehouse", "document_type"], dropna=False)
+        .agg(
+            shipment_rows=("sku_code", "size"),
+            rows_missing_quantity=("quantity_missing_flag", "sum"),
+            rows_missing_cbm=("cbm_missing_flag", "sum"),
+            rows_missing_either=("data_error_flag", "sum"),
+        )
+        .reset_index()
+    )
+    summary["missing_row_share"] = summary["rows_missing_either"] / summary["shipment_rows"]
+    total = pd.DataFrame(
+        [
+            {
+                "source_warehouse": "All",
+                "document_type": "All",
+                "shipment_rows": int(summary["shipment_rows"].sum()),
+                "rows_missing_quantity": int(summary["rows_missing_quantity"].sum()),
+                "rows_missing_cbm": int(summary["rows_missing_cbm"].sum()),
+                "rows_missing_either": int(summary["rows_missing_either"].sum()),
+                "missing_row_share": summary["rows_missing_either"].sum()
+                / summary["shipment_rows"].sum()
+                if summary["shipment_rows"].sum()
+                else 0.0,
+            }
+        ]
+    )
+    return pd.concat([summary, total], ignore_index=True, sort=False)
 
 
 def build_geography_coverage_summary(shipments: pd.DataFrame) -> pd.DataFrame:
@@ -159,6 +259,47 @@ def build_geography_coverage_summary(shipments: pd.DataFrame) -> pd.DataFrame:
                 ),
             }
         ]
+    )
+
+
+def build_geography_diagnostics_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    known = shipments[shipments["known_geography_flag"]].copy()
+    unresolved = shipments[~shipments["known_geography_flag"]].copy()
+    transaction_mask = shipments["geography_source"].eq("transaction_text_parse")
+    return pd.DataFrame(
+        [
+            {
+                "shipment_rows_total": len(shipments),
+                "shipment_rows_known_geography": len(known),
+                "shipment_rows_unknown_geography": len(unresolved),
+                "rows_transaction_text_parse": int(transaction_mask.sum()),
+                "rows_transaction_text_parse_alias_matched": int(
+                    shipments.loc[transaction_mask, "province_alias_match_flag"].sum()
+                ),
+                "rows_transaction_text_parse_district_alias_matched": int(
+                    shipments.loc[transaction_mask, "hcmc_district_alias_match_flag"].sum()
+                ),
+                "rows_with_distance_my_phuoc": int(
+                    shipments["distance_from_my_phuoc_km"].notna().sum()
+                ),
+                "rows_with_distance_vinh_loc": int(
+                    shipments["distance_from_vinh_loc_km"].notna().sum()
+                ),
+            }
+        ]
+    )
+
+
+def build_unresolved_candidate_region_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    unresolved = shipments[~shipments["known_geography_flag"]].copy()
+    if unresolved.empty:
+        return pd.DataFrame(columns=["candidate_region", "shipment_rows"])
+    unresolved["candidate_region"] = unresolved["parsed_province"].map(region_group)
+    return (
+        unresolved.groupby("candidate_region", dropna=False)
+        .agg(shipment_rows=("sku_code", "size"))
+        .reset_index()
+        .sort_values("shipment_rows", ascending=False)
     )
 
 

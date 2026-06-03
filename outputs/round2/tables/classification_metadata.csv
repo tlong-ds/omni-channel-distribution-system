@@ -1,0 +1,2 @@
+abc_a_threshold,abc_b_threshold,fast_moving_abc_quantity,fast_moving_abc_frequency,xyz_cv_x_max,xyz_cv_y_max,xyz_min_nonzero_weeks,winsorize_limits
+0.8,0.95,A,A,0.5,1.0,4,None
