@@ -1,12 +1,14 @@
 geography_level,geography_name,orders,quantity,rank_by_orders,rank_by_quantity
-hcmc_district,HCMC unspecified,743,44412.64166666667,1,1
-province,Ho Chi Minh City,743,44412.64166666667,1,1
-province,Can Tho City,115,2274.0833333333335,2,6
-province,Tien Giang,106,8316.583333333334,3,2
-province,Khanh Hoa,94,6313.666666666667,4,3
-province,Ha Noi,85,5992.383333333333,5,4
-province,Kien Giang,81,1423.4166666666667,6,7
-province,Hai Phong,75,3233.875,7,5
-province,Da Nang,30,304.4166666666667,8,8
-province,Long An,25,272.5,9,9
-province,Ben Tre,21,242.91666666666666,10,10
+province,Hồ Chí Minh,1147,39018.225,1,1
+province,Đồng Nai,414,6069.916666666667,2,9
+province,Đà Nẵng,272,16727.654166666667,3,2
+province,Cần Thơ,187,10716.083333333334,4,4
+province,Khánh Hòa,179,8230.5,5,6
+province,Phú Thọ,159,3817.4166666666665,6,12
+province,Hà Nội,149,10430.416666666666,7,5
+province,Lâm Đồng,131,7963.258333333333,8,8
+province,An Giang,114,2799.5,9,15
+province,Đắk Lắk,112,2748.75,10,16
+province,Bình Dương,107,15666.25,11,3
+province,Tiền Giang,95,8186.583333333333,12,7
+province,Nghệ An,65,4297.916666666667,16,10

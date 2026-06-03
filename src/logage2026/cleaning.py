@@ -331,9 +331,15 @@ def clean_shipments(
     frame["customer_location_count"] = frame["customer_location_count"].fillna(0).astype("Int64")
     frame["customer_key_is_ambiguous"] = frame["customer_key_is_ambiguous"].astype("boolean").fillna(False)
 
-    parsed_province = frame["ship_to_customer"].map(parse_province_with_alias)
-    frame["parsed_province"] = parsed_province.map(lambda item: item[0])
-    frame["province_alias_match_flag"] = parsed_province.map(lambda item: bool(item[1]))
+    # Build cache of parsed components for all unique ship-to customer names to extract coordinates
+    unique_ship_to = frame["ship_to_customer"].dropna().unique()
+    ship_to_cache = {name: parse_address_components(name) for name in unique_ship_to}
+
+    frame["parsed_province"] = [ship_to_cache[name]["province"] for name in frame["ship_to_customer"]]
+    frame["latitude_parsed"] = [ship_to_cache[name]["latitude"] for name in frame["ship_to_customer"]]
+    frame["longitude_parsed"] = [ship_to_cache[name]["longitude"] for name in frame["ship_to_customer"]]
+
+    frame["province_alias_match_flag"] = frame["parsed_province"].ne("Unknown")
     frame["parsed_hcmc_district"] = ""
     frame["hcmc_district_alias_match_flag"] = False
     parsed_has_geo = frame["parsed_province"].ne("Unknown")
@@ -345,13 +351,22 @@ def clean_shipments(
     frame["province"] = "Unknown"
     frame["hcmc_district"] = ""
     frame["region"] = "Unknown"
+    frame["latitude"] = pd.Series([float("nan")] * len(frame), dtype="float64", index=frame.index)
+    frame["longitude"] = pd.Series([float("nan")] * len(frame), dtype="float64", index=frame.index)
+
+    # Assign coordinates and regions for distributor matched customers
     frame.loc[distributor_geo_mask, "province"] = frame.loc[distributor_geo_mask, "province_distributor"]
     frame.loc[distributor_geo_mask, "region"] = frame.loc[distributor_geo_mask, "region_distributor"]
+    frame.loc[distributor_geo_mask, "latitude"] = frame.loc[distributor_geo_mask, "latitude_distributor"]
+    frame.loc[distributor_geo_mask, "longitude"] = frame.loc[distributor_geo_mask, "longitude_distributor"]
     frame.loc[distributor_geo_mask, "geography_source"] = "distributor_match"
 
+    # Assign coordinates and regions for transaction text parsed customers
     frame.loc[transaction_geo_mask, "province"] = frame.loc[transaction_geo_mask, "parsed_province"]
     frame.loc[transaction_geo_mask, "hcmc_district"] = frame.loc[transaction_geo_mask, "parsed_hcmc_district"]
     frame.loc[transaction_geo_mask, "region"] = frame.loc[transaction_geo_mask, "province"].map(region_group)
+    frame.loc[transaction_geo_mask, "latitude"] = frame.loc[transaction_geo_mask, "latitude_parsed"]
+    frame.loc[transaction_geo_mask, "longitude"] = frame.loc[transaction_geo_mask, "longitude_parsed"]
     frame.loc[transaction_geo_mask, "geography_source"] = "transaction_text_parse"
 
     frame.loc[frame["ship_to_customer"].eq("unknown"), "customer_match_status"] = "missing_customer_name"

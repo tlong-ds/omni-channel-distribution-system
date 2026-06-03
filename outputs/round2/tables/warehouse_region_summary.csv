@@ -1,42 +1,120 @@
 source_warehouse,region,province,hcmc_district,geography_source,shipment_lines,orders,customers,quantity,cbm_total
-My Phuoc,HCMC,Ho Chi Minh City,HCMC unspecified,transaction_text_parse,819,209,10,31639.0,1979.4656722926668
-My Phuoc,HCMC,Ho Chi Minh City,HCMC unspecified,distributor_match,580,171,7,8389.0,383.4228134576222
-My Phuoc,Southeast / HCMC fringe,Tien Giang,,transaction_text_parse,203,64,2,7609.0,480.82992825
-My Phuoc,North,Ha Noi,,transaction_text_parse,121,41,2,5159.0,341.2672409
-My Phuoc,Central,Khanh Hoa,,transaction_text_parse,117,46,1,4563.0,282.54563210000003
-My Phuoc,North,Hai Phong,,transaction_text_parse,115,42,2,3123.0,214.39166378333334
-Vinh Loc,HCMC,Ho Chi Minh City,HCMC unspecified,distributor_match,935,272,52,2338.85,130.15045833638334
-Vinh Loc,HCMC,Ho Chi Minh City,HCMC unspecified,transaction_text_parse,383,107,10,2045.7916666666667,116.42177955700001
-My Phuoc,Other Vietnam,Can Tho City,,transaction_text_parse,511,60,4,1554.0,77.64172674373334
-My Phuoc,Central,Khanh Hoa,,distributor_match,49,8,1,1305.0,79.49823900000001
-Vinh Loc,Southeast / HCMC fringe,Tien Giang,,transaction_text_parse,107,42,2,707.5833333333334,36.89416955
-My Phuoc,Mekong Delta,Kien Giang,,transaction_text_parse,229,37,3,695.0,33.2694804396
-Vinh Loc,Other Vietnam,Can Tho City,,distributor_match,114,45,2,666.25,33.116100808333336
-My Phuoc,Mekong Delta,Kien Giang,,distributor_match,45,13,4,620.0,29.907967000000003
-Vinh Loc,North,Ha Noi,,distributor_match,48,16,4,575.25,28.6182985
-Vinh Loc,Central,Khanh Hoa,,distributor_match,97,33,2,388.5833333333333,18.7897708
-My Phuoc,Central,Da Nang,,transaction_text_parse,130,27,2,293.0,13.800226858333334
-My Phuoc,Southeast / HCMC fringe,Long An,,transaction_text_parse,115,23,2,267.0,12.053498166666667
-My Phuoc,Other Vietnam,Ben Tre,,transaction_text_parse,74,15,2,171.0,7.9440363000000005
-Vinh Loc,North,Ha Noi,,transaction_text_parse,100,26,3,145.13333333333333,8.971832539433334
-My Phuoc,North,Ha Noi,,distributor_match,2,2,1,113.0,10.271248
-My Phuoc,North,Bac Ninh,,transaction_text_parse,17,8,2,89.0,5.6664541250000005
-Vinh Loc,North,Hai Phong,,distributor_match,33,17,2,87.91666666666667,5.517056883333334
-Vinh Loc,Mekong Delta,Kien Giang,,transaction_text_parse,60,27,4,82.41666666666667,5.463741582
-My Phuoc,Central,Nghe An,,transaction_text_parse,25,8,1,81.0,4.353646395833334
-Vinh Loc,Central,Khanh Hoa,,transaction_text_parse,21,8,1,57.083333333333336,4.121255608333334
-My Phuoc,Southeast / HCMC fringe,Binh Phuoc,,transaction_text_parse,18,3,1,50.0,2.5548216666666668
-My Phuoc,Other Vietnam,Ben Tre,,distributor_match,2,1,1,50.0,1.9271600000000002
-My Phuoc,Other Vietnam,Can Tho City,,distributor_match,8,5,1,37.0,1.74445
-Vinh Loc,Mekong Delta,Kien Giang,,distributor_match,11,5,2,26.0,1.8168789166666668
-Vinh Loc,North,Hai Phong,,transaction_text_parse,29,16,2,22.958333333333332,1.561730875
-My Phuoc,Other Vietnam,Lam Dong,,distributor_match,2,2,1,21.0,1.0905125000000002
-Vinh Loc,North,Bac Ninh,,transaction_text_parse,23,11,2,17.25,1.1024700250000001
-Vinh Loc,Other Vietnam,Can Tho City,,transaction_text_parse,11,5,2,16.833333333333332,0.8321261666666666
-Vinh Loc,Other Vietnam,Ben Tre,,distributor_match,5,2,2,11.833333333333332,1.5890739233333333
-Vinh Loc,Central,Da Nang,,transaction_text_parse,9,3,2,11.416666666666668,1.0498940416666667
-Vinh Loc,Other Vietnam,Ben Tre,,transaction_text_parse,12,3,2,10.083333333333334,0.7632745206666667
-Vinh Loc,Central,Nghe An,,transaction_text_parse,10,6,1,7.583333333333333,0.50554175
-Vinh Loc,Central,Nghe An,,distributor_match,4,1,1,5.833333333333334,0.6013013333333334
-Vinh Loc,Southeast / HCMC fringe,Binh Phuoc,,transaction_text_parse,4,2,1,5.583333333333333,0.5530313333333333
-Vinh Loc,Southeast / HCMC fringe,Long An,,transaction_text_parse,4,2,1,5.5,0.573222
+My Phuoc,Đông Nam Bộ,Hồ Chí Minh,,transaction_text_parse,1170,254,25,18924.0,1149.8239670496
+My Phuoc,Đông Nam Bộ,Hồ Chí Minh,,distributor_match,3091,492,35,16800.0,750.3165709277556
+My Phuoc,Khác,Bình Dương,,transaction_text_parse,166,62,1,14156.0,900.2245922000001
+My Phuoc,Đồng bằng sông Cửu Long,Cần Thơ,,transaction_text_parse,532,110,6,9252.0,570.4712271174001
+My Phuoc,Đồng bằng sông Hồng,Hà Nội,,transaction_text_parse,290,93,9,8583.0,518.6099919000001
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Đà Nẵng,,transaction_text_parse,679,115,8,8309.0,504.4964074934667
+My Phuoc,Khác,Tiền Giang,,transaction_text_parse,141,53,1,7479.0,475.5676427
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Đà Nẵng,,distributor_match,239,64,4,7008.0,373.258177525
+My Phuoc,Tây Nguyên,Lâm Đồng,,transaction_text_parse,432,80,4,6906.0,377.74336555
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Khánh Hòa,,transaction_text_parse,528,103,6,6002.0,355.196358412
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Nghệ An,,transaction_text_parse,147,55,3,4261.0,208.86295089583334
+My Phuoc,Đông Nam Bộ,Đồng Nai,,transaction_text_parse,891,332,9,3343.0,158.25187094080357
+My Phuoc,Đồng bằng sông Hồng,Hải Phòng,,transaction_text_parse,125,46,4,3168.0,216.81449278333335
+My Phuoc,Trung du và miền núi phía Bắc,Phú Thọ,,transaction_text_parse,632,114,10,3140.0,183.52362782646668
+My Phuoc,Đồng bằng sông Hồng,Ninh Bình,,transaction_text_parse,94,33,4,2900.0,204.56388425
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Huế,,distributor_match,69,18,1,2561.0,139.13195000000002
+My Phuoc,Đông Nam Bộ,Đồng Nai,,distributor_match,262,50,4,2525.0,119.09635593893334
+Vinh Loc,Đông Nam Bộ,Hồ Chí Minh,,transaction_text_parse,798,248,41,2408.2083333333335,141.0970994472667
+My Phuoc,Tây Nguyên,Đắk Lắk,,distributor_match,148,43,2,1915.0,111.79126379200001
+My Phuoc,Đồng bằng sông Cửu Long,An Giang,,transaction_text_parse,400,59,3,1826.0,84.1258929002
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Khánh Hòa,,distributor_match,154,28,2,1759.0,100.743983025
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Thanh Hóa,,transaction_text_parse,84,40,4,1737.0,109.78292450000001
+Vinh Loc,Khác,Bình Dương,,transaction_text_parse,179,45,2,1510.25,74.39960084166667
+My Phuoc,Đồng bằng sông Hồng,Bắc Ninh,,transaction_text_parse,70,25,4,1179.0,61.671214125000006
+My Phuoc,Đồng bằng sông Hồng,Hà Nội,,distributor_match,46,10,3,1151.0,52.232683
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Trị,,distributor_match,84,24,2,1096.0,57.25290156625
+Vinh Loc,Đồng bằng sông Hồng,Ninh Bình,,transaction_text_parse,96,36,4,971.0833333333334,79.64142895141667
+Vinh Loc,Đông Nam Bộ,Hồ Chí Minh,,distributor_match,652,187,22,886.0166666666667,48.58042831663334
+My Phuoc,Đồng bằng sông Cửu Long,An Giang,,distributor_match,127,23,5,884.0,41.05064860626667
+My Phuoc,Tây Nguyên,Lâm Đồng,,distributor_match,202,27,3,860.0,41.02523189233334
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Đà Nẵng,,distributor_match,149,50,4,728.4791666666666,41.03469292916667
+Vinh Loc,Khác,Tiền Giang,,transaction_text_parse,107,42,2,707.5833333333334,36.89416955
+My Phuoc,Đồng bằng sông Cửu Long,Vĩnh Long,,transaction_text_parse,234,52,6,694.0,32.3776183066
+My Phuoc,Đồng bằng sông Cửu Long,Cần Thơ,,distributor_match,202,23,2,691.0,34.22876684366667
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Đà Nẵng,,transaction_text_parse,135,43,5,682.175,38.37793114431667
+Vinh Loc,Đồng bằng sông Cửu Long,Cần Thơ,,distributor_match,110,44,1,659.9166666666666,32.460859475
+Vinh Loc,Trung du và miền núi phía Bắc,Phú Thọ,,transaction_text_parse,119,38,3,649.1666666666666,30.55804972916667
+Vinh Loc,Đồng bằng sông Hồng,Hà Nội,,distributor_match,47,16,3,561.25,26.3502985
+Vinh Loc,Tây Nguyên,Đắk Lắk,,transaction_text_parse,121,45,4,483.75,27.062932887916666
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Gia Lai,,distributor_match,152,19,1,442.0,20.819490059
+My Phuoc,Đồng bằng sông Cửu Long,Đồng Tháp,,transaction_text_parse,209,44,5,421.0,20.561812819866667
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Khánh Hòa,,transaction_text_parse,128,43,5,409.25,22.407309820833333
+My Phuoc,Đông Nam Bộ,Tây Ninh,,transaction_text_parse,160,26,2,402.0,18.9134728862
+My Phuoc,Trung du và miền núi phía Bắc,Cao Bằng,,transaction_text_parse,15,7,1,374.0,14.263256666666667
+My Phuoc,Đồng bằng sông Cửu Long,Vĩnh Long,,distributor_match,10,3,1,310.0,17.410705000000004
+My Phuoc,Đồng bằng sông Hồng,Quảng Ninh,,transaction_text_parse,36,12,1,309.0,26.96094258333333
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Huế,,transaction_text_parse,109,22,3,278.0,15.806742494533333
+My Phuoc,Tây Nguyên,Đắk Lắk,,transaction_text_parse,108,19,2,266.0,13.347443509
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Gia Lai,,transaction_text_parse,104,16,1,247.0,10.292856291666666
+Vinh Loc,Đồng bằng sông Hồng,Bắc Ninh,,transaction_text_parse,57,23,3,202.83333333333334,17.07089823
+My Phuoc,Đông Nam Bộ,Tây Ninh,,distributor_match,85,21,2,202.0,8.645600166666666
+Vinh Loc,Tây Nguyên,Lâm Đồng,,transaction_text_parse,75,23,4,191.925,14.362870214733334
+My Phuoc,Đồng bằng sông Cửu Long,Cà Mau,,distributor_match,36,9,4,177.0,9.479160666666667
+My Phuoc,Đồng bằng sông Cửu Long,Cà Mau,,transaction_text_parse,34,12,2,167.0,8.38992355
+Vinh Loc,Đồng bằng sông Hồng,Hà Nội,,transaction_text_parse,56,30,8,135.16666666666666,8.876056049166667
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Ngãi,,transaction_text_parse,60,18,2,131.0,6.52900205
+Vinh Loc,Đồng bằng sông Hồng,Hải Phòng,,transaction_text_parse,69,37,4,113.875,7.004816904166667
+Vinh Loc,Đồng bằng sông Cửu Long,Cần Thơ,,transaction_text_parse,26,10,3,113.16666666666667,10.17672015
+My Phuoc,Đồng bằng sông Cửu Long,Đồng Tháp,,distributor_match,15,3,2,112.0,6.756832500000001
+Vinh Loc,Đông Nam Bộ,Đồng Nai,,transaction_text_parse,56,28,5,102.33333333333333,8.775720865916668
+Vinh Loc,Đông Nam Bộ,Đồng Nai,,distributor_match,12,5,2,99.58333333333333,3.4068573333333334
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Thanh Hóa,,transaction_text_parse,72,29,8,85.0,6.5296196150000005
+Vinh Loc,Tây Nguyên,Đắk Lắk,,distributor_match,14,5,1,84.0,8.710050258333332
+My Phuoc,Trung du và miền núi phía Bắc,Sơn La,,transaction_text_parse,9,4,2,70.0,4.345587500000001
+Vinh Loc,Đồng bằng sông Cửu Long,An Giang,,transaction_text_parse,55,27,4,63.5,3.8266209448333335
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Khánh Hòa,,distributor_match,8,5,1,60.25,2.754381
+My Phuoc,Trung du và miền núi phía Bắc,Lào Cai,,distributor_match,1,1,1,60.0,2.8050000000000006
+My Phuoc,Đồng bằng sông Hồng,Hưng Yên,,transaction_text_parse,10,3,1,56.0,4.636627
+My Phuoc,Đồng bằng sông Hồng,Bắc Ninh,,distributor_match,5,2,1,54.0,3.2456500000000004
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Huế,,distributor_match,22,4,1,45.75,2.1630335
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Ngãi,,distributor_match,8,1,1,45.166666666666664,6.77718966
+My Phuoc,Trung du và miền núi phía Bắc,Lạng Sơn,,transaction_text_parse,11,5,2,44.0,2.652030833333334
+My Phuoc,Trung du và miền núi phía Bắc,Thái Nguyên,,transaction_text_parse,7,3,1,42.0,2.8968025
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Gia Lai,,transaction_text_parse,34,16,3,40.983333333333334,4.186642325116667
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Trị,,transaction_text_parse,10,4,2,32.0,1.7819967166666668
+My Phuoc,Khác,Yên Bái,,transaction_text_parse,8,2,1,31.0,2.0242445
+My Phuoc,Trung du và miền núi phía Bắc,Tuyên Quang,,transaction_text_parse,10,2,1,31.0,2.154967
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Hà Tĩnh,,transaction_text_parse,11,4,1,30.0,1.7975688333333335
+Vinh Loc,Trung du và miền núi phía Bắc,Phú Thọ,,distributor_match,14,7,1,28.25,1.4646216666666667
+Vinh Loc,Trung du và miền núi phía Bắc,Lào Cai,,transaction_text_parse,13,5,2,27.583333333333332,2.05180588325
+Vinh Loc,Đồng bằng sông Cửu Long,An Giang,,distributor_match,11,5,2,26.0,1.8168789166666668
+My Phuoc,Khác,Hà Giang,,transaction_text_parse,8,3,1,26.0,1.9386768333333333
+My Phuoc,Trung du và miền núi phía Bắc,Lào Cai,,transaction_text_parse,9,4,1,25.0,1.523068375
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Nghệ An,,distributor_match,9,3,2,21.333333333333336,1.3883209583333334
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Huế,,transaction_text_parse,16,7,3,18.650000000000002,1.3757989153666668
+Vinh Loc,Trung du và miền núi phía Bắc,Tuyên Quang,,transaction_text_parse,20,6,1,17.166666666666668,1.4803226666666667
+Vinh Loc,Trung du và miền núi phía Bắc,Thái Nguyên,,transaction_text_parse,21,15,2,16.666666666666664,1.1848960541666667
+My Phuoc,Khác,Hòa Bình,,transaction_text_parse,6,3,1,16.0,1.2638850000000001
+Vinh Loc,Đông Nam Bộ,Tây Ninh,,transaction_text_parse,16,8,3,14.016666666666666,1.5024726805500002
+My Phuoc,Khác,Bình Định,,transaction_text_parse,3,2,1,14.0,0.9870675000000001
+Vinh Loc,Đồng bằng sông Hồng,Quảng Ninh,,transaction_text_parse,22,9,1,13.916666666666666,0.7997978958333334
+Vinh Loc,Đồng bằng sông Cửu Long,Vĩnh Long,,transaction_text_parse,14,5,3,13.083333333333332,1.2492745206666667
+Vinh Loc,Khác,Hòa Bình,,transaction_text_parse,15,9,2,12.25,0.8426477783333334
+My Phuoc,Đồng bằng sông Hồng,Hải Phòng,,distributor_match,3,2,1,12.0,0.6542916666666667
+Vinh Loc,Khác,Phú Yên,,transaction_text_parse,9,3,2,10.333333333333334,1.0132683541666667
+My Phuoc,Trung du và miền núi phía Bắc,Thái Nguyên,,distributor_match,1,1,1,10.0,0.4675000000000001
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Ngãi,,transaction_text_parse,12,9,1,9.166666666666666,1.2540829008333334
+Vinh Loc,Đồng bằng sông Cửu Long,Cà Mau,,distributor_match,6,4,2,9.0,1.117744
+My Phuoc,Khác,Hà Nam,,transaction_text_parse,3,2,1,9.0,0.6445000000000001
+Vinh Loc,Đồng bằng sông Hồng,Hưng Yên,,transaction_text_parse,18,10,1,8.916666666666666,0.63316775
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Nghệ An,,distributor_match,1,1,1,8.0,0.45081888
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Nghệ An,,transaction_text_parse,10,6,1,7.583333333333333,0.50554175
+Vinh Loc,Khác,Hà Nam,,transaction_text_parse,10,3,1,6.666666666666667,0.436776125
+Vinh Loc,Khác,Yên Bái,,transaction_text_parse,9,4,1,6.583333333333333,0.3942726875
+Vinh Loc,Khác,Hậu Giang,,transaction_text_parse,4,2,1,6.333333333333334,0.6552413333333333
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Hà Tĩnh,,distributor_match,4,1,1,5.916666666666667,0.6302066666666667
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Trị,,distributor_match,4,2,1,5.833333333333334,0.5906513333333334
+Vinh Loc,Trung du và miền núi phía Bắc,Điện Biên,,distributor_match,4,2,1,5.833333333333334,0.5906513333333333
+Vinh Loc,Đồng bằng sông Cửu Long,Vĩnh Long,,distributor_match,4,1,1,5.833333333333333,0.6013013333333334
+Vinh Loc,Trung du và miền núi phía Bắc,Lào Cai,,distributor_match,4,2,1,5.5,0.5838720000000001
+Vinh Loc,Đồng bằng sông Hồng,Hải Phòng,,distributor_match,4,2,1,5.416666666666666,0.5716846666666667
+Vinh Loc,Tây Nguyên,Lâm Đồng,,distributor_match,4,1,1,5.333333333333333,0.5154113333333333
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Gia Lai,,distributor_match,4,2,1,5.0,0.49798200000000004
+Vinh Loc,Trung du và miền núi phía Bắc,Lạng Sơn,,transaction_text_parse,11,5,1,4.791666666666666,0.367813125
+Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Hà Tĩnh,,transaction_text_parse,5,2,1,3.5833333333333335,0.28822775
+Vinh Loc,Khác,Quảng Nam,,transaction_text_parse,5,1,1,3.5,0.265587375
+Vinh Loc,Trung du và miền núi phía Bắc,Sơn La,,transaction_text_parse,4,2,1,3.416666666666667,0.19681374999999998
+Vinh Loc,Đồng bằng sông Cửu Long,Cà Mau,,transaction_text_parse,4,4,2,3.333333333333333,0.16230375000000002
+Vinh Loc,Khác,Hà Giang,,transaction_text_parse,6,4,1,3.25,0.23787675000000003
