@@ -20,6 +20,14 @@ from src.logage2026.geography import region_group
 
 ASSIGNMENT_START = pd.Timestamp("2025-07-01")
 ASSIGNMENT_END = pd.Timestamp("2025-12-31")
+URBAN_MUNICIPALITIES = {
+    "Hồ Chí Minh",
+    "Hà Nội",
+    "Đà Nẵng",
+    "Cần Thơ",
+    "Hải Phòng",
+}
+SEGMENT_ORDER = ["Modern Trade", "Traditional Trade / Distributor"]
 
 
 def classify_cumulative_share(
@@ -92,6 +100,8 @@ def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataF
         .sum()
         .unstack(fill_value=0)
     )
+    weeks = pd.period_range(start=ASSIGNMENT_START, end=ASSIGNMENT_END, freq="W").astype(str)
+    weekly = weekly.reindex(columns=weeks, fill_value=0)
     sku["weekly_nonzero_weeks"] = weekly.gt(0).sum(axis=1)
     winsorized = _winsorize_weekly(weekly, WINSORIZE_LIMITS)
     sku["weekly_mean_quantity"] = winsorized.mean(axis=1)
@@ -320,6 +330,206 @@ def build_warehouse_region_summary(shipments: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def build_q12_region_orders_quantity_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    known = shipments[shipments["known_geography_flag"]].copy()
+    if known.empty:
+        return pd.DataFrame(columns=["region", "shipment_lines", "orders", "customers", "quantity", "cbm_total"])
+    return (
+        known.groupby("region", dropna=False)
+        .agg(
+            shipment_lines=("sku_code", "size"),
+            orders=("order_id", "nunique"),
+            customers=("customer_key", "nunique"),
+            quantity=("quantity", "sum"),
+            cbm_total=("cbm_total", "sum"),
+        )
+        .reset_index()
+        .sort_values(["quantity", "orders"], ascending=False)
+    )
+
+
+def build_q12_province_cluster_summary(shipments: pd.DataFrame, top_n: int = 12) -> pd.DataFrame:
+    known = shipments[shipments["known_geography_flag"]].copy()
+    if known.empty:
+        return pd.DataFrame(
+            columns=[
+                "province",
+                "shipment_lines",
+                "orders",
+                "customers",
+                "quantity",
+                "cbm_total",
+                "my_phuoc_orders",
+                "vinh_loc_orders",
+                "my_phuoc_quantity",
+                "vinh_loc_quantity",
+                "my_phuoc_quantity_share",
+                "vinh_loc_quantity_share",
+                "dominant_warehouse",
+                "rank_by_orders",
+                "rank_by_quantity",
+            ]
+        )
+
+    summary = (
+        known.groupby("province", dropna=False)
+        .agg(
+            shipment_lines=("sku_code", "size"),
+            orders=("order_id", "nunique"),
+            customers=("customer_key", "nunique"),
+            quantity=("quantity", "sum"),
+            cbm_total=("cbm_total", "sum"),
+        )
+        .reset_index()
+    )
+    warehouse_orders = (
+        known.groupby(["province", "source_warehouse"])["order_id"]
+        .nunique()
+        .unstack(fill_value=0)
+        .rename(columns={"My Phuoc": "my_phuoc_orders", "Vinh Loc": "vinh_loc_orders"})
+        .reset_index()
+    )
+    warehouse_quantity = (
+        known.groupby(["province", "source_warehouse"])["quantity"]
+        .sum()
+        .unstack(fill_value=0)
+        .rename(columns={"My Phuoc": "my_phuoc_quantity", "Vinh Loc": "vinh_loc_quantity"})
+        .reset_index()
+    )
+    summary = summary.merge(warehouse_orders, on="province", how="left")
+    summary = summary.merge(warehouse_quantity, on="province", how="left")
+    for column in ["my_phuoc_orders", "vinh_loc_orders", "my_phuoc_quantity", "vinh_loc_quantity"]:
+        if column not in summary.columns:
+            summary[column] = 0.0
+    summary["my_phuoc_quantity_share"] = np.where(
+        summary["quantity"].gt(0), summary["my_phuoc_quantity"] / summary["quantity"], 0.0
+    )
+    summary["vinh_loc_quantity_share"] = np.where(
+        summary["quantity"].gt(0), summary["vinh_loc_quantity"] / summary["quantity"], 0.0
+    )
+    summary["dominant_warehouse"] = np.where(
+        summary["my_phuoc_quantity"].gt(summary["vinh_loc_quantity"]),
+        "My Phuoc",
+        np.where(summary["vinh_loc_quantity"].gt(summary["my_phuoc_quantity"]), "Vinh Loc", "Balanced"),
+    )
+    summary["rank_by_orders"] = summary["orders"].rank(method="first", ascending=False).astype(int)
+    summary["rank_by_quantity"] = summary["quantity"].rank(method="first", ascending=False).astype(int)
+    summary = summary[summary["rank_by_orders"].le(top_n) | summary["rank_by_quantity"].le(top_n)].copy()
+    return summary.sort_values(["rank_by_orders", "rank_by_quantity", "province"])
+
+
+def build_q12_province_demand_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    known = shipments[shipments["known_geography_flag"]].copy()
+    if known.empty:
+        return pd.DataFrame(
+            columns=[
+                "province",
+                "region",
+                "shipment_lines",
+                "orders",
+                "customers",
+                "quantity",
+                "cbm_total",
+                "quantity_rank",
+                "orders_rank",
+                "customers_rank",
+            ]
+        )
+    summary = (
+        known.groupby(["province", "region"], dropna=False)
+        .agg(
+            shipment_lines=("sku_code", "size"),
+            orders=("order_id", "nunique"),
+            customers=("customer_key", "nunique"),
+            quantity=("quantity", "sum"),
+            cbm_total=("cbm_total", "sum"),
+        )
+        .reset_index()
+    )
+    summary["quantity_rank"] = summary["quantity"].rank(method="first", ascending=False).astype(int)
+    summary["orders_rank"] = summary["orders"].rank(method="first", ascending=False).astype(int)
+    summary["customers_rank"] = summary["customers"].rank(method="first", ascending=False).astype(int)
+    return summary.sort_values(["quantity_rank", "orders_rank", "province"])
+
+
+def build_q12_province_warehouse_dominance_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    summary = build_q12_province_demand_summary(shipments)
+    if summary.empty:
+        return pd.DataFrame(
+            columns=[
+                "province",
+                "region",
+                "orders",
+                "customers",
+                "quantity",
+                "my_phuoc_orders",
+                "vinh_loc_orders",
+                "my_phuoc_quantity",
+                "vinh_loc_quantity",
+                "my_phuoc_quantity_share",
+                "vinh_loc_quantity_share",
+                "quantity_share_gap",
+                "dominance_intensity",
+                "dominant_warehouse",
+            ]
+        )
+    known = shipments[shipments["known_geography_flag"]].copy()
+    warehouse_orders = (
+        known.groupby(["province", "source_warehouse"])["order_id"]
+        .nunique()
+        .unstack(fill_value=0)
+        .rename(columns={"My Phuoc": "my_phuoc_orders", "Vinh Loc": "vinh_loc_orders"})
+        .reset_index()
+    )
+    warehouse_quantity = (
+        known.groupby(["province", "source_warehouse"])["quantity"]
+        .sum()
+        .unstack(fill_value=0)
+        .rename(columns={"My Phuoc": "my_phuoc_quantity", "Vinh Loc": "vinh_loc_quantity"})
+        .reset_index()
+    )
+    summary = summary.merge(warehouse_orders, on="province", how="left")
+    summary = summary.merge(warehouse_quantity, on="province", how="left")
+    for column in ["my_phuoc_orders", "vinh_loc_orders", "my_phuoc_quantity", "vinh_loc_quantity"]:
+        if column not in summary.columns:
+            summary[column] = 0.0
+    summary["my_phuoc_quantity_share"] = np.where(
+        summary["quantity"].gt(0), summary["my_phuoc_quantity"] / summary["quantity"], 0.0
+    )
+    summary["vinh_loc_quantity_share"] = np.where(
+        summary["quantity"].gt(0), summary["vinh_loc_quantity"] / summary["quantity"], 0.0
+    )
+    summary["quantity_share_gap"] = summary["my_phuoc_quantity_share"] - summary["vinh_loc_quantity_share"]
+    summary["dominance_intensity"] = summary["quantity_share_gap"].abs()
+    summary["dominant_warehouse"] = np.where(
+        summary["quantity_share_gap"].gt(0),
+        "My Phuoc",
+        np.where(summary["quantity_share_gap"].lt(0), "Vinh Loc", "Balanced"),
+    )
+    return summary.sort_values(["dominance_intensity", "quantity", "province"], ascending=[False, False, True])
+
+
+def build_q12_urban_provincial_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    known = shipments[shipments["known_geography_flag"]].copy()
+    if known.empty:
+        return pd.DataFrame(
+            columns=["geography_tier", "source_warehouse", "shipment_lines", "orders", "customers", "quantity", "cbm_total"]
+        )
+    known["geography_tier"] = np.where(known["province"].isin(URBAN_MUNICIPALITIES), "urban", "provincial")
+    return (
+        known.groupby(["geography_tier", "source_warehouse"], dropna=False)
+        .agg(
+            shipment_lines=("sku_code", "size"),
+            orders=("order_id", "nunique"),
+            customers=("customer_key", "nunique"),
+            quantity=("quantity", "sum"),
+            cbm_total=("cbm_total", "sum"),
+        )
+        .reset_index()
+        .sort_values(["geography_tier", "quantity"], ascending=[True, False])
+    )
+
+
 def build_customer_cluster_summary(shipments: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
     known = shipments[shipments["known_geography_flag"]].copy()
     province_summary = (
@@ -359,91 +569,357 @@ def build_warehouse_imbalance_summary(shipments: pd.DataFrame) -> pd.DataFrame:
     if summary.empty:
         return summary
 
-    region_orders = summary.groupby("region")["orders"].transform("sum")
+    # Calculate true unique orders per region directly from transactions to prevent double counting of split orders
+    true_region_orders = known.groupby("region")["order_id"].nunique().rename("region_orders")
+    summary = summary.merge(true_region_orders, on="region", how="left")
+
     region_quantity = summary.groupby("region")["quantity"].transform("sum")
     warehouse_orders = summary.groupby("source_warehouse")["orders"].transform("sum")
     warehouse_quantity = summary.groupby("source_warehouse")["quantity"].transform("sum")
-    summary["region_order_share"] = summary["orders"] / region_orders
+    
+    summary["region_order_share"] = summary["orders"] / summary["region_orders"]
     summary["region_quantity_share"] = summary["quantity"] / region_quantity
     summary["warehouse_order_share"] = summary["orders"] / warehouse_orders
     summary["warehouse_quantity_share"] = summary["quantity"] / warehouse_quantity
+    
+    summary = summary.drop(columns=["region_orders"])
     return summary.sort_values(["region", "quantity", "orders"], ascending=[True, False, False])
 
 
-def build_order_profile_segments(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
-    known = shipments[shipments["analysis_document_flag"] & shipments["customer_segment"].ne("Unknown")].copy()
-    
-    # Calculate distance for each line depending on source warehouse
-    known["distance_km"] = np.where(
-        known["source_warehouse"] == "My Phuoc", 
-        known["distance_from_my_phuoc_km"], 
-        known["distance_from_vinh_loc_km"]
+def build_q12_warehouse_imbalance_visual_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    summary = build_warehouse_imbalance_summary(shipments)
+    if summary.empty:
+        return pd.DataFrame(
+            columns=[
+                "region",
+                "region_orders",
+                "region_quantity",
+                "my_phuoc_orders",
+                "vinh_loc_orders",
+                "my_phuoc_quantity",
+                "vinh_loc_quantity",
+                "my_phuoc_order_share",
+                "vinh_loc_order_share",
+                "my_phuoc_quantity_share",
+                "vinh_loc_quantity_share",
+                "quantity_share_gap",
+                "dominant_warehouse",
+                "dominant_warehouse_flag",
+            ]
+        )
+    pivot = summary.pivot(index="region", columns="source_warehouse", values="orders").fillna(0)
+    qty_pivot = summary.pivot(index="region", columns="source_warehouse", values="quantity").fillna(0)
+    combined = pd.DataFrame({"region": sorted(summary["region"].unique())})
+    combined["my_phuoc_orders"] = combined["region"].map(pivot.get("My Phuoc", pd.Series(dtype=float))).fillna(0)
+    combined["vinh_loc_orders"] = combined["region"].map(pivot.get("Vinh Loc", pd.Series(dtype=float))).fillna(0)
+    combined["my_phuoc_quantity"] = combined["region"].map(qty_pivot.get("My Phuoc", pd.Series(dtype=float))).fillna(0)
+    combined["vinh_loc_quantity"] = combined["region"].map(qty_pivot.get("Vinh Loc", pd.Series(dtype=float))).fillna(0)
+    combined["region_orders"] = combined["my_phuoc_orders"] + combined["vinh_loc_orders"]
+    combined["region_quantity"] = combined["my_phuoc_quantity"] + combined["vinh_loc_quantity"]
+    combined["my_phuoc_order_share"] = np.where(
+        combined["region_orders"].gt(0), combined["my_phuoc_orders"] / combined["region_orders"], 0.0
     )
-    
-    # Merge packaging specs from sku_master
+    combined["vinh_loc_order_share"] = np.where(
+        combined["region_orders"].gt(0), combined["vinh_loc_orders"] / combined["region_orders"], 0.0
+    )
+    combined["my_phuoc_quantity_share"] = np.where(
+        combined["region_quantity"].gt(0), combined["my_phuoc_quantity"] / combined["region_quantity"], 0.0
+    )
+    combined["vinh_loc_quantity_share"] = np.where(
+        combined["region_quantity"].gt(0), combined["vinh_loc_quantity"] / combined["region_quantity"], 0.0
+    )
+    combined["quantity_share_gap"] = combined["my_phuoc_quantity_share"] - combined["vinh_loc_quantity_share"]
+    combined["dominant_warehouse"] = np.where(
+        combined["quantity_share_gap"].gt(0),
+        "My Phuoc",
+        np.where(combined["quantity_share_gap"].lt(0), "Vinh Loc", "Balanced"),
+    )
+    combined["dominant_warehouse_flag"] = combined["dominant_warehouse"].ne("Balanced").astype(int)
+    return combined.sort_values(["region_quantity", "region_orders"], ascending=False)
+
+
+def _calculate_packaging_components(known: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
     sku_pkg = sku_master[["sku_code", "pcs_per_pallet", "pcs_per_carton"]].copy()
     known = known.merge(sku_pkg, on="sku_code", how="left")
-    
-    # Calculate packaging unit quantities
+
     qty = known["quantity"].fillna(0).astype(float)
     ppp = known["pcs_per_pallet"].astype(float).fillna(qty + 1.0)
     ppc = known["pcs_per_carton"].astype(float).fillna(qty + 1.0)
-    
-    # Pallet quantity
+
     has_pallet = known["pcs_per_pallet"].notna()
     pallet_qty = np.where(has_pallet & (qty >= ppp), (qty // ppp) * ppp, 0.0)
     rem_qty = np.where(has_pallet & (qty >= ppp), qty % ppp, qty)
-    
-    # Carton quantity
+
     has_carton = known["pcs_per_carton"].notna()
     carton_qty = np.where(has_carton & (rem_qty >= ppc), (rem_qty // ppc) * ppc, 0.0)
     loose_qty = np.where(has_carton & (rem_qty >= ppc), rem_qty % ppc, rem_qty)
-    
+
     known["pallet_qty"] = pallet_qty
     known["carton_qty"] = carton_qty
     known["loose_qty"] = loose_qty
-    
-    order_level = known.groupby(["customer_segment", "order_id"]).agg(
-        source_warehouse=("source_warehouse", "first"),
-        province=("province", "first"),
-        quantity=("quantity", "sum"),
-        cbm_total=("cbm_total", "sum"),
-        sku_breadth=("sku_code", "nunique"),
-        line_count=("sku_code", "size"),
-        distance_km=("distance_km", "mean"),
+    return known
+
+
+def _prepare_segment_order_lines(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    known = shipments[shipments["analysis_document_flag"] & shipments["customer_segment"].isin(SEGMENT_ORDER)].copy()
+    known["distance_km"] = np.where(
+        known["source_warehouse"] == "My Phuoc",
+        known["distance_from_my_phuoc_km"],
+        known["distance_from_vinh_loc_km"],
     )
-    order_level = order_level.reset_index()
-    summary = order_level.groupby("customer_segment").agg(
-        orders=("order_id", "nunique"),
-        provinces=("province", "nunique"),
-        avg_order_quantity=("quantity", "mean"),
-        median_order_quantity=("quantity", "median"),
-        avg_order_cbm=("cbm_total", "mean"),
-        median_order_cbm=("cbm_total", "median"),
-        avg_sku_breadth=("sku_breadth", "mean"),
-        avg_lines_per_order=("line_count", "mean"),
-        avg_distance_km=("distance_km", "mean"),
+    known = _calculate_packaging_components(known, sku_master)
+    order_level = (
+        known.groupby(["customer_segment", "order_id"], dropna=False)
+        .agg(
+            customer_key=("customer_key", "first"),
+            source_warehouse=("source_warehouse", "first"),
+            province=("province", "first"),
+            region=("region", "first"),
+            quantity=("quantity", "sum"),
+            cbm_total=("cbm_total", "sum"),
+            sku_breadth=("sku_code", "nunique"),
+            line_count=("sku_code", "size"),
+            distance_km=("distance_km", "mean"),
+        )
+        .reset_index()
     )
-    
-    segment_sku = known.groupby("customer_segment")["sku_code"].nunique().rename("segment_sku_breadth")
-    summary = summary.join(segment_sku)
-    
-    # Calculate packaging share by customer segment
-    pkg_sums = known.groupby("customer_segment")[["pallet_qty", "carton_qty", "loose_qty", "quantity"]].sum()
-    pallet_share = (pkg_sums["pallet_qty"] / pkg_sums["quantity"]).fillna(0).rename("pallet_qty_share")
-    carton_share = (pkg_sums["carton_qty"] / pkg_sums["quantity"]).fillna(0).rename("carton_qty_share")
-    loose_share = (pkg_sums["loose_qty"] / pkg_sums["quantity"]).fillna(0).rename("loose_qty_share")
-    
-    summary = summary.join([pallet_share, carton_share, loose_share])
-    
-    # Calculate average orders per customer per month (6-month window)
-    customer_orders = known.groupby(["customer_segment", "customer_key"])["order_id"].nunique().reset_index()
+    return known, order_level
+
+
+def build_q13_segment_profile_summary(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
+    known, order_level = _prepare_segment_order_lines(shipments, sku_master)
+    if order_level.empty:
+        return pd.DataFrame(
+            columns=[
+                "customer_segment",
+                "orders",
+                "customers",
+                "avg_order_quantity",
+                "avg_order_cbm",
+                "avg_orders_per_customer_month",
+                "avg_sku_breadth",
+                "avg_lines_per_order",
+                "province_count",
+                "region_count",
+                "top_province_quantity_share",
+                "avg_distance_km",
+            ]
+        )
+    summary = (
+        order_level.groupby("customer_segment", dropna=False)
+        .agg(
+            orders=("order_id", "nunique"),
+            customers=("customer_key", "nunique"),
+            avg_order_quantity=("quantity", "mean"),
+            median_order_quantity=("quantity", "median"),
+            avg_order_cbm=("cbm_total", "mean"),
+            median_order_cbm=("cbm_total", "median"),
+            avg_sku_breadth=("sku_breadth", "mean"),
+            avg_lines_per_order=("line_count", "mean"),
+            avg_distance_km=("distance_km", "mean"),
+        )
+        .reset_index()
+    )
+    customer_orders = order_level.groupby(["customer_segment", "customer_key"], dropna=False)["order_id"].nunique().reset_index()
     customer_orders["orders_per_month"] = customer_orders["order_id"] / 6.0
-    avg_freq = customer_orders.groupby("customer_segment")["orders_per_month"].mean().rename("avg_orders_per_customer_month")
-    
-    summary = summary.join(avg_freq)
-    
-    return summary.reset_index()
+    avg_freq = customer_orders.groupby("customer_segment", dropna=False)["orders_per_month"].mean().rename(
+        "avg_orders_per_customer_month"
+    )
+    geography = build_q13_segment_geographic_spread_summary(shipments)
+    summary = summary.merge(avg_freq.reset_index(), on="customer_segment", how="left")
+    summary = summary.merge(
+        geography[["customer_segment", "province_count", "region_count", "top_province_quantity_share"]],
+        on="customer_segment",
+        how="left",
+    )
+    return summary.sort_values("customer_segment")
+
+
+def build_q13_segment_packaging_summary(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
+    known, _ = _prepare_segment_order_lines(shipments, sku_master)
+    if known.empty:
+        return pd.DataFrame(columns=["customer_segment", "packaging_unit", "quantity", "quantity_share"])
+    pkg = (
+        known.groupby("customer_segment", dropna=False)[["pallet_qty", "carton_qty", "loose_qty", "quantity"]]
+        .sum()
+        .reset_index()
+    )
+    rows: list[dict[str, object]] = []
+    for _, row in pkg.iterrows():
+        total_quantity = float(row["quantity"])
+        for packaging_unit, column in [
+            ("pallet", "pallet_qty"),
+            ("carton", "carton_qty"),
+            ("loose", "loose_qty"),
+        ]:
+            quantity = float(row[column])
+            rows.append(
+                {
+                    "customer_segment": row["customer_segment"],
+                    "packaging_unit": packaging_unit,
+                    "quantity": quantity,
+                    "quantity_share": quantity / total_quantity if total_quantity else 0.0,
+                }
+            )
+    return pd.DataFrame(rows).sort_values(["customer_segment", "packaging_unit"])
+
+
+def build_q13_segment_geographic_spread_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    known = shipments[
+        shipments["analysis_document_flag"]
+        & shipments["customer_segment"].isin(SEGMENT_ORDER)
+        & shipments["known_geography_flag"]
+    ].copy()
+    if known.empty:
+        return pd.DataFrame(
+            columns=["customer_segment", "province_count", "region_count", "top_province", "top_province_quantity_share"]
+        )
+    province_summary = (
+        known.groupby(["customer_segment", "province"], dropna=False)
+        .agg(quantity=("quantity", "sum"))
+        .reset_index()
+    )
+    province_summary["province_rank"] = province_summary.groupby("customer_segment")["quantity"].rank(
+        method="first", ascending=False
+    )
+    top_province = province_summary[province_summary["province_rank"].eq(1)].rename(columns={"province": "top_province"})
+    total_quantity = known.groupby("customer_segment", dropna=False)["quantity"].sum().rename("segment_quantity")
+    top_province = top_province.merge(total_quantity.reset_index(), on="customer_segment", how="left")
+    top_province["top_province_quantity_share"] = np.where(
+        top_province["segment_quantity"].gt(0), top_province["quantity"] / top_province["segment_quantity"], 0.0
+    )
+    spread = (
+        known.groupby("customer_segment", dropna=False)
+        .agg(province_count=("province", "nunique"), region_count=("region", "nunique"))
+        .reset_index()
+    )
+    spread = spread.merge(
+        top_province[["customer_segment", "top_province", "top_province_quantity_share"]],
+        on="customer_segment",
+        how="left",
+    )
+    return spread.sort_values("customer_segment")
+
+
+def build_q13_segment_province_spread_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    known = shipments[
+        shipments["analysis_document_flag"]
+        & shipments["customer_segment"].isin(SEGMENT_ORDER)
+        & shipments["known_geography_flag"]
+    ].copy()
+    if known.empty:
+        return pd.DataFrame(
+            columns=["customer_segment", "province", "region", "orders", "customers", "quantity", "cbm_total"]
+        )
+    return (
+        known.groupby(["customer_segment", "province", "region"], dropna=False)
+        .agg(
+            orders=("order_id", "nunique"),
+            customers=("customer_key", "nunique"),
+            quantity=("quantity", "sum"),
+            cbm_total=("cbm_total", "sum"),
+        )
+        .reset_index()
+        .sort_values(["customer_segment", "quantity", "orders", "province"], ascending=[True, False, False, True])
+    )
+
+
+def build_q12_province_correlation_input_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    known = shipments[shipments["analysis_document_flag"] & shipments["known_geography_flag"]].copy()
+    if known.empty:
+        return pd.DataFrame(
+            columns=[
+                "province",
+                "region",
+                "orders",
+                "customers",
+                "quantity",
+                "cbm_total",
+                "avg_distance_km",
+                "avg_order_quantity",
+                "avg_order_cbm",
+                "avg_sku_breadth",
+            ]
+        )
+    known["distance_km"] = np.where(
+        known["source_warehouse"] == "My Phuoc",
+        known["distance_from_my_phuoc_km"],
+        known["distance_from_vinh_loc_km"],
+    )
+    order_level = (
+        known.groupby(["province", "region", "order_id"], dropna=False)
+        .agg(
+            customer_key=("customer_key", "first"),
+            quantity=("quantity", "sum"),
+            cbm_total=("cbm_total", "sum"),
+            sku_breadth=("sku_code", "nunique"),
+            distance_km=("distance_km", "mean"),
+        )
+        .reset_index()
+    )
+    summary = (
+        order_level.groupby(["province", "region"], dropna=False)
+        .agg(
+            orders=("order_id", "nunique"),
+            customers=("customer_key", "nunique"),
+            quantity=("quantity", "sum"),
+            cbm_total=("cbm_total", "sum"),
+            avg_distance_km=("distance_km", "mean"),
+            avg_order_quantity=("quantity", "mean"),
+            avg_order_cbm=("cbm_total", "mean"),
+            avg_sku_breadth=("sku_breadth", "mean"),
+        )
+        .reset_index()
+    )
+    return summary.sort_values(["quantity", "orders", "province"], ascending=[False, False, True])
+
+
+def build_order_profile_segments(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
+    summary = build_q13_segment_profile_summary(shipments, sku_master)
+    packaging = build_q13_segment_packaging_summary(shipments, sku_master)
+    if summary.empty:
+        return pd.DataFrame(
+            columns=[
+                "customer_segment",
+                "orders",
+                "customers",
+                "provinces",
+                "avg_order_quantity",
+                "median_order_quantity",
+                "avg_order_cbm",
+                "median_order_cbm",
+                "avg_sku_breadth",
+                "avg_lines_per_order",
+                "avg_distance_km",
+                "segment_sku_breadth",
+                "pallet_qty_share",
+                "carton_qty_share",
+                "loose_qty_share",
+                "avg_orders_per_customer_month",
+                "province_count",
+                "region_count",
+                "top_province_quantity_share",
+            ]
+        )
+    pkg_pivot = packaging.pivot(index="customer_segment", columns="packaging_unit", values="quantity_share").fillna(0)
+    pkg_pivot = pkg_pivot.rename(
+        columns={
+            "pallet": "pallet_qty_share",
+            "carton": "carton_qty_share",
+            "loose": "loose_qty_share",
+        }
+    )
+    segment_sku = (
+        shipments[shipments["analysis_document_flag"] & shipments["customer_segment"].isin(SEGMENT_ORDER)]
+        .groupby("customer_segment", dropna=False)["sku_code"]
+        .nunique()
+        .rename("segment_sku_breadth")
+    )
+    result = summary.copy()
+    result = result.merge(segment_sku.reset_index(), on="customer_segment", how="left")
+    result = result.merge(pkg_pivot.reset_index(), on="customer_segment", how="left")
+    result["provinces"] = result["province_count"]
+    return result.sort_values("customer_segment")
 
 
 def build_document_type_summary(shipments: pd.DataFrame) -> pd.DataFrame:
@@ -519,6 +995,8 @@ def build_safety_stock_class_a(shipments: pd.DataFrame, abc_xyz: pd.DataFrame) -
         .sum()
         .unstack(fill_value=0)
     )
+    weeks = pd.period_range(start=ASSIGNMENT_START, end=ASSIGNMENT_END, freq="W").astype(str)
+    weekly = weekly.reindex(columns=weeks, fill_value=0)
     table = pd.DataFrame(
         {
             "sku_code": weekly.index,

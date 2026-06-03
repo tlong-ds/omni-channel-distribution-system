@@ -13,6 +13,17 @@ from src.logage2026.analysis import (
     build_geography_source_summary,
     build_missing_data_summary,
     build_order_profile_segments,
+    build_q12_province_cluster_summary,
+    build_q12_province_correlation_input_summary,
+    build_q12_province_demand_summary,
+    build_q12_province_warehouse_dominance_summary,
+    build_q12_region_orders_quantity_summary,
+    build_q12_urban_provincial_summary,
+    build_q12_warehouse_imbalance_visual_summary,
+    build_q13_segment_geographic_spread_summary,
+    build_q13_segment_packaging_summary,
+    build_q13_segment_province_spread_summary,
+    build_q13_segment_profile_summary,
     build_unresolved_candidate_region_summary,
     build_unresolved_customer_summary,
     build_warehouse_imbalance_summary,
@@ -28,7 +39,7 @@ from src.logage2026.loading import (
     load_transactions,
 )
 from src.logage2026.notes import write_notes
-from src.logage2026.visuals import save_charts
+from src.logage2026.visuals import boundary_province_names, save_charts
 
 
 EXPECTED_ASSIGNMENT_ROWS = 43_894
@@ -69,6 +80,17 @@ def main() -> None:
     warehouse_region_summary = build_warehouse_region_summary(assignment_shipments)
     customer_cluster_summary = build_customer_cluster_summary(assignment_shipments)
     warehouse_imbalance_summary = build_warehouse_imbalance_summary(assignment_shipments)
+    q12_region_orders_quantity_summary = build_q12_region_orders_quantity_summary(assignment_shipments)
+    q12_province_cluster_summary = build_q12_province_cluster_summary(assignment_shipments)
+    q12_province_demand_summary = build_q12_province_demand_summary(assignment_shipments)
+    q12_province_warehouse_dominance_summary = build_q12_province_warehouse_dominance_summary(assignment_shipments)
+    q12_province_correlation_input_summary = build_q12_province_correlation_input_summary(assignment_shipments)
+    q12_urban_provincial_summary = build_q12_urban_provincial_summary(assignment_shipments)
+    q12_warehouse_imbalance_visual_summary = build_q12_warehouse_imbalance_visual_summary(assignment_shipments)
+    q13_segment_profile_summary = build_q13_segment_profile_summary(assignment_shipments, sku_master)
+    q13_segment_packaging_summary = build_q13_segment_packaging_summary(assignment_shipments, sku_master)
+    q13_segment_geographic_spread_summary = build_q13_segment_geographic_spread_summary(assignment_shipments)
+    q13_segment_province_spread_summary = build_q13_segment_province_spread_summary(assignment_shipments)
     order_profile_segments = build_order_profile_segments(assignment_shipments, sku_master)
     document_type_summary = build_document_type_summary(shipments)
     customer_match_quality_summary = build_customer_match_quality_summary(assignment_shipments)
@@ -90,6 +112,21 @@ def main() -> None:
     warehouse_region_summary.to_csv(TABLES_DIR / "warehouse_region_summary.csv", index=False)
     customer_cluster_summary.to_csv(TABLES_DIR / "customer_cluster_summary.csv", index=False)
     warehouse_imbalance_summary.to_csv(TABLES_DIR / "warehouse_imbalance_summary.csv", index=False)
+    q12_region_orders_quantity_summary.to_csv(TABLES_DIR / "q12_region_orders_quantity_summary.csv", index=False)
+    q12_province_cluster_summary.to_csv(TABLES_DIR / "q12_province_cluster_summary.csv", index=False)
+    q12_province_demand_summary.to_csv(TABLES_DIR / "q12_province_demand_summary.csv", index=False)
+    q12_province_warehouse_dominance_summary.to_csv(
+        TABLES_DIR / "q12_province_warehouse_dominance_summary.csv", index=False
+    )
+    q12_province_correlation_input_summary.to_csv(
+        TABLES_DIR / "q12_province_correlation_input_summary.csv", index=False
+    )
+    q12_urban_provincial_summary.to_csv(TABLES_DIR / "q12_urban_provincial_summary.csv", index=False)
+    q12_warehouse_imbalance_visual_summary.to_csv(TABLES_DIR / "q12_warehouse_imbalance_visual_summary.csv", index=False)
+    q13_segment_profile_summary.to_csv(TABLES_DIR / "q13_segment_profile_summary.csv", index=False)
+    q13_segment_packaging_summary.to_csv(TABLES_DIR / "q13_segment_packaging_summary.csv", index=False)
+    q13_segment_geographic_spread_summary.to_csv(TABLES_DIR / "q13_segment_geographic_spread_summary.csv", index=False)
+    q13_segment_province_spread_summary.to_csv(TABLES_DIR / "q13_segment_province_spread_summary.csv", index=False)
     order_profile_segments.to_csv(TABLES_DIR / "order_profile_segments.csv", index=False)
     document_type_summary.to_csv(TABLES_DIR / "document_type_summary.csv", index=False)
     customer_match_quality_summary.to_csv(TABLES_DIR / "customer_match_quality_summary.csv", index=False)
@@ -97,7 +134,24 @@ def main() -> None:
     unresolved_customer_summary.to_csv(TABLES_DIR / "unresolved_customer_summary.csv", index=False)
 
     _remove_stale_outputs()
-    save_charts(assignment_shipments, abc_xyz, abc_xyz_matrix, warehouse_region_summary, sku_master)
+    save_charts(
+        assignment_shipments,
+        abc_xyz,
+        abc_xyz_matrix,
+        warehouse_region_summary,
+        q12_region_orders_quantity_summary,
+        q12_province_cluster_summary,
+        q12_province_demand_summary,
+        q12_province_warehouse_dominance_summary,
+        q12_province_correlation_input_summary,
+        q12_urban_provincial_summary,
+        q12_warehouse_imbalance_visual_summary,
+        q13_segment_profile_summary,
+        q13_segment_packaging_summary,
+        q13_segment_geographic_spread_summary,
+        q13_segment_province_spread_summary,
+        sku_master,
+    )
     write_notes(
         assignment_shipments,
         abc_xyz,
@@ -109,6 +163,15 @@ def main() -> None:
         warehouse_region_summary,
         customer_cluster_summary,
         warehouse_imbalance_summary,
+        q12_region_orders_quantity_summary,
+        q12_province_cluster_summary,
+        q12_province_demand_summary,
+        q12_province_warehouse_dominance_summary,
+        q12_urban_provincial_summary,
+        q12_warehouse_imbalance_visual_summary,
+        q13_segment_profile_summary,
+        q13_segment_packaging_summary,
+        q13_segment_geographic_spread_summary,
     )
     verify_outputs(
         shipments,
@@ -123,6 +186,17 @@ def main() -> None:
         warehouse_region_summary,
         customer_cluster_summary,
         warehouse_imbalance_summary,
+        q12_region_orders_quantity_summary,
+        q12_province_cluster_summary,
+        q12_province_demand_summary,
+        q12_province_warehouse_dominance_summary,
+        q12_province_correlation_input_summary,
+        q12_urban_provincial_summary,
+        q12_warehouse_imbalance_visual_summary,
+        q13_segment_profile_summary,
+        q13_segment_packaging_summary,
+        q13_segment_geographic_spread_summary,
+        q13_segment_province_spread_summary,
         document_type_summary,
         customer_match_quality_summary,
         geography_source_summary,
@@ -158,6 +232,17 @@ def verify_outputs(
     warehouse_region_summary,
     customer_cluster_summary,
     warehouse_imbalance_summary,
+    q12_region_orders_quantity_summary,
+    q12_province_cluster_summary,
+    q12_province_demand_summary,
+    q12_province_warehouse_dominance_summary,
+    q12_province_correlation_input_summary,
+    q12_urban_provincial_summary,
+    q12_warehouse_imbalance_visual_summary,
+    q13_segment_profile_summary,
+    q13_segment_packaging_summary,
+    q13_segment_geographic_spread_summary,
+    q13_segment_province_spread_summary,
     document_type_summary,
     customer_match_quality_summary,
     geography_source_summary,
@@ -194,8 +279,45 @@ def verify_outputs(
         raise ValueError("Geography quantity coverage does not reconcile to known-geography shipments")
     if abs(warehouse_region_summary["quantity"].sum() - known["quantity"].sum()) > 0.05:
         raise ValueError("Warehouse region summary does not reconcile to known-geography quantity")
+    if abs(q12_region_orders_quantity_summary["quantity"].sum() - known["quantity"].sum()) > 0.05:
+        raise ValueError("Q1.2 region summary does not reconcile to known-geography quantity")
+    if abs(q12_province_demand_summary["quantity"].sum() - known["quantity"].sum()) > 0.05:
+        raise ValueError("Q1.2 province demand summary does not reconcile to known-geography quantity")
+    if abs(q12_province_warehouse_dominance_summary["quantity"].sum() - known["quantity"].sum()) > 0.05:
+        raise ValueError("Q1.2 province warehouse dominance summary does not reconcile to known-geography quantity")
+    boundary_names = boundary_province_names()
+    if not q12_province_demand_summary["province"].isin(boundary_names).all():
+        raise ValueError("Q1.2 province demand summary contains province names missing from the boundary layer")
+    if not q12_province_warehouse_dominance_summary["province"].isin(boundary_names).all():
+        raise ValueError("Q1.2 warehouse dominance summary contains province names missing from the boundary layer")
+    if not q12_province_correlation_input_summary["province"].isin(boundary_names).all():
+        raise ValueError("Q1.2 province correlation input summary contains province names missing from the boundary layer")
+    if not q12_province_cluster_summary["my_phuoc_quantity_share"].between(0, 1).all():
+        raise ValueError("Q1.2 province cluster summary has invalid My Phuoc quantity shares")
+    if not q12_province_cluster_summary["vinh_loc_quantity_share"].between(0, 1).all():
+        raise ValueError("Q1.2 province cluster summary has invalid Vinh Loc quantity shares")
+    if abs(q12_urban_provincial_summary["quantity"].sum() - known["quantity"].sum()) > 0.05:
+        raise ValueError("Q1.2 urban/provincial summary does not reconcile to known-geography quantity")
+    if abs(q12_warehouse_imbalance_visual_summary["region_quantity"].sum() - known["quantity"].sum()) > 0.05:
+        raise ValueError("Q1.2 warehouse imbalance visual summary does not reconcile to known-geography quantity")
     if warehouse_imbalance_summary["orders"].sum() < known["order_id"].nunique():
         raise ValueError("Warehouse imbalance summary unexpectedly undercounts known-geography orders")
+    segment_known = assignment_shipments[
+        assignment_shipments["customer_segment"].isin(["Modern Trade", "Traditional Trade / Distributor"])
+    ].copy()
+    if int(q13_segment_profile_summary["orders"].sum()) != segment_known.groupby(["customer_segment", "order_id"]).ngroups:
+        raise ValueError("Q1.3 segment profile summary does not reconcile to assignment-window segment orders")
+    packaging_share = q13_segment_packaging_summary.groupby("customer_segment")["quantity_share"].sum()
+    if not packaging_share.round(6).eq(1.0).all():
+        raise ValueError("Q1.3 packaging mix shares do not sum to 1 by segment")
+    if int(q13_segment_geographic_spread_summary["province_count"].min()) <= 0:
+        raise ValueError("Q1.3 geographic spread summary should contain positive province coverage")
+    if q13_segment_province_spread_summary["customer_segment"].isin(["Unknown"]).any():
+        raise ValueError("Q1.3 province spread summary should exclude Unknown customer segment")
+    if abs(q13_segment_province_spread_summary["quantity"].sum() - segment_known.loc[segment_known["known_geography_flag"], "quantity"].sum()) > 0.05:
+        raise ValueError("Q1.3 province spread summary does not reconcile to known-geography segment quantity")
+    if not q13_segment_province_spread_summary["province"].isin(boundary_names).all():
+        raise ValueError("Q1.3 province spread summary contains province names missing from the boundary layer")
     if assignment_shipments.loc[
         assignment_shipments["customer_match_status"].eq("ambiguous_multi_location_customer"), "geography_source"
     ].eq("distributor_match").any():
@@ -230,6 +352,17 @@ def verify_outputs(
         TABLES_DIR / "warehouse_region_summary.csv",
         TABLES_DIR / "customer_cluster_summary.csv",
         TABLES_DIR / "warehouse_imbalance_summary.csv",
+        TABLES_DIR / "q12_region_orders_quantity_summary.csv",
+        TABLES_DIR / "q12_province_cluster_summary.csv",
+        TABLES_DIR / "q12_province_demand_summary.csv",
+        TABLES_DIR / "q12_province_warehouse_dominance_summary.csv",
+        TABLES_DIR / "q12_province_correlation_input_summary.csv",
+        TABLES_DIR / "q12_urban_provincial_summary.csv",
+        TABLES_DIR / "q12_warehouse_imbalance_visual_summary.csv",
+        TABLES_DIR / "q13_segment_profile_summary.csv",
+        TABLES_DIR / "q13_segment_packaging_summary.csv",
+        TABLES_DIR / "q13_segment_geographic_spread_summary.csv",
+        TABLES_DIR / "q13_segment_province_spread_summary.csv",
         TABLES_DIR / "order_profile_segments.csv",
         TABLES_DIR / "document_type_summary.csv",
         TABLES_DIR / "customer_match_quality_summary.csv",
@@ -241,6 +374,16 @@ def verify_outputs(
         CHARTS_DIR / "regional_quantity_density.png",
         CHARTS_DIR / "warehouse_region_split.png",
         CHARTS_DIR / "order_profile_comparison.png",
+        CHARTS_DIR / "q12_province_clusters.png",
+        CHARTS_DIR / "q12_province_demand_maps.png",
+        CHARTS_DIR / "q12_warehouse_dominance_map.png",
+        CHARTS_DIR / "q12_geography_coverage_map.png",
+        CHARTS_DIR / "q12_province_distance_correlation.png",
+        CHARTS_DIR / "q12_urban_provincial_split.png",
+        CHARTS_DIR / "q12_warehouse_imbalance.png",
+        CHARTS_DIR / "q13_packaging_mix.png",
+        CHARTS_DIR / "q13_geographic_spread.png",
+        CHARTS_DIR / "q13_segment_geographic_maps.png",
         CHARTS_DIR / "vietnam_regions_map.png",
     ]
     missing_files = [path for path in required_outputs if not path.exists()]

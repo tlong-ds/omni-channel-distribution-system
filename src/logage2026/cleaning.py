@@ -249,6 +249,7 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
 
     frame["address_street"] = _normalize_string(pd.Series([c["street"] for c in components], index=frame.index))
     frame["address_ward"] = _normalize_string(pd.Series([c["ward"] for c in components], index=frame.index))
+    frame["address_district"] = _normalize_string(pd.Series([c["district"] for c in components], index=frame.index))
     frame["address_province"] = _normalize_string(pd.Series([c["province"] for c in components], index=frame.index))
     frame["latitude"] = [c.get("latitude") for c in components]
     frame["longitude"] = [c.get("longitude") for c in components]
@@ -257,9 +258,11 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
     frame["customer_location_key"] = (
         frame["customer_key"] + " | " + frame["delivery_address"].map(normalize_text)
     )
-    frame["province"] = frame["address_province"].apply(to_new_province)
+    frame["province"] = frame["address_province"]
+    frame["district"] = frame["address_district"]
+    frame["ward"] = frame["address_ward"]
     frame["region"] = frame["province"].map(region_group)
-    dedupe_columns = ["customer_key", "address_street", "address_ward", "address_province", "region"]
+    dedupe_columns = ["customer_key", "address_street", "address_ward", "address_district", "address_province", "region"]
     frame = frame.drop_duplicates(subset=dedupe_columns).copy()
     frame["customer_location_count"] = frame.groupby("customer_key")["customer_location_key"].transform("nunique")
     frame["customer_key_is_ambiguous"] = frame["customer_location_count"].gt(1)
@@ -277,6 +280,8 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
         "customer_key_is_ambiguous",
         "customer_match_status",
         "province",
+        "district",
+        "ward",
         "region",
         "latitude",
         "longitude",
@@ -343,6 +348,8 @@ def clean_shipments(
     ship_to_cache = {name: parse_address_components(name) for name in unique_ship_to}
 
     frame["parsed_province"] = [ship_to_cache[name]["province"] for name in frame["ship_to_customer"]]
+    frame["parsed_district"] = [ship_to_cache[name]["district"] for name in frame["ship_to_customer"]]
+    frame["parsed_ward"] = [ship_to_cache[name]["ward"] for name in frame["ship_to_customer"]]
     frame["latitude_parsed"] = [ship_to_cache[name]["latitude"] for name in frame["ship_to_customer"]]
     frame["longitude_parsed"] = [ship_to_cache[name]["longitude"] for name in frame["ship_to_customer"]]
 
@@ -354,12 +361,16 @@ def clean_shipments(
     transaction_geo_mask = ~distributor_geo_mask & parsed_has_geo
 
     frame["province"] = "Unknown"
+    frame["district"] = ""
+    frame["ward"] = ""
     frame["region"] = "Unknown"
     frame["latitude"] = pd.Series([float("nan")] * len(frame), dtype="float64", index=frame.index)
     frame["longitude"] = pd.Series([float("nan")] * len(frame), dtype="float64", index=frame.index)
 
     # Assign coordinates and regions for distributor matched customers
     frame.loc[distributor_geo_mask, "province"] = frame.loc[distributor_geo_mask, "province_distributor"]
+    frame.loc[distributor_geo_mask, "district"] = frame.loc[distributor_geo_mask, "district_distributor"]
+    frame.loc[distributor_geo_mask, "ward"] = frame.loc[distributor_geo_mask, "ward_distributor"]
     frame.loc[distributor_geo_mask, "region"] = frame.loc[distributor_geo_mask, "region_distributor"]
     frame.loc[distributor_geo_mask, "latitude"] = frame.loc[distributor_geo_mask, "latitude_distributor"]
     frame.loc[distributor_geo_mask, "longitude"] = frame.loc[distributor_geo_mask, "longitude_distributor"]
@@ -367,6 +378,8 @@ def clean_shipments(
 
     # Assign coordinates and regions for transaction text parsed customers
     frame.loc[transaction_geo_mask, "province"] = frame.loc[transaction_geo_mask, "parsed_province"]
+    frame.loc[transaction_geo_mask, "district"] = frame.loc[transaction_geo_mask, "parsed_district"]
+    frame.loc[transaction_geo_mask, "ward"] = frame.loc[transaction_geo_mask, "parsed_ward"]
     frame.loc[transaction_geo_mask, "region"] = frame.loc[transaction_geo_mask, "province"].map(region_group)
     frame.loc[transaction_geo_mask, "latitude"] = frame.loc[transaction_geo_mask, "latitude_parsed"]
     frame.loc[transaction_geo_mask, "longitude"] = frame.loc[transaction_geo_mask, "longitude_parsed"]
@@ -374,7 +387,7 @@ def clean_shipments(
 
     frame.loc[frame["ship_to_customer"].eq("unknown"), "customer_match_status"] = "missing_customer_name"
 
-    frame["province"] = frame["province"].apply(to_new_province)
+    frame["province"] = frame["province"].fillna("Unknown")
     frame["region"] = frame["province"].map(region_group)
 
     frame["known_geography_flag"] = frame["province"].ne("Unknown")
@@ -424,6 +437,8 @@ def clean_shipments(
         "segment_confidence",
         "created_date",
         "province",
+        "district",
+        "ward",
         "region",
         "parsed_province",
         "province_alias_match_flag",
@@ -453,6 +468,8 @@ def _build_distributor_match_table(distributors: pd.DataFrame) -> pd.DataFrame:
             [
                 "customer_key",
                 "province",
+                "district",
+                "ward",
                 "region",
                 "latitude",
                 "longitude",
@@ -462,6 +479,8 @@ def _build_distributor_match_table(distributors: pd.DataFrame) -> pd.DataFrame:
         ].rename(
             columns={
                 "province": "province_distributor",
+                "district": "district_distributor",
+                "ward": "ward_distributor",
                 "region": "region_distributor",
                 "latitude": "latitude_distributor",
                 "longitude": "longitude_distributor",

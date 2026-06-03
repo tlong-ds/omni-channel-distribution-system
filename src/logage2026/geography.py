@@ -160,6 +160,7 @@ def parse_address_components(address: object) -> dict:
         return {
             "street": "",
             "ward": "",
+            "district": "",
             "province": "",
             "full_address": str(address) if not pd.isna(address) else "",
             "latitude": None,
@@ -168,37 +169,113 @@ def parse_address_components(address: object) -> dict:
     try:
         address = preprocess_address(address)
 
-        # Try parsing with FROM_2025 mode first to natively recognize 2025 address formats
-        result = vau.parse_address(address, mode=vau.ParseMode.FROM_2025)
+        legacy_db = None
+        result = None
+        street = ""
 
-        if not result.ward:
-            # If not a ward-level match in 2025, it might be a legacy format (has district)
-            legacy = vau.parse_address(address, mode=vau.ParseMode.LEGACY)
-            if legacy.district:
-                # Old format (has district) → convert to new 2025 address
-                result = vau.convert_address(address)
-            elif legacy.province:
-                # If it has a legacy province but FROM_2025 missed it, fall back to legacy
-                if not result.short_province:
-                    result = legacy
+        # 1. Try parsing with LEGACY mode first
+        try:
+            result_legacy = vau.parse_address(address, mode=vau.ParseMode.LEGACY)
+        except Exception:
+            result_legacy = None
 
-        province = result.short_province or ""
+        if result_legacy and getattr(result_legacy, "ward_code", None):
+            try:
+                from vietnamadminunits.database import main as db_main
+                res_db = db_main.query(f"SELECT * FROM admin_units_legacy WHERE wardCode='{result_legacy.ward_code}'")
+                if res_db:
+                    legacy_db = res_db[0]
+                    result = result_legacy
+                    street = result_legacy.street or ""
+            except Exception:
+                pass
+
+        # 2. If LEGACY mode failed or ward_code was not in admin_units_legacy, try FROM_2025 mode
+        if not legacy_db:
+            try:
+                result_2025 = vau.parse_address(address, mode=vau.ParseMode.FROM_2025)
+            except Exception:
+                result_2025 = None
+
+            if result_2025 and getattr(result_2025, "ward_code", None):
+                try:
+                    from vietnamadminunits.database import main as db_main
+                    res_db = db_main.query(f"SELECT * FROM admin_units_legacy WHERE wardCode='{result_2025.ward_code}'")
+                    if res_db:
+                        legacy_db = res_db[0]
+                        result = result_2025
+                        street = result_2025.street or ""
+                except Exception:
+                    pass
+
+        if legacy_db:
+            province = legacy_db["provinceShort"] or ""
+            district = legacy_db["districtShort"] or ""
+            ward = legacy_db["wardShort"] or ""
+            latitude = legacy_db["wardLat"] or result.latitude
+            longitude = legacy_db["wardLon"] or result.longitude
+            
+            parts = []
+            if street:
+                parts.append(street)
+            if ward:
+                parts.append(ward)
+            if district:
+                parts.append(district)
+            if province:
+                parts.append(province)
+            parts.append("Vietnam")
+            full_address = ", ".join(parts)
+        else:
+            # Fall back to using the raw result_legacy or result_2025 properties directly
+            res = result_legacy or (result_2025 if 'result_2025' in locals() else None)
+            if res:
+                province = getattr(res, "short_province", None) or ""
+                district = getattr(res, "short_district", None) or ""
+                ward = getattr(res, "short_ward", None) or ""
+                latitude = getattr(res, "latitude", None)
+                longitude = getattr(res, "longitude", None)
+                street = getattr(res, "street", None) or ""
+                
+                parts = []
+                if street:
+                    parts.append(street)
+                if ward:
+                    parts.append(ward)
+                if district:
+                    parts.append(district)
+                if province:
+                    parts.append(province)
+                parts.append("Vietnam")
+                full_address = ", ".join(parts)
+            else:
+                province = ""
+                district = ""
+                ward = ""
+                latitude = None
+                longitude = None
+                full_address = str(address)
+                street = str(address)
+
         if not province:
             province = _extract_province_from_text(address)
 
         return {
-            "street": result.street or "",
-            "ward": result.ward or "",
+            "street": street,
+            "ward": ward,
+            "district": district,
             "province": province,
-            "full_address": result.get_address() or str(address),
-            "latitude": result.latitude,
-            "longitude": result.longitude
+            "full_address": full_address,
+            "latitude": latitude,
+            "longitude": longitude
         }
     except Exception:
+        fallback_prov = _extract_province_from_text(address)
         return {
             "street": str(address),
             "ward": "",
-            "province": _extract_province_from_text(address),
+            "district": "",
+            "province": fallback_prov,
             "full_address": str(address),
             "latitude": None,
             "longitude": None
@@ -250,80 +327,67 @@ def region_group(province: str) -> str:
     if prov in {"", "UNKNOWN"}:
         return "Không xác định"
 
-    # 1. Trung du và miền núi phía Bắc
     if prov in {
-        "CAO BANG",
-        "DIEN BIEN",
-        "LAI CHAU",
-        "LANG SON", 
-        "LAO CAI",
-        "PHU THO",
-        "SON LA",
-        "THAI NGUYEN",
-        "TUYEN QUANG",
+
+        "HA GIANG", "CAO BANG", "BAC KAN", "TUYEN QUANG", "LAO CAI",
+
+        "YEN BAI", "THAI NGUYEN", "LANG SON", "BAC GIANG", "PHU THO",
+
+        "DIEN BIEN", "LAI CHAU", "SON LA", "HOA BINH", "QUANG NINH"
 
     }:
 
         return "Trung du và miền núi phía Bắc"
 
-    # 2. Đồng bằng sông Hồng
     if prov in {
-        "HA NOI",
-        "HAI PHONG",
-        "BAC NINH",
-        "HUNG YEN",
-        "NINH BINH",
-        "QUANG NINH",
+
+        "HA NOI", "HAI PHONG", "VINH PHUC", "BAC NINH", "HAI DUONG",
+
+        "HUNG YEN", "THAI BINH", "HA NAM", "NAM DINH", "NINH BINH"
 
     }:
 
         return "Đồng bằng sông Hồng"
 
-    # 3. Bắc Trung Bộ và Duyên hải miền Trung
     if prov in {
-        "THANH HOA",
-        "NGHE AN",
-        "HA TINH",
-        "QUANG TRI",
-        "HUE",
-        "DA NANG",
-        "QUANG NGAI",
-        "GIA LAI",      
-        "KHANH HOA",    
+
+        "THANH HOA", "NGHE AN", "HA TINH", "QUANG BINH", "QUANG TRI",
+
+        "HUE", "DA NANG", "QUANG NAM", "QUANG NGAI",
+
+        "BINH DINH", "PHU YEN", "KHANH HOA", "NINH THUAN", "BINH THUAN"
 
     }:
 
         return "Bắc Trung Bộ và Duyên hải miền Trung"
 
-    # 4. Tây Nguyên
-
     if prov in {
-        "DAK LAK",      # Đắk Lắk mới + Phú Yên
-        "LAM DONG",     # Lâm Đồng mới + Đắk Nông + Bình Thuận
+
+        "KON TUM", "GIA LAI", "DAK LAK", "DAK NONG", "LAM DONG"
+
     }:
 
         return "Tây Nguyên"
 
-    # 5. Đông Nam Bộ
-
     if prov in {
-        "HO CHI MINH",
-        "HO CHI MINH CITY",
-        "DONG NAI",
-        "TAY NINH",
+
+        "HO CHI MINH", "HO CHI MINH CITY", "TP HCM", "TP. HO CHI MINH",
+
+        "HCMC", "BINH PHUOC", "TAY NINH", "BINH DUONG", "DONG NAI",
+
+        "BA RIA VUNG TAU", "BA RIA - VUNG TAU"
 
     }:
 
         return "Đông Nam Bộ"
 
-    # 6. Đồng bằng sông Cửu Long
-
     if prov in {
-        "CAN THO",
-        "VINH LONG",
-        "DONG THAP",
-        "CA MAU",
-        "AN GIANG",
+
+        "LONG AN", "TIEN GIANG", "BEN TRE", "TRA VINH", "VINH LONG",
+
+        "DONG THAP", "AN GIANG", "KIEN GIANG", "CAN THO", "HAU GIANG",
+
+        "SOC TRANG", "BAC LIEU", "CA MAU"
 
     }:
 
@@ -347,7 +411,6 @@ def haversine_km(origin: tuple[float, float], destination: tuple[float, float]) 
 def add_distance_columns(frame: pd.DataFrame) -> pd.DataFrame:
     result = frame.copy()
     if "latitude" not in result.columns or "longitude" not in result.columns:
-        # Fallback if somehow latitude and longitude aren't in the dataframe (shouldn't happen for distributors)
         return result
         
     for warehouse, origin in WAREHOUSE_COORDINATES.items():

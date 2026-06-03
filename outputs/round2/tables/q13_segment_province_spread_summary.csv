@@ -1,0 +1,99 @@
+customer_segment,province,region,orders,customers,quantity,cbm_total
+Modern Trade,Bình Dương,Đông Nam Bộ,169,7,19463.166666666668,1256.5012172931667
+Modern Trade,Hồ Chí Minh,Đông Nam Bộ,300,36,19055.691666666666,1188.4538939579334
+Modern Trade,Cần Thơ,Đồng bằng sông Cửu Long,111,3,8962.583333333334,560.742115125
+Modern Trade,Tiền Giang,Đồng bằng sông Cửu Long,95,2,8186.583333333333,512.46181225
+Modern Trade,Đà Nẵng,Bắc Trung Bộ và Duyên hải miền Trung,93,3,7158.666666666667,449.7951454245834
+Modern Trade,Hà Nội,Đồng bằng sông Hồng,91,7,5676.633333333333,369.22321460610004
+Modern Trade,Khánh Hòa,Bắc Trung Bộ và Duyên hải miền Trung,87,4,4968.5,304.4830600083333
+Modern Trade,Hải Phòng,Đồng bằng sông Hồng,49,3,3068.5,212.86377191666668
+Modern Trade,Đắk Lắk,Tây Nguyên,80,3,2363.5833333333335,140.42922719166668
+Modern Trade,Thanh Hóa,Bắc Trung Bộ và Duyên hải miền Trung,46,6,1636.3333333333333,105.14606396916668
+Modern Trade,Phú Thọ,Trung du và miền núi phía Bắc,37,2,1357.25,92.27309606666667
+Modern Trade,Bắc Giang,Trung du và miền núi phía Bắc,13,1,285.5833333333333,22.342103205
+Modern Trade,Đồng Nai,Đông Nam Bộ,28,5,257.3333333333333,17.491551872916666
+Modern Trade,Quảng Nam,Bắc Trung Bộ và Duyên hải miền Trung,30,1,204.21666666666667,12.007681714066667
+Modern Trade,Yên Bái,Trung du và miền núi phía Bắc,11,4,152.58333333333334,10.26290888325
+Modern Trade,Bà Rịa - Vũng Tàu,Đông Nam Bộ,15,5,140.75,9.316428986250001
+Modern Trade,Sơn La,Trung du và miền núi phía Bắc,3,1,53.416666666666664,3.38365125
+Modern Trade,Vĩnh Long,Đồng bằng sông Cửu Long,4,1,35.75,2.3515048333333337
+Modern Trade,An Giang,Đồng bằng sông Cửu Long,7,4,34.166666666666664,2.6220175833333332
+Modern Trade,Cà Mau,Đồng bằng sông Cửu Long,6,2,25.666666666666668,1.9079787500000003
+Modern Trade,Tuyên Quang,Trung du và miền núi phía Bắc,6,1,17.166666666666668,1.4803226666666667
+Modern Trade,Quảng Bình,Bắc Trung Bộ và Duyên hải miền Trung,5,2,15.833333333333334,2.1071288708333333
+Modern Trade,Bến Tre,Đồng bằng sông Cửu Long,5,3,11.333333333333334,1.4988732458333334
+Modern Trade,Phú Yên,Bắc Trung Bộ và Duyên hải miền Trung,1,1,7.916666666666667,0.7843066666666667
+Modern Trade,Hòa Bình,Trung du và miền núi phía Bắc,7,1,7.583333333333333,0.5487077158333333
+Modern Trade,Kiên Giang,Đồng bằng sông Cửu Long,4,1,7.0,0.40898281983333334
+Modern Trade,Hậu Giang,Đồng bằng sông Cửu Long,2,1,6.333333333333334,0.6552413333333333
+Modern Trade,Bạc Liêu,Đồng bằng sông Cửu Long,2,1,6.0,0.6317440000000001
+Modern Trade,Hà Tĩnh,Bắc Trung Bộ và Duyên hải miền Trung,1,1,5.916666666666667,0.6302066666666667
+Modern Trade,Điện Biên,Trung du và miền núi phía Bắc,2,1,5.833333333333334,0.5906513333333333
+Modern Trade,Nghệ An,Bắc Trung Bộ và Duyên hải miền Trung,1,1,5.833333333333334,0.6013013333333334
+Modern Trade,Bình Phước,Đông Nam Bộ,2,1,5.583333333333333,0.5530313333333333
+Modern Trade,Long An,Đồng bằng sông Cửu Long,2,1,5.5,0.573222
+Modern Trade,Gia Lai,Tây Nguyên,1,1,5.416666666666667,0.5549666666666667
+Modern Trade,Hải Dương,Đồng bằng sông Hồng,2,1,5.416666666666666,0.5716846666666667
+Modern Trade,Lâm Đồng,Tây Nguyên,1,1,5.333333333333333,0.5154113333333333
+Modern Trade,Huế,Bắc Trung Bộ và Duyên hải miền Trung,3,1,5.233333333333333,0.6759285612000001
+Modern Trade,Bình Định,Bắc Trung Bộ và Duyên hải miền Trung,2,1,5.0,0.49798200000000004
+Modern Trade,Nam Định,Đồng bằng sông Hồng,2,1,4.75,0.60268390375
+Modern Trade,Kon Tum,Tây Nguyên,3,1,3.25,0.39013380350000004
+Modern Trade,Tây Ninh,Đông Nam Bộ,3,1,3.0,0.255255765
+Traditional Trade / Distributor,Hồ Chí Minh,Đông Nam Bộ,984,71,23200.4,1046.1151151726556
+Traditional Trade / Distributor,Đà Nẵng,Bắc Trung Bộ và Duyên hải miền Trung,112,8,8364.3125,461.20864690770003
+Traditional Trade / Distributor,Bình Thuận,Bắc Trung Bộ và Duyên hải miền Trung,81,5,6993.175,394.9125891933167
+Traditional Trade / Distributor,Đồng Nai,Đông Nam Bộ,359,8,5322.0,250.70274263107024
+Traditional Trade / Distributor,Hà Nội,Đồng bằng sông Hồng,73,9,4778.833333333333,236.90916235791667
+Traditional Trade / Distributor,Quảng Nam,Bắc Trung Bộ và Duyên hải miền Trung,39,4,4387.958333333333,222.56979167233334
+Traditional Trade / Distributor,Nghệ An,Bắc Trung Bộ và Duyên hải miền Trung,64,4,4292.083333333333,210.60633115083334
+Traditional Trade / Distributor,Huế,Bắc Trung Bộ và Duyên hải miền Trung,45,4,2887.5,157.35351468203334
+Traditional Trade / Distributor,Hòa Bình,Trung du và miền núi phía Bắc,101,6,2789.1666666666665,127.96312880583334
+Traditional Trade / Distributor,Khánh Hòa,Bắc Trung Bộ và Duyên hải miền Trung,54,5,2115.25,123.028508618
+Traditional Trade / Distributor,Cần Thơ,Đồng bằng sông Cửu Long,66,5,1598.5,79.73447674373334
+Traditional Trade / Distributor,Bắc Giang,Trung du và miền núi phía Bắc,23,3,1092.8333333333333,56.086082000000005
+Traditional Trade / Distributor,An Giang,Đồng bằng sông Cửu Long,59,6,763.3333333333334,37.119312917
+Traditional Trade / Distributor,Quảng Trị,Bắc Trung Bộ và Duyên hải miền Trung,17,3,604.0,34.21470928291667
+Traditional Trade / Distributor,Vĩnh Long,Đồng bằng sông Cửu Long,27,4,542.3333333333334,27.5638930596
+Traditional Trade / Distributor,Quảng Bình,Bắc Trung Bộ và Duyên hải miền Trung,11,1,524.0,24.820189000000003
+Traditional Trade / Distributor,Bình Định,Bắc Trung Bộ và Duyên hải miền Trung,21,2,456.0,21.806557559
+Traditional Trade / Distributor,Kiên Giang,Đồng bằng sông Cửu Long,11,2,446.0,20.811885889600003
+Traditional Trade / Distributor,Đắk Lắk,Tây Nguyên,33,6,389.1666666666667,20.752463255583333
+Traditional Trade / Distributor,Cao Bằng,Trung du và miền núi phía Bắc,7,1,374.0,14.263256666666667
+Traditional Trade / Distributor,Bình Dương,Đông Nam Bộ,25,3,351.0,15.208108267
+Traditional Trade / Distributor,Quảng Ninh,Trung du và miền núi phía Bắc,21,1,322.9166666666667,27.760740479166664
+Traditional Trade / Distributor,Bến Tre,Đồng bằng sông Cửu Long,16,2,315.0,14.075729742333335
+Traditional Trade / Distributor,Cà Mau,Đồng bằng sông Cửu Long,19,4,285.0,14.138699216666668
+Traditional Trade / Distributor,Gia Lai,Tây Nguyên,31,3,282.56666666666666,13.924531950116668
+Traditional Trade / Distributor,Bình Phước,Đông Nam Bộ,5,1,257.0,11.33183
+Traditional Trade / Distributor,Tây Ninh,Đông Nam Bộ,17,2,233.51666666666668,12.342210135083334
+Traditional Trade / Distributor,Tiền Giang,Đồng bằng sông Cửu Long,16,4,224.0,11.466893333333335
+Traditional Trade / Distributor,Long An,Đồng bằng sông Cửu Long,21,2,202.0,8.645600166666666
+Traditional Trade / Distributor,Quảng Ngãi,Bắc Trung Bộ và Duyên hải miền Trung,28,4,185.33333333333334,14.560274610833334
+Traditional Trade / Distributor,Thanh Hóa,Bắc Trung Bộ và Duyên hải miền Trung,22,2,181.66666666666666,10.896480145833333
+Traditional Trade / Distributor,Hải Phòng,Đồng bằng sông Hồng,26,2,171.95833333333334,8.689286625000001
+Traditional Trade / Distributor,Đồng Tháp,Đồng bằng sông Cửu Long,14,2,158.0,7.9181732445333335
+Traditional Trade / Distributor,Lâm Đồng,Tây Nguyên,13,1,143.0,5.730971075
+Traditional Trade / Distributor,Trà Vinh,Đồng bằng sông Cửu Long,11,1,121.0,6.560470192
+Traditional Trade / Distributor,Sóc Trăng,Đồng bằng sông Cửu Long,12,2,107.08333333333333,5.025298908583333
+Traditional Trade / Distributor,Nam Định,Đồng bằng sông Hồng,20,2,101.66666666666667,5.651420895833334
+Traditional Trade / Distributor,Yên Bái,Trung du và miền núi phía Bắc,7,2,97.58333333333333,5.223517187500001
+Traditional Trade / Distributor,Ninh Bình,Đồng bằng sông Hồng,10,1,80.0,5.0502919791666665
+Traditional Trade / Distributor,Hưng Yên,Đồng bằng sông Hồng,13,1,64.91666666666667,5.26979475
+Traditional Trade / Distributor,Thái Nguyên,Trung du và miền núi phía Bắc,14,2,64.0,4.253771554166667
+Traditional Trade / Distributor,Hà Nam,Đồng bằng sông Hồng,6,2,59.666666666666664,2.419758125
+Traditional Trade / Distributor,Bắc Ninh,Đồng bằng sông Hồng,14,1,57.416666666666664,3.55957715
+Traditional Trade / Distributor,Hải Dương,Đồng bằng sông Hồng,9,1,50.416666666666664,2.7802928125
+Traditional Trade / Distributor,Hậu Giang,Đồng bằng sông Cửu Long,1,1,50.0,2.0075000000000003
+Traditional Trade / Distributor,Lạng Sơn,Trung du và miền núi phía Bắc,10,2,48.791666666666664,3.0198439583333334
+Traditional Trade / Distributor,Phú Thọ,Trung du và miền núi phía Bắc,4,1,40.833333333333336,2.85551175
+Traditional Trade / Distributor,Bạc Liêu,Đồng bằng sông Cửu Long,2,2,39.666666666666664,2.47071
+Traditional Trade / Distributor,Vĩnh Phúc,Đồng bằng sông Hồng,13,1,34.833333333333336,2.2982400625
+Traditional Trade / Distributor,Hà Tĩnh,Bắc Trung Bộ và Duyên hải miền Trung,6,1,33.583333333333336,2.0857965833333334
+Traditional Trade / Distributor,Tuyên Quang,Trung du và miền núi phía Bắc,2,1,31.0,2.154967
+Traditional Trade / Distributor,Hà Giang,Trung du và miền núi phía Bắc,7,1,29.25,2.1765535833333334
+Traditional Trade / Distributor,Lào Cai,Trung du và miền núi phía Bắc,5,1,27.166666666666668,1.631410375
+Traditional Trade / Distributor,Sơn La,Trung du và miền núi phía Bắc,3,1,20.0,1.15875
+Traditional Trade / Distributor,Bắc Kạn,Trung du và miền núi phía Bắc,5,1,4.666666666666667,0.29542700000000005
+Traditional Trade / Distributor,Ninh Thuận,Bắc Trung Bộ và Duyên hải miền Trung,2,1,3.75,0.4698819125
+Traditional Trade / Distributor,Phú Yên,Bắc Trung Bộ và Duyên hải miền Trung,2,1,2.4166666666666665,0.2289616875
