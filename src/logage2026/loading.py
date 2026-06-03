@@ -1,6 +1,10 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+
 import pandas as pd
 
-from .config import CUSTOMER_SEGMENT_OVERRIDE_FILE, DISTRIBUTOR_FILE, SKU_MASTER_FILE, TRANSACTION_FILE
+from src.logage2026.config import CUSTOMER_SEGMENT_OVERRIDE_FILE, DISTRIBUTOR_FILE, SKU_MASTER_FILE, TRANSACTION_FILE
 
 
 def load_sku_master() -> pd.DataFrame:
@@ -36,3 +40,12 @@ def load_segment_overrides() -> pd.DataFrame:
     if CUSTOMER_SEGMENT_OVERRIDE_FILE.exists():
         return pd.read_csv(CUSTOMER_SEGMENT_OVERRIDE_FILE)
     return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    sku = load_sku_master()
+    tx = load_transactions()
+    dist = load_distributors()
+    print(f"SKU Master shape: {sku.shape}")
+    print(f"Transactions shape: {tx.shape}")
+    print(f"Distributors shape: {dist.shape}")

@@ -17,5 +17,7 @@
 
 ![Q1.2 Warehouse-region split](../charts/warehouse_region_split.png)
 
+![Q1.2 Vietnam regioning map](../charts/vietnam_regions_map.png)
+
 ## Q1.3 Order profile analysis
 ![Q1.3 Order profile comparison](../charts/order_profile_comparison.png)

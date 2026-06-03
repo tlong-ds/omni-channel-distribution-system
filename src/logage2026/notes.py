@@ -1,6 +1,10 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+
 import pandas as pd
 
-from .config import NOTES_DIR
+from src.logage2026.config import NOTES_DIR
 
 
 def write_notes(
@@ -51,7 +55,46 @@ def write_notes(
         "",
         "![Q1.2 Warehouse-region split](../charts/warehouse_region_split.png)",
         "",
+        "![Q1.2 Vietnam regioning map](../charts/vietnam_regions_map.png)",
+        "",
         "## Q1.3 Order profile analysis",
         "![Q1.3 Order profile comparison](../charts/order_profile_comparison.png)",
     ]
     (NOTES_DIR / "question_summary.md").write_text("\n".join(text) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+    
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    
+    from src.logage2026.config import CLEANED_DIR, TABLES_DIR
+    
+    print("Loading static cleaned data from disk...")
+    try:
+        shipments = pd.read_csv(CLEANED_DIR / "shipments_cleaned.csv")
+        abc_xyz = pd.read_csv(TABLES_DIR / "abc_xyz.csv")
+        abc_xyz_matrix = pd.read_csv(TABLES_DIR / "abc_xyz_matrix_summary.csv")
+        fast_moving_summary = pd.read_csv(TABLES_DIR / "fast_moving_summary.csv")
+        classification_metadata = pd.read_csv(TABLES_DIR / "classification_metadata.csv")
+        missing_data_summary = pd.read_csv(TABLES_DIR / "missing_data_summary.csv")
+        geography_coverage_summary = pd.read_csv(TABLES_DIR / "geography_coverage_summary.csv")
+        warehouse_region_summary = pd.read_csv(TABLES_DIR / "warehouse_region_summary.csv")
+        customer_cluster_summary = pd.read_csv(TABLES_DIR / "customer_cluster_summary.csv")
+        warehouse_imbalance_summary = pd.read_csv(TABLES_DIR / "warehouse_imbalance_summary.csv")
+        
+        # Convert dates
+        shipments["created_date"] = pd.to_datetime(shipments["created_date"])
+        
+        print("Generating report text from static output...")
+        write_notes(
+            shipments, abc_xyz, abc_xyz_matrix, fast_moving_summary,
+            classification_metadata, missing_data_summary, geography_coverage_summary,
+            warehouse_region_summary, customer_cluster_summary, warehouse_imbalance_summary
+        )
+        print("Report written successfully to outputs/round2/notes/question_summary.md!")
+    except Exception as e:
+        print(f"Error loading static output: {e}")
+        print("Please run run_analysis.py first to generate the outputs.")
+

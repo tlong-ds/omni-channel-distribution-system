@@ -69,7 +69,7 @@ def main() -> None:
     warehouse_region_summary = build_warehouse_region_summary(assignment_shipments)
     customer_cluster_summary = build_customer_cluster_summary(assignment_shipments)
     warehouse_imbalance_summary = build_warehouse_imbalance_summary(assignment_shipments)
-    order_profile_segments = build_order_profile_segments(assignment_shipments)
+    order_profile_segments = build_order_profile_segments(assignment_shipments, sku_master)
     document_type_summary = build_document_type_summary(shipments)
     customer_match_quality_summary = build_customer_match_quality_summary(assignment_shipments)
     geography_source_summary = build_geography_source_summary(assignment_shipments)
@@ -97,7 +97,7 @@ def main() -> None:
     unresolved_customer_summary.to_csv(TABLES_DIR / "unresolved_customer_summary.csv", index=False)
 
     _remove_stale_outputs()
-    save_charts(assignment_shipments, abc_xyz, abc_xyz_matrix, warehouse_region_summary)
+    save_charts(assignment_shipments, abc_xyz, abc_xyz_matrix, warehouse_region_summary, sku_master)
     write_notes(
         assignment_shipments,
         abc_xyz,
@@ -241,6 +241,7 @@ def verify_outputs(
         CHARTS_DIR / "regional_quantity_density.png",
         CHARTS_DIR / "warehouse_region_split.png",
         CHARTS_DIR / "order_profile_comparison.png",
+        CHARTS_DIR / "vietnam_regions_map.png",
     ]
     missing_files = [path for path in required_outputs if not path.exists()]
     if missing_files:

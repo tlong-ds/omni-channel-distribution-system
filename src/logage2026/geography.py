@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+
 import math
 import re
 import unicodedata
@@ -5,7 +9,7 @@ import vietnamadminunits as vau
 
 import pandas as pd
 
-from .config import WAREHOUSE_COORDINATES
+from src.logage2026.config import WAREHOUSE_COORDINATES
 
 
 # Mapping of old district names that became wards post-2025 reform
@@ -164,23 +168,19 @@ def parse_address_components(address: object) -> dict:
     try:
         address = preprocess_address(address)
 
-        # Step 1: Parse with LEGACY mode — recognises all pre-2025 provinces
-        # (Tiền Giang, Yên Bái, Quảng Nam, etc.) that FROM_2025 misses entirely.
-        legacy = vau.parse_address(address, mode=vau.ParseMode.LEGACY)
+        # Try parsing with FROM_2025 mode first to natively recognize 2025 address formats
+        result = vau.parse_address(address, mode=vau.ParseMode.FROM_2025)
 
-        if legacy.district:
-            # Old format (has district) → convert to new 2025 address
-            result = vau.convert_address(address)
-        elif legacy.province:
-            # Already a new-format address or province-only match → use as-is
-            # but re-parse with FROM_2025 to get accurate new ward/coordinates
-            result = vau.parse_address(address, mode=vau.ParseMode.FROM_2025)
-            # If FROM_2025 loses the province, fall back to legacy result
-            if not result.short_province:
-                result = legacy
-        else:
-            # LEGACY found nothing — try FROM_2025 directly
-            result = vau.parse_address(address, mode=vau.ParseMode.FROM_2025)
+        if not result.ward:
+            # If not a ward-level match in 2025, it might be a legacy format (has district)
+            legacy = vau.parse_address(address, mode=vau.ParseMode.LEGACY)
+            if legacy.district:
+                # Old format (has district) → convert to new 2025 address
+                result = vau.convert_address(address)
+            elif legacy.province:
+                # If it has a legacy province but FROM_2025 missed it, fall back to legacy
+                if not result.short_province:
+                    result = legacy
 
         province = result.short_province or ""
         if not province:
@@ -219,8 +219,8 @@ def parse_province_with_alias(text: object) -> tuple[str, str]:
     if pd.isna(text) or not str(text).strip():
         return "Unknown", ""
     try:
-        parsed = vau.parse_address(str(text))
-        return parsed.short_province or "Unknown", str(text)
+        components = parse_address_components(text)
+        return components["province"] or "Unknown", str(text)
     except Exception:
         return "Unknown", ""
 
@@ -228,6 +228,21 @@ def parse_province_with_alias(text: object) -> tuple[str, str]:
 def parse_province(text: object) -> str:
     province, _ = parse_province_with_alias(text)
     return province
+
+
+def parse_ward_with_alias(text: object) -> tuple[str, str]:
+    if pd.isna(text) or not str(text).strip():
+        return "", ""
+    try:
+        components = parse_address_components(text)
+        return components["ward"] or "", str(text)
+    except Exception:
+        return "", ""
+
+
+def parse_ward(text: object) -> str:
+    ward, _ = parse_ward_with_alias(text)
+    return ward
 
 
 def region_group(province: str) -> str:
@@ -340,3 +355,97 @@ def add_distance_columns(frame: pd.DataFrame) -> pd.DataFrame:
             haversine_km(origin, (lat, lon)) for lat, lon in zip(result["latitude"], result["longitude"])
         ]
     return result
+
+
+from vietnamadminunits.converter.converter_2025 import DICT_PROVINCE
+
+def strip_province_prefix(s: str) -> str:
+    if s.startswith('tinh'):
+        return s[4:]
+    if s.startswith('thanhpho'):
+        return s[8:]
+    return s
+
+# Build mapping from old clean name to new clean name
+_OLD_TO_NEW_MAP = {}
+for new_prov, old_provs in DICT_PROVINCE.items():
+    new_bare = strip_province_prefix(new_prov)
+    # Define standard name for the new province
+    std_new = "Hồ Chí Minh" if new_bare == "hochiminh" else (
+        "Hà Nội" if new_bare == "hanoi" else (
+            "Hải Phòng" if new_bare == "haiphong" else (
+                "Đà Nẵng" if new_bare == "danang" else (
+                    "Cần Thơ" if new_bare == "cantho" else (
+                        "Huế" if new_bare == "hue" else new_bare.title()
+                    )
+                )
+            )
+        )
+    )
+    if new_bare == "angiang": std_new = "An Giang"
+    elif new_bare == "bacninh": std_new = "Bắc Ninh"
+    elif new_bare == "camau": std_new = "Cà Mau"
+    elif new_bare == "caobang": std_new = "Cao Bằng"
+    elif new_bare == "daklak": std_new = "Đắk Lắk"
+    elif new_bare == "dongnai": std_new = "Đồng Nai"
+    elif new_bare == "dongthap": std_new = "Đồng Tháp"
+    elif new_bare == "gialai": std_new = "Gia Lai"
+    elif new_bare == "hungyen": std_new = "Hưng Yên"
+    elif new_bare == "khanhhoa": std_new = "Khánh Hòa"
+    elif new_bare == "laichau": std_new = "Lai Châu"
+    elif new_bare == "lamdong": std_new = "Lâm Đồng"
+    elif new_bare == "langson": std_new = "Lạng Sơn"
+    elif new_bare == "laocai": std_new = "Lào Cai"
+    elif new_bare == "nghean": std_new = "Nghệ An"
+    elif new_bare == "ninhbinh": std_new = "Ninh Bình"
+    elif new_bare == "phutho": std_new = "Phú Thọ"
+    elif new_bare == "quangngai": std_new = "Quảng Ngãi"
+    elif new_bare == "quangninh": std_new = "Quảng Ninh"
+    elif new_bare == "quangtri": std_new = "Quảng Trị"
+    elif new_bare == "sonla": std_new = "Sơn La"
+    elif new_bare == "tayninh": std_new = "Tây Ninh"
+    elif new_bare == "thainguyen": std_new = "Thái Nguyên"
+    elif new_bare == "thanhhoa": std_new = "Thanh Hóa"
+    elif new_bare == "tuyenquang": std_new = "Tuyên Quang"
+    elif new_bare == "vinhlong": std_new = "Vĩnh Long"
+    elif new_bare == "hatinh": std_new = "Hà Tĩnh"
+    elif new_bare == "dienbien": std_new = "Điện Biên"
+    
+    for old_prov in old_provs:
+        old_bare = strip_province_prefix(old_prov)
+        _OLD_TO_NEW_MAP[old_bare] = std_new
+
+def to_new_province(province_name: str) -> str:
+    if pd.isna(province_name) or not isinstance(province_name, str) or province_name == "Unknown":
+        return "Unknown"
+    
+    import unicodedata
+    n = province_name.lower().replace(" ", "").replace("-", "")
+    n = "".join(c for c in unicodedata.normalize("NFKD", n) if not unicodedata.combining(c))
+    n = n.replace("đ", "d")
+    
+    if n == "thuathienhue" or n == "hue":
+        return "Huế"
+        
+    if n in _OLD_TO_NEW_MAP:
+        return _OLD_TO_NEW_MAP[n]
+        
+    for k, v in _OLD_TO_NEW_MAP.items():
+        if k in n or n in k:
+            return v
+            
+    return province_name.title()
+
+
+if __name__ == "__main__":
+    test_addresses = [
+        "Số 129 Trần Hưng Đạo, Phường Long Xuyên, Tỉnh An Giang, Việt Nam",
+        "270Bis Ly Thuong Kiet, Ward 14, District 10, Ho Chi Minh City"
+    ]
+    for addr in test_addresses:
+        parsed = parse_address_components(addr)
+        print(f"Parsed address components for '{addr}':")
+        for k, v in parsed.items():
+            print(f"  {k}: {v}")
+        print()
+

@@ -1,5 +1,5 @@
 customer_match_status,shipment_rows,orders,customers,quantity
 missing_customer_name,24839,5421,1,146949.81661706348
-ambiguous_multi_location_customer,12174,3001,273,153282.88055555554
-unique_resolvable_customer_geography,6027,1193,114,41936.6625
+ambiguous_multi_location_customer,12172,3001,272,153279.88055555554
+unique_resolvable_customer_geography,6029,1194,115,41939.6625
 unmatched_customer_key,854,356,5,13195.439880952381

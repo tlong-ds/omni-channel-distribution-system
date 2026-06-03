@@ -1,7 +1,11 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+
 import numpy as np
 import pandas as pd
 
-from .config import (
+from src.logage2026.config import (
     ABC_A_THRESHOLD,
     ABC_B_THRESHOLD,
     FAST_MOVING_ABC_FREQUENCY,
@@ -11,7 +15,7 @@ from .config import (
     XYZ_CV_Y_MAX,
     XYZ_MIN_NONZERO_WEEKS,
 )
-from .geography import region_group
+from src.logage2026.geography import region_group
 
 
 ASSIGNMENT_START = pd.Timestamp("2025-07-01")
@@ -276,9 +280,6 @@ def build_geography_diagnostics_summary(shipments: pd.DataFrame) -> pd.DataFrame
                 "rows_transaction_text_parse_alias_matched": int(
                     shipments.loc[transaction_mask, "province_alias_match_flag"].sum()
                 ),
-                "rows_transaction_text_parse_district_alias_matched": int(
-                    shipments.loc[transaction_mask, "hcmc_district_alias_match_flag"].sum()
-                ),
                 "rows_with_distance_my_phuoc": int(
                     shipments["distance_from_my_phuoc_km"].notna().sum()
                 ),
@@ -306,7 +307,7 @@ def build_unresolved_candidate_region_summary(shipments: pd.DataFrame) -> pd.Dat
 def build_warehouse_region_summary(shipments: pd.DataFrame) -> pd.DataFrame:
     known = shipments[shipments["known_geography_flag"]].copy()
     return (
-        known.groupby(["source_warehouse", "region", "province", "hcmc_district", "geography_source"], dropna=False)
+        known.groupby(["source_warehouse", "region", "province", "geography_source"], dropna=False)
         .agg(
             shipment_lines=("sku_code", "size"),
             orders=("order_id", "nunique"),
@@ -329,16 +330,7 @@ def build_customer_cluster_summary(shipments: pd.DataFrame, top_n: int = 10) -> 
     )
     province_summary["geography_level"] = "province"
 
-    hcmc = known[known["province"].eq("Ho Chi Minh City") & known["hcmc_district"].ne("")].copy()
-    district_summary = (
-        hcmc.groupby("hcmc_district", dropna=False)
-        .agg(orders=("order_id", "nunique"), quantity=("quantity", "sum"))
-        .reset_index()
-        .rename(columns={"hcmc_district": "geography_name"})
-    )
-    district_summary["geography_level"] = "hcmc_district"
-
-    combined = pd.concat([province_summary, district_summary], ignore_index=True, sort=False)
+    combined = province_summary
     if combined.empty:
         return pd.DataFrame(
             columns=["geography_level", "geography_name", "orders", "quantity", "rank_by_orders", "rank_by_quantity"]
@@ -378,8 +370,39 @@ def build_warehouse_imbalance_summary(shipments: pd.DataFrame) -> pd.DataFrame:
     return summary.sort_values(["region", "quantity", "orders"], ascending=[True, False, False])
 
 
-def build_order_profile_segments(shipments: pd.DataFrame) -> pd.DataFrame:
+def build_order_profile_segments(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
     known = shipments[shipments["analysis_document_flag"] & shipments["customer_segment"].ne("Unknown")].copy()
+    
+    # Calculate distance for each line depending on source warehouse
+    known["distance_km"] = np.where(
+        known["source_warehouse"] == "My Phuoc", 
+        known["distance_from_my_phuoc_km"], 
+        known["distance_from_vinh_loc_km"]
+    )
+    
+    # Merge packaging specs from sku_master
+    sku_pkg = sku_master[["sku_code", "pcs_per_pallet", "pcs_per_carton"]].copy()
+    known = known.merge(sku_pkg, on="sku_code", how="left")
+    
+    # Calculate packaging unit quantities
+    qty = known["quantity"].fillna(0).astype(float)
+    ppp = known["pcs_per_pallet"].astype(float).fillna(qty + 1.0)
+    ppc = known["pcs_per_carton"].astype(float).fillna(qty + 1.0)
+    
+    # Pallet quantity
+    has_pallet = known["pcs_per_pallet"].notna()
+    pallet_qty = np.where(has_pallet & (qty >= ppp), (qty // ppp) * ppp, 0.0)
+    rem_qty = np.where(has_pallet & (qty >= ppp), qty % ppp, qty)
+    
+    # Carton quantity
+    has_carton = known["pcs_per_carton"].notna()
+    carton_qty = np.where(has_carton & (rem_qty >= ppc), (rem_qty // ppc) * ppc, 0.0)
+    loose_qty = np.where(has_carton & (rem_qty >= ppc), rem_qty % ppc, rem_qty)
+    
+    known["pallet_qty"] = pallet_qty
+    known["carton_qty"] = carton_qty
+    known["loose_qty"] = loose_qty
+    
     order_level = known.groupby(["customer_segment", "order_id"]).agg(
         source_warehouse=("source_warehouse", "first"),
         province=("province", "first"),
@@ -387,6 +410,7 @@ def build_order_profile_segments(shipments: pd.DataFrame) -> pd.DataFrame:
         cbm_total=("cbm_total", "sum"),
         sku_breadth=("sku_code", "nunique"),
         line_count=("sku_code", "size"),
+        distance_km=("distance_km", "mean"),
     )
     order_level = order_level.reset_index()
     summary = order_level.groupby("customer_segment").agg(
@@ -398,9 +422,28 @@ def build_order_profile_segments(shipments: pd.DataFrame) -> pd.DataFrame:
         median_order_cbm=("cbm_total", "median"),
         avg_sku_breadth=("sku_breadth", "mean"),
         avg_lines_per_order=("line_count", "mean"),
+        avg_distance_km=("distance_km", "mean"),
     )
+    
     segment_sku = known.groupby("customer_segment")["sku_code"].nunique().rename("segment_sku_breadth")
-    return summary.join(segment_sku).reset_index()
+    summary = summary.join(segment_sku)
+    
+    # Calculate packaging share by customer segment
+    pkg_sums = known.groupby("customer_segment")[["pallet_qty", "carton_qty", "loose_qty", "quantity"]].sum()
+    pallet_share = (pkg_sums["pallet_qty"] / pkg_sums["quantity"]).fillna(0).rename("pallet_qty_share")
+    carton_share = (pkg_sums["carton_qty"] / pkg_sums["quantity"]).fillna(0).rename("carton_qty_share")
+    loose_share = (pkg_sums["loose_qty"] / pkg_sums["quantity"]).fillna(0).rename("loose_qty_share")
+    
+    summary = summary.join([pallet_share, carton_share, loose_share])
+    
+    # Calculate average orders per customer per month (6-month window)
+    customer_orders = known.groupby(["customer_segment", "customer_key"])["order_id"].nunique().reset_index()
+    customer_orders["orders_per_month"] = customer_orders["order_id"] / 6.0
+    avg_freq = customer_orders.groupby("customer_segment")["orders_per_month"].mean().rename("avg_orders_per_customer_month")
+    
+    summary = summary.join(avg_freq)
+    
+    return summary.reset_index()
 
 
 def build_document_type_summary(shipments: pd.DataFrame) -> pd.DataFrame:
@@ -494,3 +537,40 @@ def build_safety_stock_class_a(shipments: pd.DataFrame, abc_xyz: pd.DataFrame) -
         how="left",
     )
     return table.sort_values("safety_stock_units", ascending=False)
+
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+    
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    
+    try:
+        from src.logage2026.loading import load_sku_master, load_transactions, load_distributors, load_segment_overrides
+        from src.logage2026.cleaning import clean_sku_master, clean_distributors, clean_shipments
+    except ImportError:
+        from loading import load_sku_master, load_transactions, load_distributors, load_segment_overrides
+        from cleaning import clean_sku_master, clean_distributors, clean_shipments
+        
+    print("Loading raw datasets...")
+    sku_raw = load_sku_master()
+    tx_raw = load_transactions()
+    dist_raw = load_distributors()
+    overrides = load_segment_overrides()
+    
+    print("Cleaning datasets...")
+    sku_master = clean_sku_master(sku_raw)
+    distributors = clean_distributors(dist_raw)
+    shipments = clean_shipments(tx_raw, distributors, segment_overrides=overrides)
+    
+    print("Running classification...")
+    valid_skus = set(sku_master["sap_code_2"].dropna())
+    shipments = shipments[shipments["sku_code"].isin(valid_skus)].copy()
+    assignment_shipments = filter_assignment_shipments(shipments)
+    
+    abc_xyz = build_abc_xyz(assignment_shipments, sku_master)
+    print(f"Classification completed. Total unique SKUs classified: {abc_xyz['sku_code'].nunique()}")
+    print("\nABC Quantity Class counts:")
+    print(abc_xyz["abc_quantity"].value_counts())
+    print("\nXYZ Demand Variability Class counts:")
+    print(abc_xyz["xyz"].value_counts())

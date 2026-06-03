@@ -1,12 +1,19 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+
 import pandas as pd
 
-from .geography import (
+from src.logage2026.geography import (
     add_distance_columns,
     normalize_text,
     parse_province,
     parse_province_with_alias,
+    parse_ward,
+    parse_ward_with_alias,
     region_group,
     parse_address_components,
+    to_new_province,
 )
 
 
@@ -58,7 +65,7 @@ def _analysis_document_flag(document_type: pd.Series) -> pd.Series:
 
 
 def _analysis_exclusion_reason(document_type: pd.Series, flag: pd.Series) -> pd.Series:
-    reasons = pd.Series(pd.NA, index=document_type.index, dtype="string")
+    reasons = pd.Series("", index=document_type.index, dtype="string")
     reasons.loc[~flag] = "excluded_document_type:" + document_type.loc[~flag].fillna("UNKNOWN")
     return reasons
 
@@ -250,7 +257,7 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
     frame["customer_location_key"] = (
         frame["customer_key"] + " | " + frame["delivery_address"].map(normalize_text)
     )
-    frame["province"] = frame["address_province"]
+    frame["province"] = frame["address_province"].apply(to_new_province)
     frame["region"] = frame["province"].map(region_group)
     dedupe_columns = ["customer_key", "address_street", "address_ward", "address_province", "region"]
     frame = frame.drop_duplicates(subset=dedupe_columns).copy()
@@ -340,8 +347,6 @@ def clean_shipments(
     frame["longitude_parsed"] = [ship_to_cache[name]["longitude"] for name in frame["ship_to_customer"]]
 
     frame["province_alias_match_flag"] = frame["parsed_province"].ne("Unknown")
-    frame["parsed_hcmc_district"] = ""
-    frame["hcmc_district_alias_match_flag"] = False
     parsed_has_geo = frame["parsed_province"].ne("Unknown")
 
     frame["geography_source"] = "unresolved"
@@ -349,7 +354,6 @@ def clean_shipments(
     transaction_geo_mask = ~distributor_geo_mask & parsed_has_geo
 
     frame["province"] = "Unknown"
-    frame["hcmc_district"] = ""
     frame["region"] = "Unknown"
     frame["latitude"] = pd.Series([float("nan")] * len(frame), dtype="float64", index=frame.index)
     frame["longitude"] = pd.Series([float("nan")] * len(frame), dtype="float64", index=frame.index)
@@ -363,14 +367,15 @@ def clean_shipments(
 
     # Assign coordinates and regions for transaction text parsed customers
     frame.loc[transaction_geo_mask, "province"] = frame.loc[transaction_geo_mask, "parsed_province"]
-    frame.loc[transaction_geo_mask, "hcmc_district"] = frame.loc[transaction_geo_mask, "parsed_hcmc_district"]
     frame.loc[transaction_geo_mask, "region"] = frame.loc[transaction_geo_mask, "province"].map(region_group)
     frame.loc[transaction_geo_mask, "latitude"] = frame.loc[transaction_geo_mask, "latitude_parsed"]
     frame.loc[transaction_geo_mask, "longitude"] = frame.loc[transaction_geo_mask, "longitude_parsed"]
     frame.loc[transaction_geo_mask, "geography_source"] = "transaction_text_parse"
 
     frame.loc[frame["ship_to_customer"].eq("unknown"), "customer_match_status"] = "missing_customer_name"
-    frame.loc[frame["province"].eq("Unknown"), "hcmc_district"] = ""
+
+    frame["province"] = frame["province"].apply(to_new_province)
+    frame["region"] = frame["province"].map(region_group)
 
     frame["known_geography_flag"] = frame["province"].ne("Unknown")
     frame["segment_source"] = "unresolved"
@@ -419,12 +424,9 @@ def clean_shipments(
         "segment_confidence",
         "created_date",
         "province",
-        "hcmc_district",
         "region",
         "parsed_province",
-        "parsed_hcmc_district",
         "province_alias_match_flag",
-        "hcmc_district_alias_match_flag",
         "latitude",
         "longitude",
         "distance_from_my_phuoc_km",
@@ -497,3 +499,55 @@ def classify_customer_segment(customer: object) -> str:
     if text == "UNKNOWN":
         return "Unknown"
     return "Traditional Trade / Distributor"
+
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+    from pathlib import Path
+    
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    
+    try:
+        from src.logage2026.loading import load_sku_master, load_transactions, load_distributors, load_segment_overrides
+        from src.logage2026.config import CLEANED_DIR
+    except ImportError:
+        from loading import load_sku_master, load_transactions, load_distributors, load_segment_overrides
+        from config import CLEANED_DIR
+        
+    parser = argparse.ArgumentParser(description="Clean datasets for LOGage 2026 analysis.")
+    parser.add_argument("--sku", action="store_true", help="Clean SKU Master Data only")
+    parser.add_argument("--distributor", action="store_true", help="Clean Distributor Network only")
+    parser.add_argument("--shipment", action="store_true", help="Clean Outbound Shipment Transactions only")
+    parser.add_argument("--geography", action="store_true", help="Run geography address parsing / cleaning demo")
+    parser.add_argument("--all", action="store_true", help="Clean all datasets (default)")
+    
+    args = parser.parse_args()
+    
+    if not (args.sku or args.distributor or args.shipment or args.geography):
+        args.all = True
+        
+    CLEANED_DIR.mkdir(parents=True, exist_ok=True)
+    
+    if args.sku or args.all:
+        print("Cleaning SKU Master Data...")
+        sku = clean_sku_master(load_sku_master())
+        out_path = CLEANED_DIR / "sku_master_cleaned.csv"
+        sku.to_csv(out_path, index=False)
+        print(f"Saved cleaned SKU Master to {out_path} (shape: {sku.shape})")
+        
+    if args.distributor or args.all:
+        print("Cleaning Distributor Network Data...")
+        dist = clean_distributors(load_distributors())
+        out_path = CLEANED_DIR / "distributors_cleaned.csv"
+        dist.to_csv(out_path, index=False)
+        print(f"Saved cleaned Distributors to {out_path} (shape: {dist.shape})")
+        
+    if args.shipment or args.all:
+        print("Cleaning Outbound Shipment Transactions...")
+        dist = clean_distributors(load_distributors())
+        overrides = load_segment_overrides()
+        shipments = clean_shipments(load_transactions(), dist, segment_overrides=overrides)
+        out_path = CLEANED_DIR / "shipments_cleaned.csv"
+        shipments.to_csv(out_path, index=False)
+        print(f"Saved cleaned Shipments to {out_path} (shape: {shipments.shape})")
