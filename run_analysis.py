@@ -3,6 +3,7 @@ from src.logage2026.analysis import (
     ASSIGNMENT_START,
     build_abc_xyz,
     build_abc_xyz_matrix_summary,
+    build_abc_quantity_frequency_matrix,
     build_classification_metadata,
     build_customer_match_quality_summary,
     build_customer_cluster_summary,
@@ -45,7 +46,7 @@ from src.logage2026.visuals import boundary_province_names, save_charts
 EXPECTED_ASSIGNMENT_ROWS = 43_894
 EXPECTED_ASSIGNMENT_QUANTITY = 355_364.80
 EXPECTED_ASSIGNMENT_CBM = 19_653.78
-NOTE_FILENAME = "part1_question_summary.md"
+NOTE_FILENAME = "part1_question_summary.tex"
 
 STALE_OUTPUTS = [
     TABLES_DIR / "safety_stock_class_a.csv",
@@ -98,6 +99,7 @@ def main() -> None:
 
     abc_xyz = build_abc_xyz(assignment_shipments, sku_master)
     abc_xyz_matrix = build_abc_xyz_matrix_summary(abc_xyz)
+    abc_qty_freq_matrix = build_abc_quantity_frequency_matrix(abc_xyz)
     fast_moving_summary = build_fast_moving_summary(abc_xyz)
     classification_metadata = build_classification_metadata()
     missing_data_summary = build_missing_data_summary(shipments)
@@ -130,6 +132,7 @@ def main() -> None:
 
     abc_xyz.to_csv(TABLES_DIR / "q11_sku_abc_xyz.csv", index=False)
     abc_xyz_matrix.to_csv(TABLES_DIR / "q11_abc_xyz_matrix_summary.csv", index=False)
+    abc_qty_freq_matrix.to_csv(TABLES_DIR / "q11_abc_quantity_frequency_matrix.csv", index=False)
     fast_moving_summary.to_csv(TABLES_DIR / "q11_fast_moving_summary.csv", index=False)
     classification_metadata.to_csv(TABLES_DIR / "q11_classification_metadata.csv", index=False)
     missing_data_summary.to_csv(TABLES_DIR / "shared_missing_data_summary.csv", index=False)
@@ -178,6 +181,7 @@ def main() -> None:
         q13_segment_geographic_spread_summary,
         q13_segment_province_spread_summary,
         sku_master,
+        abc_qty_freq_matrix,
     )
     write_notes(
         assignment_shipments,
@@ -199,6 +203,7 @@ def main() -> None:
         q13_segment_profile_summary,
         q13_segment_packaging_summary,
         q13_segment_geographic_spread_summary,
+        abc_qty_freq_matrix,
     )
     verify_outputs(
         shipments,
@@ -370,6 +375,7 @@ def verify_outputs(
         CLEANED_DIR / "shipments_cleaned.csv",
         TABLES_DIR / "q11_sku_abc_xyz.csv",
         TABLES_DIR / "q11_abc_xyz_matrix_summary.csv",
+        TABLES_DIR / "q11_abc_quantity_frequency_matrix.csv",
         TABLES_DIR / "q11_fast_moving_summary.csv",
         TABLES_DIR / "q11_classification_metadata.csv",
         TABLES_DIR / "shared_missing_data_summary.csv",
@@ -397,7 +403,9 @@ def verify_outputs(
         TABLES_DIR / "q12_unresolved_customer_summary.csv",
         NOTES_DIR / NOTE_FILENAME,
         CHARTS_DIR / "q11_abc_quantity_distribution.png",
+        CHARTS_DIR / "q11_abc_frequency_distribution.png",
         CHARTS_DIR / "q11_abc_xyz_matrix.png",
+        CHARTS_DIR / "q11_abc_quantity_frequency_matrix.png",
         CHARTS_DIR / "q12_region_quantity_orders.png",
         CHARTS_DIR / "q12_warehouse_region_quantity_split.png",
         CHARTS_DIR / "q13_order_profile_comparison.png",

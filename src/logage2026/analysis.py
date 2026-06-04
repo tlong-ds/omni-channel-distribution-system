@@ -170,6 +170,20 @@ def build_abc_xyz_matrix_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def build_abc_quantity_frequency_matrix(abc_xyz: pd.DataFrame) -> pd.DataFrame:
+    return (
+        abc_xyz.groupby(["abc_quantity", "abc_frequency"], dropna=False)
+        .agg(
+            sku_count=("sku_code", "nunique"),
+            quantity=("quantity", "sum"),
+            order_frequency=("order_frequency", "sum"),
+            cbm_total=("cbm_total", "sum"),
+        )
+        .reset_index()
+        .sort_values(["abc_quantity", "abc_frequency"])
+    )
+
+
 def build_fast_moving_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
     total_quantity = abc_xyz["quantity"].sum()
     total_frequency = abc_xyz["order_frequency"].sum()

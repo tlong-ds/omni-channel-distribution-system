@@ -54,12 +54,15 @@ def save_charts(
     q13_segment_geographic_spread_summary: pd.DataFrame,
     q13_segment_province_spread_summary: pd.DataFrame,
     sku_master: pd.DataFrame,
+    abc_qty_freq_matrix: pd.DataFrame,
 ) -> None:
     CHARTS_DIR.mkdir(parents=True, exist_ok=True)
     province_layer = _prepare_vietnam_province_layer()
 
     _abc_bar(abc_xyz)
+    _abc_frequency_bar(abc_xyz)
     _abc_xyz_matrix_chart(abc_xyz_matrix)
+    _abc_quantity_frequency_matrix_chart(abc_qty_freq_matrix)
     _region_bar(q12_region_orders_quantity_summary)
     _warehouse_quantity_bar(shipments)
     _q12_province_cluster_chart(q12_province_cluster_summary)
@@ -253,6 +256,41 @@ def _abc_bar(abc_xyz: pd.DataFrame) -> None:
     ax.grid(axis="y", alpha=0.25)
     fig.tight_layout()
     fig.savefig(CHARTS_DIR / "q11_abc_quantity_distribution.png", dpi=160)
+    plt.close(fig)
+
+
+def _abc_frequency_bar(abc_xyz: pd.DataFrame) -> None:
+    chart = abc_xyz.groupby("abc_frequency")["order_frequency"].sum().reindex(["A", "B", "C"])
+    fig, ax = plt.subplots(figsize=(7, 4))
+    chart.plot(kind="bar", ax=ax, color=["#6366f1", "#d29d3d", "#8b8f9b"])
+    ax.set_title(f"Order frequency by ABC frequency class\n{_window_label()}")
+    ax.set_xlabel("ABC frequency class")
+    ax.set_ylabel("Order Frequency")
+    ax.grid(axis="y", alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "q11_abc_frequency_distribution.png", dpi=160)
+    plt.close(fig)
+
+
+def _abc_quantity_frequency_matrix_chart(abc_qty_freq_matrix: pd.DataFrame) -> None:
+    pivot = (
+        abc_qty_freq_matrix.pivot(index="abc_quantity", columns="abc_frequency", values="sku_count")
+        .reindex(index=["A", "B", "C"], columns=["A", "B", "C"])
+        .fillna(0)
+    )
+    fig, ax = plt.subplots(figsize=(6, 4.5))
+    image = ax.imshow(pivot.values, cmap="GnBu")
+    ax.set_title(f"ABC Quantity vs ABC Frequency Matrix\n{_window_label()}")
+    ax.set_xlabel("ABC Frequency Class")
+    ax.set_ylabel("ABC Quantity Class")
+    ax.set_xticks(range(len(pivot.columns)), labels=pivot.columns)
+    ax.set_yticks(range(len(pivot.index)), labels=pivot.index)
+    for row_idx, row_label in enumerate(pivot.index):
+        for col_idx, col_label in enumerate(pivot.columns):
+            ax.text(col_idx, row_idx, f"{int(pivot.loc[row_label, col_label])}", ha="center", va="center", color="#102a43")
+    fig.colorbar(image, ax=ax, shrink=0.85, label="SKU count")
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "q11_abc_quantity_frequency_matrix.png", dpi=160)
     plt.close(fig)
 
 
@@ -492,7 +530,7 @@ def _order_profile_chart(summary: pd.DataFrame) -> None:
     fig, axes = plt.subplots(4, 2, figsize=(12, 12))
     metrics = [
         ("avg_order_quantity", "Avg order size (pcs)", "#2f6f73"),
-        ("avg_order_cbm", "Avg order size (CBM)", "#d29d3d"),
+        ("avg_order_cbm", "Avg order size (m³)", "#d29d3d"),
         ("avg_orders_per_customer_month", "Order frequency", "#6366f1"),
         ("avg_sku_breadth", "SKU breadth / order", "#b45f3c"),
         ("province_count", "Province count", "#4f7cac"),
