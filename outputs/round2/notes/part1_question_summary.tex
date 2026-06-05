@@ -36,7 +36,7 @@
 
 \subsection{Executive Summary}\label{executive-summary}
 
-This report provides the outbound flow analysis, customer profiling, and geographic demand mapping for the Round 2 competition based on the transaction logs spanning June to December 2025. The core analysis focuses on the 6-month Assignment Window (July 1 -- December 31, 2025), which contains \textbf{49,277 shipment rows}, \textbf{435,135.20 units of outbound demand}, and \textbf{24,507.67 m³ of volume}.
+This report provides the outbound flow analysis, customer profiling, and geographic demand mapping for the Round 2 competition based on the transaction logs spanning June to December 2025. The core analysis focuses on the 6-month Assignment Window (July 1 -- December 31, 2025), which contains \textbf{43,955 shipment rows}, \textbf{372,333.80 units of outbound demand}, and \textbf{20,565.06 m³ of volume}.
 
 Key takeaways include:
 \begin{enumerate}
@@ -78,8 +78,8 @@ The distribution of outbound quantities and order frequencies across the SKUs sh
 A total of \textbf{615 unique SKUs} were classified. The product distribution across the ABC-XYZ matrix (using ABC by Quantity) is shown in Figure \ref{fig:q11-abc-xyz-matrix}:
 In this matrix:
 \begin{itemize}
-\item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs based on their contribution to total outbound quantity (Class A: top 80\%, Class B: next 15\%, Class C: bottom 5\%).
-\item \textbf{XYZ Variability Class (X-axis)}: Classifies SKUs based on their weekly demand variability (Class X: stable demand, CV $\le$ 0.50; Class Y: variable demand, CV $\le$ 1.00; Class Z: spiky/irregular demand, CV $>$ 1.00 or low active sample).
+\item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs based on their contribution to total outbound quantity (Class A: top 70\%, Class B: next 20\%, Class C: bottom 10\%).
+\item \textbf{XYZ Variability Class (X-axis)}: Classifies SKUs based on their monthly demand variability (Class X: stable demand, CV $\le$ 0.50; Class Y: variable demand, CV $\le$ 1.00; Class Z: spiky/irregular demand, CV $>$ 1.00).
 \item \textbf{Cell Labels (Numbers)}: The integer value inside each cell represents the count of unique SKUs that fall into that specific intersection of volume and variability.
 \end{itemize}
 
@@ -94,8 +94,8 @@ In this matrix:
 To address the two dimensions of ABC analysis required, we cross-tabulated the SKU count across ABC Quantity and ABC Frequency classes. This matrix, visualized in Figure \ref{fig:q11-abc-qty-freq-matrix}, reveals how the outbound volume of each SKU relates to its picking frequency:
 In this matrix:
 \begin{itemize}
-\item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs by outbound volume (total units shipped: Class A: top 80\%, Class B: next 15\%, Class C: bottom 5\%).
-\item \textbf{ABC Frequency Class (X-axis)}: Classifies SKUs by order frequency (number of unique transactions containing the SKU: Class A: top 80\% of transactions, Class B: next 15\%, Class C: bottom 5\%).
+\item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs by outbound volume (total units shipped: Class A: top 70\%, Class B: next 20\%, Class C: bottom 10\%).
+\item \textbf{ABC Frequency Class (X-axis)}: Classifies SKUs by order frequency (number of unique transactions containing the SKU: Class A: top 70\% of transactions, Class B: next 20\%, Class C: bottom 10\%).
 \item \textbf{Cell Labels (Numbers)}: The integer value inside each cell represents the count of unique SKUs that fall into that specific intersection of quantity and transaction frequency.
 \end{itemize}
 
@@ -108,10 +108,10 @@ In this matrix:
 
 This cross-tabulation reveals four key SKU profiles:
 \begin{itemize}
-\item \textbf{A-A (Fast-Moving)}: 59 SKUs that drive both high volume and high picking frequency, representing the operational core.
-\item \textbf{A-B / A-C (Bulk/Spiky Movers)}: 20 SKUs that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.
-\item \textbf{B-A / C-A (Frequent Low-Volume)}: 88 SKUs that are ordered frequently but in small quantities. These create high warehouse pick-trip workloads (bins are visited often) despite contributing minor physical throughput.
-\item \textbf{C-C (Slow-Moving/Long-Tail)}: 260 SKUs that are rarely ordered and in tiny amounts, suited for deep storage.
+\item \textbf{A-A (Fast-Moving)}: 28 SKUs that drive both high volume and high picking frequency, representing the operational core.
+\item \textbf{A-B / A-C (Bulk/Spiky Movers)}: 12 SKUs that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.
+\item \textbf{B-A / C-A (Frequent Low-Volume)}: 72 SKUs that are ordered frequently but in small quantities. These create high warehouse pick-trip workloads (bins are visited often) despite contributing minor physical throughput.
+\item \textbf{C-C (Slow-Moving/Long-Tail)}: 375 SKUs that are rarely ordered and in tiny amounts, suited for deep storage.
 \end{itemize}
 
 \subsubsection{Identification of the ``Fast-Moving'' SKU Group}\label{identification-of-the-fast-moving-sku-group}
@@ -125,7 +125,7 @@ The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by 
 \end{itemize}
 
 \begin{quote}
-\textbf{Operational Recommendation}: Because only \textasciitilde10\% of the SKUs drive nearly 2/3 of all shipped quantities, these 59 SKUs should be assigned to the most ergonomic pick-faces (lower levels, close to the packing stations) with dedicated replenishment pathways to minimize picking travel time.
+\textbf{Operational Recommendation}: Because only \textasciitilde5\% of the SKUs (28 fast-moving A-A SKUs) drive over 56\% of all shipped quantities, these SKUs should be assigned to the most ergonomic pick-faces (lower levels, close to the packing stations) with dedicated replenishment pathways to minimize picking travel time.
 \end{quote}
 
 \subsection{Q1.2 Distribution Heatmap and Warehouse Imbalance Analysis}\label{q1.2-distribution-heatmap-and-warehouse-imbalance-analysis}
