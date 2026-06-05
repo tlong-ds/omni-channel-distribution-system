@@ -6,20 +6,34 @@ import numpy as np
 import pandas as pd
 
 from src.logage2026.config import (
-    ABC_A_THRESHOLD,
-    ABC_B_THRESHOLD,
+    ASSIGNMENT_DOCUMENT_TYPES,
+    ASSIGNMENT_END_DATE,
+    ASSIGNMENT_START_DATE,
     FAST_MOVING_ABC_FREQUENCY,
     FAST_MOVING_ABC_QUANTITY,
+    Q11_ABC_A_THRESHOLD,
+    Q11_ABC_B_THRESHOLD,
+    Q11_DOCUMENT_TYPES,
+    Q11_END_DATE,
+    Q11_KEEP_MISSING_SKU_MASTER,
+    Q11_START_DATE,
+    Q11_VARIABILITY_GRAIN,
+    Q11_VARIABILITY_PERIOD_END,
+    Q11_VARIABILITY_PERIOD_START,
+    Q11_XYZ_CV_X_MAX,
+    Q11_XYZ_CV_Y_MAX,
+    Q11_XYZ_MIN_NONZERO_PERIODS,
     WINSORIZE_LIMITS,
-    XYZ_CV_X_MAX,
-    XYZ_CV_Y_MAX,
-    XYZ_MIN_NONZERO_WEEKS,
 )
 from src.logage2026.geography import region_group
 
 
-ASSIGNMENT_START = pd.Timestamp("2025-07-01")
-ASSIGNMENT_END = pd.Timestamp("2025-12-31")
+ASSIGNMENT_START = pd.Timestamp(ASSIGNMENT_START_DATE)
+ASSIGNMENT_END = pd.Timestamp(ASSIGNMENT_END_DATE)
+Q11_START = pd.Timestamp(Q11_START_DATE)
+Q11_END = pd.Timestamp(Q11_END_DATE)
+Q11_VARIABILITY_START = pd.Timestamp(Q11_VARIABILITY_PERIOD_START)
+Q11_VARIABILITY_END = pd.Timestamp(Q11_VARIABILITY_PERIOD_END)
 URBAN_MUNICIPALITIES = {
     "Hồ Chí Minh",
     "Hà Nội",
@@ -31,7 +45,7 @@ SEGMENT_ORDER = ["Modern Trade", "Traditional Trade / Distributor"]
 
 
 def classify_cumulative_share(
-    share: float, a_threshold: float = ABC_A_THRESHOLD, b_threshold: float = ABC_B_THRESHOLD
+    share: float, a_threshold: float = Q11_ABC_A_THRESHOLD, b_threshold: float = Q11_ABC_B_THRESHOLD
 ) -> str:
     if share <= a_threshold:
         return "A"
@@ -41,7 +55,7 @@ def classify_cumulative_share(
 
 
 def classify_xyz(
-    cv: float, x_max: float = XYZ_CV_X_MAX, y_max: float = XYZ_CV_Y_MAX
+    cv: float, x_max: float = Q11_XYZ_CV_X_MAX, y_max: float = Q11_XYZ_CV_Y_MAX
 ) -> str:
     if pd.isna(cv) or np.isinf(cv):
         return "Z"
@@ -56,8 +70,23 @@ def filter_assignment_shipments(
     shipments: pd.DataFrame,
     start_date: pd.Timestamp = ASSIGNMENT_START,
     end_date: pd.Timestamp = ASSIGNMENT_END,
+    allowed_document_types: tuple[str, ...] = ASSIGNMENT_DOCUMENT_TYPES,
 ) -> pd.DataFrame:
     mask = shipments["analysis_document_flag"] & shipments["created_date"].between(start_date, end_date, inclusive="both")
+    mask = mask & shipments["document_type"].isin(allowed_document_types)
+    if "data_error_flag" in shipments.columns:
+        mask = mask & ~shipments["data_error_flag"]
+    return shipments.loc[mask].copy()
+
+
+def filter_q11_shipments(
+    shipments: pd.DataFrame,
+    start_date: pd.Timestamp = Q11_START,
+    end_date: pd.Timestamp = Q11_END,
+    allowed_document_types: tuple[str, ...] = Q11_DOCUMENT_TYPES,
+) -> pd.DataFrame:
+    mask = shipments["created_date"].between(start_date, end_date, inclusive="both")
+    mask = mask & shipments["document_type"].isin(allowed_document_types)
     if "data_error_flag" in shipments.columns:
         mask = mask & ~shipments["data_error_flag"]
     return shipments.loc[mask].copy()
@@ -74,7 +103,37 @@ def _winsorize_weekly(weekly: pd.DataFrame, limits: tuple[float, float] | None) 
     return weekly.clip(lower=lower_bounds, upper=upper_bounds, axis=0)
 
 
-def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
+def _build_period_quantity_table(
+    shipments: pd.DataFrame,
+    grain: str = Q11_VARIABILITY_GRAIN,
+    period_start: pd.Timestamp = Q11_VARIABILITY_START,
+    period_end: pd.Timestamp = Q11_VARIABILITY_END,
+) -> pd.DataFrame:
+    if grain == "monthly":
+        freq = "M"
+    elif grain == "weekly":
+        freq = "W"
+    else:
+        raise ValueError(f"Unsupported variability grain: {grain}")
+    periods = pd.period_range(start=period_start, end=period_end, freq=freq).astype(str)
+    periodized = (
+        shipments.assign(period=shipments["created_date"].dt.to_period(freq).astype(str))
+        .groupby(["sku_code", "period"])["quantity"]
+        .sum()
+        .unstack(fill_value=0)
+    )
+    return periodized.reindex(columns=periods, fill_value=0)
+
+
+def build_abc_xyz(
+    shipments: pd.DataFrame,
+    sku_master: pd.DataFrame,
+    variability_grain: str = Q11_VARIABILITY_GRAIN,
+    variability_period_start: pd.Timestamp = Q11_VARIABILITY_START,
+    variability_period_end: pd.Timestamp = Q11_VARIABILITY_END,
+    min_nonzero_periods: int = Q11_XYZ_MIN_NONZERO_PERIODS,
+    keep_missing_sku_master: bool = Q11_KEEP_MISSING_SKU_MASTER,
+) -> pd.DataFrame:
     sku_master = sku_master.copy()
     required_sku_columns = [
         "product_name",
@@ -94,20 +153,20 @@ def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataF
         line_frequency=("sku_code", "size"),
         cbm_total=("cbm_total", "sum"),
     )
-    weekly = (
-        shipments.assign(week=shipments["created_date"].dt.to_period("W").astype(str))
-        .groupby(["sku_code", "week"])["quantity"]
-        .sum()
-        .unstack(fill_value=0)
+    period_quantities = _build_period_quantity_table(
+        shipments,
+        grain=variability_grain,
+        period_start=variability_period_start,
+        period_end=variability_period_end,
     )
-    weeks = pd.period_range(start=ASSIGNMENT_START, end=ASSIGNMENT_END, freq="W").astype(str)
-    weekly = weekly.reindex(columns=weeks, fill_value=0)
-    sku["weekly_nonzero_weeks"] = weekly.gt(0).sum(axis=1)
-    winsorized = _winsorize_weekly(weekly, WINSORIZE_LIMITS)
-    sku["weekly_mean_quantity"] = winsorized.mean(axis=1)
-    sku["weekly_std_quantity"] = winsorized.std(axis=1)
-    sku["demand_cv"] = sku["weekly_std_quantity"] / sku["weekly_mean_quantity"].replace(0, np.nan)
-    sku["xyz_low_sample_flag"] = sku["weekly_nonzero_weeks"].lt(XYZ_MIN_NONZERO_WEEKS).astype(int)
+    sku["variability_nonzero_periods"] = period_quantities.gt(0).sum(axis=1)
+    winsorized = _winsorize_weekly(period_quantities, WINSORIZE_LIMITS)
+    sku["variability_mean_quantity"] = winsorized.mean(axis=1)
+    sku["variability_std_quantity"] = winsorized.std(axis=1)
+    sku["demand_cv"] = sku["variability_std_quantity"] / sku["variability_mean_quantity"].replace(0, np.nan)
+    sku["xyz_low_sample_flag"] = 0
+    if min_nonzero_periods > 0:
+        sku["xyz_low_sample_flag"] = sku["variability_nonzero_periods"].lt(min_nonzero_periods).astype(int)
     sku = sku.reset_index().sort_values("quantity", ascending=False)
     sku["quantity_share"] = sku["quantity"] / sku["quantity"].sum()
     sku["quantity_cumulative_share"] = sku["quantity_share"].cumsum()
@@ -125,6 +184,8 @@ def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataF
         sku["abc_quantity"].eq(FAST_MOVING_ABC_QUANTITY)
         & sku["abc_frequency"].eq(FAST_MOVING_ABC_FREQUENCY)
     ).astype(int)
+    if not keep_missing_sku_master:
+        sku = sku[sku["sku_code"].isin(set(sku_master["sku_code"].dropna()))].copy()
     sku = sku.merge(sku_master, on="sku_code", how="left")
     ordered_columns = [
         "sku_code",
@@ -138,10 +199,10 @@ def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataF
         "frequency_share",
         "frequency_cumulative_share",
         "abc_frequency",
-        "weekly_mean_quantity",
-        "weekly_std_quantity",
+        "variability_mean_quantity",
+        "variability_std_quantity",
         "demand_cv",
-        "weekly_nonzero_weeks",
+        "variability_nonzero_periods",
         "xyz_low_sample_flag",
         "xyz",
         "abc_xyz",
@@ -153,7 +214,14 @@ def build_abc_xyz(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataF
         "pcs_weight_kg",
         "carton_weight_kg",
     ]
-    return sku[ordered_columns].sort_values(["abc_quantity", "xyz", "quantity"], ascending=[True, True, False])
+    result = sku[ordered_columns].rename(
+        columns={
+            "variability_mean_quantity": f"{variability_grain}_mean_quantity",
+            "variability_std_quantity": f"{variability_grain}_std_quantity",
+            "variability_nonzero_periods": f"{variability_grain}_nonzero_periods",
+        }
+    )
+    return result.sort_values(["abc_quantity", "xyz", "quantity"], ascending=[True, True, False])
 
 
 def build_abc_xyz_matrix_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
@@ -208,17 +276,79 @@ def build_classification_metadata() -> pd.DataFrame:
     return pd.DataFrame(
         [
             {
-                "abc_a_threshold": ABC_A_THRESHOLD,
-                "abc_b_threshold": ABC_B_THRESHOLD,
+                "q11_start_date": Q11_START.date().isoformat(),
+                "q11_end_date": Q11_END.date().isoformat(),
+                "q11_document_types": ",".join(Q11_DOCUMENT_TYPES),
+                "q11_keep_missing_sku_master": int(Q11_KEEP_MISSING_SKU_MASTER),
+                "q11_variability_grain": Q11_VARIABILITY_GRAIN,
+                "q11_variability_period_start": Q11_VARIABILITY_START.date().isoformat(),
+                "q11_variability_period_end": Q11_VARIABILITY_END.date().isoformat(),
+                "abc_a_threshold": Q11_ABC_A_THRESHOLD,
+                "abc_b_threshold": Q11_ABC_B_THRESHOLD,
                 "fast_moving_abc_quantity": FAST_MOVING_ABC_QUANTITY,
                 "fast_moving_abc_frequency": FAST_MOVING_ABC_FREQUENCY,
-                "xyz_cv_x_max": XYZ_CV_X_MAX,
-                "xyz_cv_y_max": XYZ_CV_Y_MAX,
-                "xyz_min_nonzero_weeks": XYZ_MIN_NONZERO_WEEKS,
+                "xyz_cv_x_max": Q11_XYZ_CV_X_MAX,
+                "xyz_cv_y_max": Q11_XYZ_CV_Y_MAX,
+                "xyz_min_nonzero_periods": Q11_XYZ_MIN_NONZERO_PERIODS,
                 "winsorize_limits": str(WINSORIZE_LIMITS),
             }
         ]
     )
+
+
+def build_q11_monthly_demand_table(abc_xyz: pd.DataFrame, q11_shipments: pd.DataFrame) -> pd.DataFrame:
+    monthly = _build_period_quantity_table(
+        q11_shipments,
+        grain="monthly",
+        period_start=Q11_VARIABILITY_START,
+        period_end=Q11_VARIABILITY_END,
+    ).reset_index()
+    monthly = monthly.rename(columns={column: pd.Period(column).strftime("%b-%y") for column in monthly.columns if column != "sku_code"})
+    month_columns = [column for column in monthly.columns if column != "sku_code"]
+    monthly["Total"] = monthly[month_columns].sum(axis=1)
+    monthly["Mean/Mo"] = monthly[month_columns].mean(axis=1)
+    monthly["Std Dev"] = monthly[month_columns].std(axis=1)
+    monthly["CV"] = monthly["Std Dev"] / monthly["Mean/Mo"].replace(0, np.nan)
+    merged = monthly.merge(
+        abc_xyz[
+            [
+                "sku_code",
+                "product_name",
+                "category",
+                "abc_quantity",
+                "abc_frequency",
+                "xyz",
+                "abc_xyz",
+                "quantity",
+                "order_frequency",
+                "cbm_total",
+                "quantity_share",
+                "frequency_share",
+            ]
+        ],
+        on="sku_code",
+        how="left",
+    )
+    ordered_columns = [
+        "sku_code",
+        "product_name",
+        "category",
+        "abc_quantity",
+        "abc_frequency",
+        "xyz",
+        "abc_xyz",
+        *month_columns,
+        "Total",
+        "Mean/Mo",
+        "Std Dev",
+        "CV",
+        "quantity",
+        "quantity_share",
+        "order_frequency",
+        "frequency_share",
+        "cbm_total",
+    ]
+    return merged[ordered_columns].sort_values(["abc_quantity", "quantity"], ascending=[True, False])
 
 
 def build_missing_data_summary(shipments: pd.DataFrame) -> pd.DataFrame:
@@ -1056,11 +1186,8 @@ if __name__ == "__main__":
     shipments = clean_shipments(tx_raw, distributors, segment_overrides=overrides)
     
     print("Running classification...")
-    valid_skus = set(sku_master["sap_code_2"].dropna())
-    shipments = shipments[shipments["sku_code"].isin(valid_skus)].copy()
-    assignment_shipments = filter_assignment_shipments(shipments)
-    
-    abc_xyz = build_abc_xyz(assignment_shipments, sku_master)
+    q11_shipments = filter_q11_shipments(shipments)
+    abc_xyz = build_abc_xyz(q11_shipments, sku_master)
     print(f"Classification completed. Total unique SKUs classified: {abc_xyz['sku_code'].nunique()}")
     print("\nABC Quantity Class counts:")
     print(abc_xyz["abc_quantity"].value_counts())
