@@ -207,10 +207,10 @@ def main() -> None:
     # Format shipments
     if 'shipments_cleaned' in wb.sheetnames:
         ws = wb['shipments_cleaned']
-        headers = [cell.value for cell in ws[1]]
-        for col, header in enumerate(headers, 1):
-            if header and str(header).endswith('_flag'):
-                letter = get_column_letter(col)
+        keep_letters = {'B', 'C', 'F', 'G', 'H', 'I', 'J', 'N', 'U', 'X', 'Y', 'Z', 'AA', 'AB'}
+        for col in range(1, ws.max_column + 1):
+            letter = get_column_letter(col)
+            if letter not in keep_letters:
                 ws.column_dimensions[letter].hidden = True
 
     # Auto-fit all sheets
