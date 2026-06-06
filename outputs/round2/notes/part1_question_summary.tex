@@ -89,22 +89,6 @@ In this matrix:
 \label{fig:q11-abc-xyz-matrix}
 \end{figure}
 
-\subsubsection{Joint Quantity vs. Frequency Matrix Summary}\label{joint-quantity-vs.-frequency-matrix-summary}
-To address the two dimensions of ABC analysis required, we cross-tabulated the SKU count across ABC Quantity and ABC Frequency classes. This matrix, visualized in Figure \ref{fig:q11-abc-qty-freq-matrix}, reveals how the outbound volume of each SKU relates to its picking frequency:
-In this matrix:
-\begin{itemize}
-\item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs by outbound volume (total units shipped: Class A: top 70\%, Class B: next 20\%, Class C: bottom 10\%).
-\item \textbf{ABC Frequency Class (X-axis)}: Classifies SKUs by order frequency (number of unique transactions containing the SKU: Class A: top 70\% of transactions, Class B: next 20\%, Class C: bottom 10\%).
-\item \textbf{Cell Labels (Numbers)}: The integer value inside each cell represents the count of unique SKUs that fall into that specific intersection of quantity and transaction frequency.
-\end{itemize}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.75\linewidth]{../charts/q11_abc_quantity_frequency_matrix.png}
-\caption{Q1.1 ABC quantity vs. frequency matrix}
-\label{fig:q11-abc-qty-freq-matrix}
-\end{figure}
-
 This cross-tabulation reveals four key SKU profiles:
 \begin{itemize}
 \item \textbf{A-X (Fast-Moving)}: 19 SKUs (4.04\%) that drive both high volume and high picking frequency, representing the operational core.
@@ -114,7 +98,7 @@ This cross-tabulation reveals four key SKU profiles:
 \end{itemize}
 
 \subsubsection{Identification of the ``Fast-Moving'' SKU Group}\label{identification-of-the-fast-moving-sku-group}
-The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by Quantity and Class A by Order Frequency (Class A-A). This group is the primary driver of warehouse operational workload and inventory velocity.
+The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by Quantity and Class X by Order Frequency (Class A-X). This group is the primary driver of warehouse operational workload and inventory velocity.
 
 \begin{itemize}
 \item \textbf{SKU Count}: \textbf{19 SKUs} (representing \textbf{4.04\%} of the total assortment).

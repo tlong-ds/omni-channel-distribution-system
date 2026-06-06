@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  6 JUN 2026 14:33
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  6 JUN 2026 14:50
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -770,70 +770,65 @@ File: ../charts/q11_abc_xyz_matrix.png Graphic file (type bmp)
 
 
 [2]
-File: ../charts/q11_abc_quantity_frequency_matrix.png Graphic file (type bmp)
-<../charts/q11_abc_quantity_frequency_matrix.png>
-
 
 [3]
-
-[4]
 File: ../charts/q12_geography_coverage_map.png Graphic file (type bmp)
 <../charts/q12_geography_coverage_map.png>
 
 
-[5]
+[4]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.665pt on input line 176.
+(Font)              scaled to size 7.665pt on input line 160.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.475pt on input line 176.
+(Font)              scaled to size 5.475pt on input line 160.
 LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-76.
+60.
  (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 10.95099pt on input line 176.
+(Font)              scaled to size 10.95099pt on input line 160.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.66568pt on input line 176.
+(Font)              scaled to size 7.66568pt on input line 160.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.4755pt on input line 176.
+(Font)              scaled to size 5.4755pt on input line 160.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 10.94882pt on input line 176.
+(Font)              scaled to size 10.94882pt on input line 160.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.66417pt on input line 176.
+(Font)              scaled to size 7.66417pt on input line 160.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.47441pt on input line 176.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 176
+(Font)              scaled to size 5.47441pt on input line 160.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 160
 .
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 176
+LaTeX Font Info:    Trying to load font information for U+msb on input line 160
 .
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 
-[6]
+[5]
 File: ../charts/q12_warehouse_imbalance.png Graphic file (type bmp)
 <../charts/q12_warehouse_imbalance.png>
 File: ../charts/q12_region_reference_map.png Graphic file (type bmp)
 <../charts/q12_region_reference_map.png>
 
 
-[7]
+[6]
 File: ../charts/q12_region_quantity_orders.png Graphic file (type bmp)
 <../charts/q12_region_quantity_orders.png>
 
 
-[8]
+[7]
 File: ../charts/q12_top_demand_provinces_map.png Graphic file (type bmp)
 <../charts/q12_top_demand_provinces_map.png>
 
 
-[9]
+[8]
 File: ../charts/q12_province_demand_choropleths.png Graphic file (type bmp)
 <../charts/q12_province_demand_choropleths.png>
 File: ../charts/q12_warehouse_region_quantity_split.png Graphic file (type bmp)
@@ -841,45 +836,45 @@ File: ../charts/q12_warehouse_region_quantity_split.png Graphic file (type bmp)
 <../charts/q12_warehouse_region_quantity_split.png>
 
 
-[10]
+[9]
 File: ../charts/q12_warehouse_dominance_map.png Graphic file (type bmp)
 <../charts/q12_warehouse_dominance_map.png>
 File: ../charts/q12_province_distance_correlation.png Graphic file (type bmp)
 <../charts/q12_province_distance_correlation.png>
 
 
-[11]
+[10]
 File: ../charts/q13_order_profile_comparison.png Graphic file (type bmp)
 <../charts/q13_order_profile_comparison.png>
 
 
-[12]
+[11]
 File: ../charts/q13_packaging_mix.png Graphic file (type bmp)
 <../charts/q13_packaging_mix.png>
 
 
-[13]
+[12]
 File: ../charts/q13_geographic_spread.png Graphic file (type bmp)
 <../charts/q13_geographic_spread.png>
 File: ../charts/q13_segment_geographic_maps.png Graphic file (type bmp)
 <../charts/q13_segment_geographic_maps.png>
 
 
-[14]
+[13]
 
-[15] (./part1_question_summary.aux)
+[14] (./part1_question_summary.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 16976 strings out of 473832
- 314059 string characters out of 5729482
- 861540 words of memory out of 5000000
- 39844 multiletter control sequences out of 15000+600000
+ 16964 strings out of 473832
+ 313518 string characters out of 5729482
+ 861395 words of memory out of 5000000
+ 39833 multiletter control sequences out of 15000+600000
  562348 words of font info for 65 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 90i,10n,114p,609b,452s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,10n,114p,609b,454s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on part1_question_summary.pdf (15 pages).
+Output written on part1_question_summary.pdf (14 pages).
