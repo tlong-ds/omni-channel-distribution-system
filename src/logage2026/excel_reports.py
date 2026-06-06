@@ -35,20 +35,57 @@ CENTER = Alignment(horizontal="center", vertical="center", wrap_text=True)
 LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
 
-def write_q11_workbook(
+def _write_dataframe_sheet(ws, title_text: str, df: pd.DataFrame) -> None:
+    ws.column_dimensions[get_column_letter(1)].width = 3
+    for col in range(2, len(df.columns) + 2):
+        ws.column_dimensions[get_column_letter(col)].width = 18
+    _apply_title(ws, "B1", len(df.columns) + 1, title_text)
+    
+    for col, value in enumerate(df.columns, start=2):
+        ws.cell(2, col, str(value))
+    _style_range(ws, 2, 2, len(df.columns) + 1, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    
+    for row_idx, row in enumerate(df.itertuples(index=False), start=3):
+        for col_idx, value in enumerate(row, start=2):
+            cell = ws.cell(row_idx, col_idx, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if isinstance(value, str) else CENTER
+            if isinstance(value, float):
+                cell.number_format = "0.00"
+    
+    ws.freeze_panes = "B3"
+    ws.auto_filter.ref = f"B2:{get_column_letter(len(df.columns) + 1)}{len(df) + 2}"
+
+
+def write_summary_workbook(
     abc_xyz: pd.DataFrame,
     abc_xyz_matrix: pd.DataFrame,
     monthly_demand: pd.DataFrame,
     q11_shipments: pd.DataFrame,
-    output_path: Path = Q11_WORKBOOK_OUTPUT,
+    warehouse_region_summary: pd.DataFrame,
+    q12_top_demand_provinces_summary: pd.DataFrame,
+    warehouse_imbalance_summary: pd.DataFrame,
+    q13_segment_profile_summary: pd.DataFrame,
+    q13_segment_packaging_summary: pd.DataFrame,
+    q13_segment_geographic_spread_summary: pd.DataFrame,
+    output_path: Path,
 ) -> Path:
     workbook = Workbook()
     dashboard = workbook.active
-    dashboard.title = "Dashboard"
+    dashboard.title = "Q1.1 Dashboard"
     _write_dashboard(dashboard, abc_xyz, abc_xyz_matrix, q11_shipments)
-    _write_full_sku_ranking(workbook.create_sheet("Full SKU Ranking"), abc_xyz)
-    _write_monthly_demand_sheet(workbook.create_sheet("Monthly Demand (XYZ Base)"), monthly_demand)
-    _write_class_a_deep_dive(workbook.create_sheet("Class A Deep Dive"), monthly_demand)
+    _write_full_sku_ranking(workbook.create_sheet("Q1.1 Full SKU Ranking"), abc_xyz)
+    _write_monthly_demand_sheet(workbook.create_sheet("Q1.1 Monthly Demand"), monthly_demand)
+    _write_class_a_deep_dive(workbook.create_sheet("Q1.1 Class A Deep Dive"), monthly_demand)
+    
+    _write_dataframe_sheet(workbook.create_sheet("Q1.2 Warehouse by Region"), "QUESTION 1.2 — WAREHOUSE REGION SUMMARY", warehouse_region_summary)
+    _write_dataframe_sheet(workbook.create_sheet("Q1.2 Top Provinces"), "QUESTION 1.2 — TOP DEMAND PROVINCES", q12_top_demand_provinces_summary)
+    _write_dataframe_sheet(workbook.create_sheet("Q1.2 Warehouse Imbalance"), "QUESTION 1.2 — WAREHOUSE IMBALANCE", warehouse_imbalance_summary)
+    
+    _write_dataframe_sheet(workbook.create_sheet("Q1.3 Segment Profile"), "QUESTION 1.3 — ORDER PROFILE BY SEGMENT", q13_segment_profile_summary)
+    _write_dataframe_sheet(workbook.create_sheet("Q1.3 Packaging"), "QUESTION 1.3 — PACKAGING SPREAD BY SEGMENT", q13_segment_packaging_summary)
+    _write_dataframe_sheet(workbook.create_sheet("Q1.3 Geo Spread"), "QUESTION 1.3 — GEOGRAPHIC SPREAD BY SEGMENT", q13_segment_geographic_spread_summary)
+            
     workbook.save(output_path)
     return output_path
 

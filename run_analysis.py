@@ -43,7 +43,7 @@ from src.logage2026.loading import (
     load_transactions,
 )
 from src.logage2026.notes import write_notes
-from src.logage2026.q11_excel import write_q11_workbook
+from src.logage2026.excel_reports import write_summary_workbook
 from src.logage2026.visuals import boundary_province_names, save_charts
 
 
@@ -170,8 +170,6 @@ def main() -> None:
     customer_match_quality_summary.to_csv(TABLES_DIR / "q12_customer_match_quality_summary.csv", index=False)
     geography_source_summary.to_csv(TABLES_DIR / "q12_geography_source_summary.csv", index=False)
     unresolved_customer_summary.to_csv(TABLES_DIR / "q12_unresolved_customer_summary.csv", index=False)
-    write_q11_workbook(abc_xyz, abc_xyz_matrix, q11_monthly_demand, q11_shipments)
-
     import pandas as pd
     import openpyxl
     from openpyxl.utils import get_column_letter
@@ -230,10 +228,19 @@ def main() -> None:
     wb.save(cleaned_path)
             
     print("Exporting summary tables to summary_tables.xlsx...")
-    with pd.ExcelWriter(OUTPUT_DIR / "summary_tables.xlsx") as writer:
-        for csv_file in TABLES_DIR.glob("*.csv"):
-            df = pd.read_csv(csv_file)
-            df.to_excel(writer, sheet_name=csv_file.stem[:31], index=False)
+    write_summary_workbook(
+        abc_xyz=abc_xyz,
+        abc_xyz_matrix=abc_xyz_matrix,
+        monthly_demand=q11_monthly_demand,
+        q11_shipments=q11_shipments,
+        warehouse_region_summary=warehouse_region_summary,
+        q12_top_demand_provinces_summary=q12_province_cluster_summary,
+        warehouse_imbalance_summary=warehouse_imbalance_summary,
+        q13_segment_profile_summary=q13_segment_profile_summary,
+        q13_segment_packaging_summary=q13_segment_packaging_summary,
+        q13_segment_geographic_spread_summary=q13_segment_geographic_spread_summary,
+        output_path=OUTPUT_DIR / "summary_tables.xlsx",
+    )
 
     _remove_stale_outputs()
     save_charts(
