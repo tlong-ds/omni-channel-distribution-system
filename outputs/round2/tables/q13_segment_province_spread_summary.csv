@@ -1,7 +1,7 @@
 customer_segment,province,region,orders,customers,quantity,cbm_total
 Modern Trade,Bình Dương,Đông Nam Bộ,212,7,27224.166666666668,1770.0036857931668
-Modern Trade,Hồ Chí Minh,Đông Nam Bộ,329,36,26470.691666666666,1684.6559902579334
-Modern Trade,Cần Thơ,Đồng bằng sông Cửu Long,135,3,14509.583333333334,920.153200025
+Modern Trade,Hồ Chí Minh,Đông Nam Bộ,328,36,26469.691666666666,1684.4979862579335
+Modern Trade,Cần Thơ,Đồng bằng sông Cửu Long,134,3,14503.583333333334,919.8823360250001
 Modern Trade,Tiền Giang,Đồng bằng sông Cửu Long,118,2,11870.583333333334,750.58790695
 Modern Trade,Đà Nẵng,Bắc Trung Bộ và Duyên hải miền Trung,112,3,10969.666666666666,704.4276839245833
 Modern Trade,Hà Nội,Đồng bằng sông Hồng,108,8,8268.633333333333,548.8609042061
@@ -42,12 +42,12 @@ Modern Trade,Kon Tum,Tây Nguyên,3,1,3.25,0.39013380350000004
 Modern Trade,Tây Ninh,Đông Nam Bộ,3,1,3.0,0.255255765
 Traditional Trade / Distributor,Hồ Chí Minh,Đông Nam Bộ,1180,71,27079.4,1221.3846257158557
 Traditional Trade / Distributor,Đà Nẵng,Bắc Trung Bộ và Duyên hải miền Trung,138,8,10689.3125,592.3952294583667
-Traditional Trade / Distributor,Bình Thuận,Bắc Trung Bộ và Duyên hải miền Trung,105,6,10120.175,607.2141269106501
+Traditional Trade / Distributor,Bình Thuận,Bắc Trung Bộ và Duyên hải miền Trung,100,5,9899.175,594.2055394106501
 Traditional Trade / Distributor,Đồng Nai,Đông Nam Bộ,376,8,6113.0,281.93463172867024
 Traditional Trade / Distributor,Quảng Nam,Bắc Trung Bộ và Duyên hải miền Trung,50,4,6085.958333333333,308.2400850056667
-Traditional Trade / Distributor,Hà Nội,Đồng bằng sông Hồng,84,9,5783.833333333333,290.1119033579167
 Traditional Trade / Distributor,Nghệ An,Bắc Trung Bộ và Duyên hải miền Trung,74,4,5562.083333333333,273.38441865083337
 Traditional Trade / Distributor,Huế,Bắc Trung Bộ và Duyên hải miền Trung,62,5,4601.5,258.6114835653667
+Traditional Trade / Distributor,Hà Nội,Đồng bằng sông Hồng,74,7,4535.833333333333,237.1956483579167
 Traditional Trade / Distributor,Hòa Bình,Trung du và miền núi phía Bắc,116,6,3000.1666666666665,135.6025903587
 Traditional Trade / Distributor,Khánh Hòa,Bắc Trung Bộ và Duyên hải miền Trung,69,5,2617.25,152.51956050133333
 Traditional Trade / Distributor,Cần Thơ,Đồng bằng sông Cửu Long,83,5,2015.5,101.83573024966667

@@ -5,7 +5,6 @@ from src.logage2026.analysis import (
     Q11_START,
     build_abc_xyz,
     build_abc_xyz_matrix_summary,
-    build_abc_quantity_frequency_matrix,
     build_classification_metadata,
     build_customer_match_quality_summary,
     build_customer_cluster_summary,
@@ -106,7 +105,7 @@ def main() -> None:
 
     abc_xyz = build_abc_xyz(q11_shipments, sku_master)
     abc_xyz_matrix = build_abc_xyz_matrix_summary(abc_xyz)
-    abc_qty_freq_matrix = build_abc_quantity_frequency_matrix(abc_xyz)
+
     fast_moving_summary = build_fast_moving_summary(abc_xyz)
     classification_metadata = build_classification_metadata()
     q11_monthly_demand = build_q11_monthly_demand_table(abc_xyz, q11_shipments)
@@ -140,7 +139,7 @@ def main() -> None:
 
     abc_xyz.to_csv(TABLES_DIR / "q11_sku_abc_xyz.csv", index=False)
     abc_xyz_matrix.to_csv(TABLES_DIR / "q11_abc_xyz_matrix_summary.csv", index=False)
-    abc_qty_freq_matrix.to_csv(TABLES_DIR / "q11_abc_quantity_frequency_matrix.csv", index=False)
+
     fast_moving_summary.to_csv(TABLES_DIR / "q11_fast_moving_summary.csv", index=False)
     classification_metadata.to_csv(TABLES_DIR / "q11_classification_metadata.csv", index=False)
     q11_monthly_demand.to_csv(TABLES_DIR / "q11_monthly_demand_summary.csv", index=False)
@@ -191,7 +190,6 @@ def main() -> None:
         q13_segment_geographic_spread_summary,
         q13_segment_province_spread_summary,
         sku_master,
-        abc_qty_freq_matrix,
     )
     write_notes(
         assignment_shipments,
@@ -213,7 +211,6 @@ def main() -> None:
         q13_segment_profile_summary,
         q13_segment_packaging_summary,
         q13_segment_geographic_spread_summary,
-        abc_qty_freq_matrix,
     )
     print(f"Round 2 analysis written to {OUTPUT_DIR}")
     print(

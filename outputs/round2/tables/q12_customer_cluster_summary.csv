@@ -1,13 +1,13 @@
 geography_level,geography_name,orders,quantity,rank_by_orders,rank_by_quantity
-province,Hồ Chí Minh,1492,53550.09166666667,1,1
+province,Hồ Chí Minh,1491,53549.09166666667,1,1
 province,Đồng Nai,404,6370.333333333333,2,9
 province,Đà Nẵng,249,21658.979166666668,3,3
 province,Bình Dương,247,27622.166666666668,4,2
-province,Cần Thơ,218,16525.083333333332,5,4
-province,Hà Nội,192,14052.466666666667,6,5
+province,Cần Thơ,217,16519.083333333332,5,4
+province,Hà Nội,182,12804.466666666667,6,5
 province,Khánh Hòa,175,10830.75,7,7
 province,Đắk Lắk,145,4280.75,8,14
 province,Tiền Giang,139,12118.583333333334,9,6
 province,Hòa Bình,123,3007.75,10,16
-province,Bình Thuận,105,10120.175,11,8
+province,Bình Thuận,100,9899.175,11,8
 province,Quảng Nam,80,6290.175,14,10

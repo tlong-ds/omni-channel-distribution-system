@@ -93,7 +93,7 @@ def _period_label(start: pd.Timestamp, end: pd.Timestamp) -> str:
 def _month_columns(monthly_demand: pd.DataFrame) -> list[str]:
     month_like = []
     for column in monthly_demand.columns:
-        if column in {"sku_code", "product_name", "category", "abc_quantity", "abc_frequency", "xyz", "abc_xyz", "Total", "Mean/Mo", "Std Dev", "CV", "quantity", "quantity_share", "order_frequency", "frequency_share", "cbm_total"}:
+        if column in {"sku_code", "product_name", "category", "abc_quantity", "xyz", "abc_xyz", "Total", "Mean/Mo", "Std Dev", "CV", "quantity", "quantity_share", "order_frequency", "frequency_share", "cbm_total"}:
             continue
         try:
             pd.Period(column, freq="M")
@@ -363,7 +363,7 @@ def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
         ws,
         "B1",
         18,
-        f"FULL SKU RANKING TABLE — ABC-XYZ CLASSIFICATION ({abc_xyz['sku_code'].nunique():,} SKUs | Jul-Dec 2025)",
+        f"FULL SKU RANKING TABLE — ABC-XYZ CLASSIFICATION ({abc_xyz['sku_code'].nunique():,} SKUs | Jun\u2013Dec 2025)",
     )
     headers = [
         "Rank\n(Qty)",
@@ -375,8 +375,7 @@ def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
         "Rank\n(Freq)",
         "Order\nFreq",
         "% Freq",
-        "Cum %\nFreq",
-        "ABC\n(Freq)",
+        "Cum Freq Share",
         "Total CBM",
         "CV",
         "XYZ",
@@ -386,7 +385,7 @@ def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
     ]
     for col, value in enumerate(headers, start=2):
         ws.cell(2, col, value)
-    _style_range(ws, 2, 2, 18, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    _style_range(ws, 2, 2, 17, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
 
     qty_sorted = abc_xyz.sort_values(["quantity", "sku_code"], ascending=[False, True]).reset_index(drop=True)
     qty_rank = {sku: idx for idx, sku in enumerate(qty_sorted["sku_code"], start=1)}
@@ -405,7 +404,6 @@ def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
             _safe_float(row.order_frequency),
             _safe_float(row.frequency_share),
             _safe_float(row.frequency_cumulative_share),
-            row.abc_frequency,
             _safe_float(row.cbm_total),
             _safe_float(row.demand_cv),
             row.xyz,
@@ -415,17 +413,17 @@ def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
         ]
         for col, value in enumerate(values, start=2):
             ws.cell(row_idx, col, value)
-        _style_range(ws, row_idx, 2, 18, fill=CLASS_FILLS.get(row.abc_quantity), alignment=CENTER)
+        _style_range(ws, row_idx, 2, 17, fill=CLASS_FILLS.get(row.abc_quantity), alignment=CENTER)
         ws.cell(row_idx, 3).alignment = LEFT
+        ws.cell(row_idx, 16).alignment = LEFT
         ws.cell(row_idx, 17).alignment = LEFT
-        ws.cell(row_idx, 18).alignment = LEFT
         ws.cell(row_idx, 5).number_format = "0.00%"
         ws.cell(row_idx, 6).number_format = "0.0%"
         ws.cell(row_idx, 10).number_format = "0.00%"
         ws.cell(row_idx, 11).number_format = "0.0%"
-        ws.cell(row_idx, 14).number_format = "0.000"
+        ws.cell(row_idx, 13).number_format = "0.000"
     ws.freeze_panes = "B3"
-    ws.auto_filter.ref = f"B2:R{ws.max_row}"
+    ws.auto_filter.ref = f"B2:Q{ws.max_row}"
 
 
 def _write_monthly_demand_sheet(ws, monthly_demand: pd.DataFrame) -> None:

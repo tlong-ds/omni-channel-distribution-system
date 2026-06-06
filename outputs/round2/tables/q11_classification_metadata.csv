@@ -1,2 +1,2 @@
-q11_start_date,q11_end_date,q11_document_types,q11_keep_missing_sku_master,q11_variability_grain,q11_variability_period_start,q11_variability_period_end,abc_a_threshold,abc_b_threshold,fast_moving_abc_quantity,fast_moving_abc_frequency,xyz_cv_x_max,xyz_cv_y_max,xyz_min_nonzero_periods,winsorize_limits
-2025-06-01,2025-12-31,"A/R INVOICE,INVENTORY TRANSFERS,GOODS ISSUE,STOCK COUNT,A/P CREDIT MEMO",1,monthly,2025-06-01,2025-12-31,0.7,0.9,A,A,0.5,1.0,0,None
+q11_start_date,q11_end_date,q11_document_types,q11_keep_missing_sku_master,q11_variability_grain,q11_variability_period_start,q11_variability_period_end,abc_a_threshold,abc_b_threshold,fast_moving_xyz_frequency,winsorize_limits
+2025-06-01,2025-12-31,"A/R INVOICE,INVENTORY TRANSFERS,GOODS ISSUE,STOCK COUNT,A/P CREDIT MEMO",1,monthly,2025-06-01,2025-12-31,0.7,0.9,X,None

@@ -18,22 +18,21 @@ My Phuoc,Đông Nam Bộ,Bình Dương,distributor_match,188,50,4,3496.0,240.022
 My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Thanh Hóa,transaction_text_parse,109,58,3,3280.0,209.1664532
 My Phuoc,Tây Nguyên,Đắk Lắk,transaction_text_parse,308,90,4,3209.0,183.47480306766667
 My Phuoc,Đông Nam Bộ,Đồng Nai,distributor_match,267,51,3,2678.0,124.03121529453334
-Vinh Loc,Đông Nam Bộ,Hồ Chí Minh,transaction_text_parse,803,243,35,2467.625,141.81038362576666
+Vinh Loc,Đông Nam Bộ,Hồ Chí Minh,transaction_text_parse,802,242,35,2466.625,141.65237962576668
 My Phuoc,Trung du và miền núi phía Bắc,Hòa Bình,transaction_text_parse,662,89,6,2363.0,105.71188487953334
 My Phuoc,Trung du và miền núi phía Bắc,Phú Thọ,transaction_text_parse,100,48,2,2269.0,152.7534613
 My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Khánh Hòa,distributor_match,62,11,1,1735.0,105.137309
 Vinh Loc,Đông Nam Bộ,Bình Dương,transaction_text_parse,235,64,4,1573.6666666666667,77.8699386705
 My Phuoc,Trung du và miền núi phía Bắc,Bắc Giang,transaction_text_parse,76,23,3,1562.0,81.12466983333334
-My Phuoc,Đồng bằng sông Hồng,Hà Nội,distributor_match,55,13,4,1382.0,64.874707
 My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Bình,distributor_match,49,15,1,1193.0,58.17504900000001
 My Phuoc,Đồng bằng sông Cửu Long,Cần Thơ,distributor_match,323,47,3,1192.0,60.2442935416
-My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Bình Thuận,distributor_match,237,33,4,1045.0,48.548635276333336
 My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Trị,distributor_match,91,18,1,965.0,55.157653066250006
 Vinh Loc,Đông Nam Bộ,Bình Dương,distributor_match,71,21,2,945.5,77.74346142266667
+My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Bình Thuận,distributor_match,220,28,3,824.0,35.54004777633334
 Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Đà Nẵng,distributor_match,146,49,3,725.1458333333334,40.673275429166665
 Vinh Loc,Đồng bằng sông Cửu Long,Tiền Giang,transaction_text_parse,107,42,2,707.5833333333334,36.89416955
 My Phuoc,Đồng bằng sông Cửu Long,An Giang,distributor_match,19,5,3,667.0,29.815494
-Vinh Loc,Đồng bằng sông Cửu Long,Cần Thơ,distributor_match,110,44,1,659.9166666666666,32.460859475
+Vinh Loc,Đồng bằng sông Cửu Long,Cần Thơ,distributor_match,109,43,1,653.9166666666666,32.189995475
 Vinh Loc,Trung du và miền núi phía Bắc,Hòa Bình,transaction_text_parse,111,34,3,644.75,30.439413195
 Vinh Loc,Đông Nam Bộ,Hồ Chí Minh,distributor_match,463,141,17,623.4666666666667,34.47239394386667
 Vinh Loc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Nam,transaction_text_parse,116,37,3,579.8416666666667,31.724566386400003
@@ -63,6 +62,7 @@ My Phuoc,Tây Nguyên,Lâm Đồng,distributor_match,71,16,1,162.0,6.25922560000
 My Phuoc,Trung du và miền núi phía Bắc,Lạng Sơn,transaction_text_parse,16,6,2,154.0,7.3155808333333345
 My Phuoc,Bắc Trung Bộ và Duyên hải miền Trung,Quảng Ngãi,transaction_text_parse,71,23,2,151.0,7.552344883333333
 My Phuoc,Đồng bằng sông Cửu Long,Cà Mau,distributor_match,35,10,3,144.0,7.455966666666668
+My Phuoc,Đồng bằng sông Hồng,Hà Nội,distributor_match,5,3,2,134.0,11.958452000000001
 My Phuoc,Đồng bằng sông Cửu Long,Trà Vinh,transaction_text_parse,48,13,1,131.0,7.2221635976
 My Phuoc,Trung du và miền núi phía Bắc,Yên Bái,transaction_text_parse,9,3,2,131.0,8.3979195
 My Phuoc,Đồng bằng sông Cửu Long,Sóc Trăng,transaction_text_parse,55,13,1,126.0,5.874500050666667

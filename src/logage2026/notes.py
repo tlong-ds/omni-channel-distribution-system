@@ -31,7 +31,6 @@ def write_notes(
     q13_segment_profile_summary: pd.DataFrame,
     q13_segment_packaging_summary: pd.DataFrame,
     q13_segment_geographic_spread_summary: pd.DataFrame,
-    abc_qty_freq_matrix: pd.DataFrame,
 ) -> None:
     NOTES_DIR.mkdir(parents=True, exist_ok=True)
     metadata = classification_metadata.iloc[0] if not classification_metadata.empty else None
@@ -68,26 +67,21 @@ def write_notes(
         sku_share = sku_count / total_skus if total_skus else 0.0
         return f"{sku_count} SKUs ({sku_share * 100:.2f}\\%)"
         
-    # Build dictionary of qty-frequency cells
-    qty_freq_dict = {}
-    for _, row in abc_qty_freq_matrix.iterrows():
-        qty_freq_dict[(row['abc_quantity'], row['abc_frequency'])] = int(row['sku_count'])
-        
-    def get_qty_freq_cell_text(abc_q, abc_f):
-        count = qty_freq_dict.get((abc_q, abc_f), 0)
-        share = count / total_skus if total_skus else 0.0
-        return f"{count} SKUs ({share * 100:.2f}\\%)"
-        
     total_skus = len(abc_xyz)
     class_a_skus = len(abc_xyz[abc_xyz['abc_quantity'] == 'A'])
     class_b_skus = len(abc_xyz[abc_xyz['abc_quantity'] == 'B'])
     class_c_skus = len(abc_xyz[abc_xyz['abc_quantity'] == 'C'])
     
-    class_a_freq = len(abc_xyz[abc_xyz['abc_frequency'] == 'A'])
-    class_b_freq = len(abc_xyz[abc_xyz['abc_frequency'] == 'B'])
-    class_c_freq = len(abc_xyz[abc_xyz['abc_frequency'] == 'C'])
+    class_x_freq = len(abc_xyz[abc_xyz['xyz'] == 'X'])
+    class_y_freq = len(abc_xyz[abc_xyz['xyz'] == 'Y'])
+    class_z_freq = len(abc_xyz[abc_xyz['xyz'] == 'Z'])
     
     fast_mov_sku_share = fast_mov['sku_count'] / total_skus if total_skus else 0.0
+
+    ax_count = matrix_dict.get(('A', 'X'), {}).get('sku_count', 0)
+    ay_az_count = matrix_dict.get(('A', 'Y'), {}).get('sku_count', 0) + matrix_dict.get(('A', 'Z'), {}).get('sku_count', 0)
+    bx_cx_count = matrix_dict.get(('B', 'X'), {}).get('sku_count', 0) + matrix_dict.get(('C', 'X'), {}).get('sku_count', 0)
+    cz_count = matrix_dict.get(('C', 'Z'), {}).get('sku_count', 0)
 
     def pct(val):
         return f"{val * 100:.2f}\\%"
@@ -134,7 +128,7 @@ def write_notes(
         r"",
         r"\subsection{Executive Summary}\label{executive-summary}",
         r"",
-        f"This report provides the outbound flow analysis, customer profiling, and geographic demand mapping for the Round 2 competition based on the transaction logs spanning June to December 2025. The core analysis focuses on the 6-month Assignment Window (July 1 -- December 31, 2025), which contains \\textbf{{{len(shipments):,} shipment rows}}, \\textbf{{{shipments['quantity'].sum():,.2f} units of outbound demand}}, and \\textbf{{{shipments['cbm_total'].sum():,.2f} m³ of volume}}.",
+        f"This report provides the outbound flow analysis, customer profiling, and geographic demand mapping for the Round 2 competition based on the transaction logs spanning June to December 2025. The core analysis focuses on the 7-month Assignment Window (June 1 -- December 31, 2025), which contains \\textbf{{{len(shipments):,} shipment rows}}, \\textbf{{{shipments['quantity'].sum():,.2f} units of outbound demand}}, and \\textbf{{{shipments['cbm_total'].sum():,.2f} m³ of volume}}.",
         r"",
         r"Key takeaways include:",
         r"\begin{enumerate}",
@@ -150,13 +144,12 @@ def write_notes(
         r"\subsubsection{Classification Thresholds}\label{classification-thresholds}",
         r"\begin{itemize}",
         f"\\item \\textbf{{ABC Quantity Thresholds}}: Class A (Top {pct0(metadata['abc_a_threshold'])}), Class B (Next {pct0(metadata['abc_b_threshold'] - metadata['abc_a_threshold'])}), Class C (Bottom {pct0(1 - metadata['abc_b_threshold'])})",
-        f"\\item \\textbf{{ABC Frequency Thresholds}}: Class A (Top {pct0(metadata['abc_a_threshold'])}), Class B (Next {pct0(metadata['abc_b_threshold'] - metadata['abc_a_threshold'])}), Class C (Bottom {pct0(1 - metadata['abc_b_threshold'])})",
-        f"\\item \\textbf{{XYZ Variability Thresholds}}: Class X (CV $\\le$ {metadata['xyz_cv_x_max']:.2f}), Class Y (CV $\\le$ {metadata['xyz_cv_y_max']:.2f}), Class Z (CV > {metadata['xyz_cv_y_max']:.2f})",
+        f"\\item \\textbf{{XYZ Frequency Thresholds}}: Class X (Top {pct0(metadata['abc_a_threshold'])}), Class Y (Next {pct0(metadata['abc_b_threshold'] - metadata['abc_a_threshold'])}), Class Z (Bottom {pct0(1 - metadata['abc_b_threshold'])})",
         f"\\item \\textbf{{Q1.1 Variability Basis}}: {metadata['q11_variability_grain'].title()} demand buckets from {metadata['q11_variability_period_start']} to {metadata['q11_variability_period_end']} with document types {metadata['q11_document_types']}.",
         r"\end{itemize}",
         r"",
         r"\subsubsection{ABC Volume (Quantity) and Order Frequency Distributions}\label{distributions}",
-        r"The distribution of outbound quantities and order frequencies across the SKUs shows a high concentration. Most shipped volumes and orders are driven by a small fraction of the assortment, as visualized in Figures \ref{fig:q11-abc-qty-dist} and \ref{fig:q11-abc-freq-dist}.",
+        r"The distribution of outbound quantities and order frequencies across the SKUs shows a high concentration. Most shipped volumes and orders are driven by a small fraction of the assortment, as visualized in Figures \ref{fig:q11-abc-qty-dist} and \ref{fig:q11-xyz-freq-dist}.",
         r"",
         r"\begin{figure}[H]",
         r"\centering",
@@ -167,18 +160,18 @@ def write_notes(
         r"",
         r"\begin{figure}[H]",
         r"\centering",
-        r"\includegraphics[width=0.85\linewidth]{../charts/q11_abc_frequency_distribution.png}",
-        r"\caption{Q1.1 ABC order frequency distribution}",
-        r"\label{fig:q11-abc-freq-dist}",
+        r"\includegraphics[width=0.85\linewidth]{../charts/q11_xyz_frequency_distribution.png}",
+        r"\caption{Order Frequency Distribution by XYZ Class}",
+        r"\label{fig:q11-xyz-freq-dist}",
         r"\end{figure}",
         r"",
         r"\subsubsection{Joint ABC-XYZ Matrix Summary}\label{joint-abc-xyz-matrix-summary}",
         f"A total of \\textbf{{{total_skus} unique SKUs}} were classified. The product distribution across the ABC-XYZ matrix (using ABC by Quantity) is shown in Figure \\ref{{fig:q11-abc-xyz-matrix}}:",
         r"In this matrix:",
         r"\begin{itemize}",
-        r"\item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs based on their contribution to total outbound quantity (Class A: top 80\%, Class B: next 15\%, Class C: bottom 5\%).",
-        r"\item \textbf{XYZ Variability Class (X-axis)}: Classifies SKUs based on their weekly demand variability (Class X: stable demand, CV $\le$ 0.50; Class Y: variable demand, CV $\le$ 1.00; Class Z: spiky/irregular demand, CV $>$ 1.00 or low active sample).",
-        r"\item \textbf{Cell Labels (Numbers)}: The integer value inside each cell represents the count of unique SKUs that fall into that specific intersection of volume and variability.",
+        f"\\item \\textbf{{ABC Quantity Class (Y-axis)}}: Classifies SKUs based on their contribution to total outbound quantity (Class A: top {pct0(metadata['abc_a_threshold'])}, Class B: next {pct0(metadata['abc_b_threshold'] - metadata['abc_a_threshold'])}, Class C: bottom {pct0(1 - metadata['abc_b_threshold'])}).",
+        f"\\item \\textbf{{XYZ Frequency Class (X-axis)}}: Classifies SKUs based on their contribution to total order frequency (Class X: top {pct0(metadata['abc_a_threshold'])}, Class Y: next {pct0(metadata['abc_b_threshold'] - metadata['abc_a_threshold'])}, Class Z: bottom {pct0(1 - metadata['abc_b_threshold'])}).",
+        r"\item \textbf{Cell Labels (Numbers)}: The integer value inside each cell represents the count of unique SKUs that fall into that specific intersection of volume and frequency.",
         r"\end{itemize}",
         r"",
         r"\begin{figure}[H]",
@@ -192,8 +185,8 @@ def write_notes(
         r"To address the two dimensions of ABC analysis required, we cross-tabulated the SKU count across ABC Quantity and ABC Frequency classes. This matrix, visualized in Figure \ref{fig:q11-abc-qty-freq-matrix}, reveals how the outbound volume of each SKU relates to its picking frequency:",
         r"In this matrix:",
         r"\begin{itemize}",
-        r"\item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs by outbound volume (total units shipped: Class A: top 80\%, Class B: next 15\%, Class C: bottom 5\%).",
-        r"\item \textbf{ABC Frequency Class (X-axis)}: Classifies SKUs by order frequency (number of unique transactions containing the SKU: Class A: top 80\% of transactions, Class B: next 15\%, Class C: bottom 5\%).",
+        f"\\item \\textbf{{ABC Quantity Class (Y-axis)}}: Classifies SKUs by outbound volume (total units shipped: Class A: top {pct0(metadata['abc_a_threshold'])}, Class B: next {pct0(metadata['abc_b_threshold'] - metadata['abc_a_threshold'])}, Class C: bottom {pct0(1 - metadata['abc_b_threshold'])}).",
+        f"\\item \\textbf{{ABC Frequency Class (X-axis)}}: Classifies SKUs by order frequency (number of unique transactions containing the SKU: Class A: top {pct0(metadata['abc_a_threshold'])} of transactions, Class B: next {pct0(metadata['abc_b_threshold'] - metadata['abc_a_threshold'])}, Class C: bottom {pct0(1 - metadata['abc_b_threshold'])}).",
         r"\item \textbf{Cell Labels (Numbers)}: The integer value inside each cell represents the count of unique SKUs that fall into that specific intersection of quantity and transaction frequency.",
         r"\end{itemize}",
         r"",
@@ -206,10 +199,10 @@ def write_notes(
         r"",
         r"This cross-tabulation reveals four key SKU profiles:",
         r"\begin{itemize}",
-        r"\item \textbf{A-A (Fast-Moving)}: 59 SKUs that drive both high volume and high picking frequency, representing the operational core.",
-        r"\item \textbf{A-B / A-C (Bulk/Spiky Movers)}: 20 SKUs that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.",
-        r"\item \textbf{B-A / C-A (Frequent Low-Volume)}: 88 SKUs that are ordered frequently but in small quantities. These create high warehouse pick-trip workloads (bins are visited often) despite contributing minor physical throughput.",
-        r"\item \textbf{C-C (Slow-Moving/Long-Tail)}: 260 SKUs that are rarely ordered and in tiny amounts, suited for deep storage.",
+        f"\\item \\textbf{{A-X (Fast-Moving)}}: {ax_count} SKUs ({pct(ax_count/total_skus)}) that drive both high volume and high picking frequency, representing the operational core.",
+        f"\\item \\textbf{{A-Y / A-Z (Bulk/Spiky Movers)}}: {ay_az_count} SKUs ({pct(ay_az_count/total_skus)}) that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.",
+        f"\\item \\textbf{{B-X / C-X (Frequent but Low Volume)}}: {bx_cx_count} SKUs ({pct(bx_cx_count/total_skus)}) that are picked often but contribute little to total volume, creating disproportionate labor pressure relative to their volume contribution.",
+        f"\\item \\textbf{{C-Z (Slow and Infrequent)}}: {cz_count} SKUs ({pct(cz_count/total_skus)}) that are prime candidates for deep reserve storage or rationalization.",
         r"\end{itemize}",
         r"",
         r"\subsubsection{Identification of the ``Fast-Moving'' SKU Group}\label{identification-of-the-fast-moving-sku-group}",
@@ -223,7 +216,7 @@ def write_notes(
         r"\end{itemize}",
         r"",
         r"\begin{quote}",
-        r"\textbf{Operational Recommendation}: Because only \textasciitilde10\% of the SKUs drive nearly 2/3 of all shipped quantities, these 59 SKUs should be assigned to the most ergonomic pick-faces (lower levels, close to the packing stations) with dedicated replenishment pathways to minimize picking travel time.",
+        f"\\textbf{{Operational Recommendation}}: Because only \\textasciitilde{pct0(fast_mov_sku_share)} of the SKUs drive \\textasciitilde{pct0(fast_mov['quantity_share'])} of all shipped quantities, these {fast_mov['sku_count']} SKUs should be assigned to the most ergonomic pick-faces (lower levels, close to the packing stations) with dedicated replenishment pathways to minimize picking travel time.",
         r"\end{quote}",
         r"",
         r"\subsection{Q1.2 Distribution Heatmap and Warehouse Imbalance Analysis}\label{q1.2-distribution-heatmap-and-warehouse-imbalance-analysis}",
@@ -502,7 +495,7 @@ if __name__ == "__main__":
             q12_urban_provincial_summary,
             q12_warehouse_imbalance_visual_summary,
             q13_segment_profile_summary, q13_segment_packaging_summary,
-            q13_segment_geographic_spread_summary, abc_qty_freq_matrix
+            q13_segment_geographic_spread_summary
         )
         print(f"Report written successfully to outputs/round2/notes/{NOTE_FILENAME}!")
     except Exception as e:
