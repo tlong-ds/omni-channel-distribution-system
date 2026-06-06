@@ -179,12 +179,67 @@ def main() -> None:
     print("Exporting cleaned data to cleaned_data.xlsx...")
     cleaned_path = OUTPUT_DIR / "cleaned_data.xlsx"
     with pd.ExcelWriter(cleaned_path, engine='openpyxl') as writer:
+        pipeline_summary_data = [
+            {"Dataset": "SKU Master", "Pipeline Stage": "Standardization", "Details": "Stripped whitespace, converted missing values to proper nulls, normalized strings to uppercase."},
+            {"Dataset": "SKU Master", "Pipeline Stage": "Volume Derivation", "Details": "Calculated carton volume in CBM strictly from L x W x H dimensions if missing."},
+            {"Dataset": "SKU Master", "Pipeline Stage": "Pallet Capacity & Loose Items", "Details": "Calculated loose pieces per pallet via residual of total pieces minus full carton capacity."},
+            {"Dataset": "SKU Master", "Pipeline Stage": "Weight Imputation", "Details": "Derived missing carton weights from piece weights (and vice versa) using pieces per carton. Flagged conflicts."},
+            {"Dataset": "SKU Master", "Pipeline Stage": "Deduplication", "Details": "Kept first unique row per SKU Code to eliminate redundant master records."},
+            {"Dataset": "Distributor Network", "Pipeline Stage": "Normalization", "Details": "Normalized customer names, stripping legal entity prefixes for stable key matching."},
+            {"Dataset": "Distributor Network", "Pipeline Stage": "Address Parsing", "Details": "Parsed raw delivery addresses using regex and dictionaries to extract Base Address, Province, District, and Ward."},
+            {"Dataset": "Distributor Network", "Pipeline Stage": "Deduplication", "Details": "Removed ambiguous overlapping locations based on exact lat/long and text similarity matching."},
+            {"Dataset": "Distributor Network", "Pipeline Stage": "Distance Calculation", "Details": "Computed straight-line geographical distances from main hubs (My Phuoc, Vinh Loc) using Haversine formula."},
+            {"Dataset": "Shipment Transactions", "Pipeline Stage": "Order Context", "Details": "Concatenated Source Warehouse and Document No. to uniquely identify order batches."},
+            {"Dataset": "Shipment Transactions", "Pipeline Stage": "Channel Inference", "Details": "Classified channel as B2B or B2C based on textual regex patterns in the Ship-To customer name."},
+            {"Dataset": "Shipment Transactions", "Pipeline Stage": "Distributor Matching", "Details": "Joined shipments with cleaned Distributor lookup on normalized customer keys to inherit reliable geocoding."},
+            {"Dataset": "Shipment Transactions", "Pipeline Stage": "Address Fallback", "Details": "For unmatched customers, parsed the transaction 'Ship-to' text directly to extract geographical components."},
+            {"Dataset": "Shipment Transactions", "Pipeline Stage": "Segment Mapping", "Details": "Categorized customers into segments (Modern vs Traditional Trade) using keyword rules and external overrides."}
+        ]
+        summary_df = pd.DataFrame(pipeline_summary_data)
+        summary_df.to_excel(writer, sheet_name="Pipeline_Transparency", index=False)
+        
         for csv_file in CLEANED_DIR.glob("*.csv"):
             df = pd.read_csv(csv_file)
             df.to_excel(writer, sheet_name=csv_file.stem[:31], index=False)
             
     # Apply formatting
     wb = openpyxl.load_workbook(cleaned_path)
+    
+    # Format Pipeline_Transparency
+    if 'Pipeline_Transparency' in wb.sheetnames:
+        ws = wb['Pipeline_Transparency']
+        from openpyxl.styles import Alignment
+        
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 35
+        ws.column_dimensions['C'].width = 80
+        
+        align_center = Alignment(wrap_text=True, vertical='center', horizontal='center')
+        align_top_left = Alignment(wrap_text=True, vertical='center', horizontal='left')
+        
+        for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+            if row[0].row == 1:
+                for cell in row:
+                    cell.alignment = align_center
+                continue
+            
+            row[0].alignment = align_center
+            row[1].alignment = align_top_left
+            if len(row) > 2:
+                row[2].alignment = align_top_left
+                details_text = str(row[2].value) if row[2].value else ""
+                num_lines = (len(details_text) // 70) + 1
+                ws.row_dimensions[row[0].row].height = num_lines * 18
+                
+        start_row = 2
+        current_val = ws.cell(row=start_row, column=1).value
+        for r in range(3, ws.max_row + 2):
+            cell_val = ws.cell(row=r, column=1).value if r <= ws.max_row else None
+            if cell_val != current_val:
+                if r - 1 > start_row:
+                    ws.merge_cells(start_row=start_row, start_column=1, end_row=r-1, end_column=1)
+                start_row = r
+                current_val = cell_val
     
     # Format distributors
     if 'distributors_cleaned' in wb.sheetnames:
@@ -217,6 +272,8 @@ def main() -> None:
 
     # Auto-fit all sheets
     for ws in wb.worksheets:
+        if ws.title == 'Pipeline_Transparency':
+            continue
         for col in range(1, ws.max_column + 1):
             letter = get_column_letter(col)
             if ws.column_dimensions[letter].hidden:
