@@ -84,7 +84,7 @@ In this matrix:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\linewidth]{../charts/q11_abc_xyz_matrix.png}
+\includegraphics[width=0.75\linewidth]{../charts/q11_abc_xyz_matrix_frequency.png}
 \caption{Q1.1 ABC-XYZ SKU count matrix}
 \label{fig:q11-abc-xyz-matrix}
 \end{figure}
@@ -95,7 +95,23 @@ This cross-tabulation reveals four key SKU profiles:
 \item \textbf{A-Y / A-Z (Bulk/Spiky Movers)}: 7 SKUs (1.73\%) that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.
 \item \textbf{B-X / C-X (Frequent but Low Volume)}: 32 SKUs (7.92\%) that are picked often but contribute little to total volume, creating disproportionate labor pressure relative to their volume contribution.
 \item \textbf{C-Z (Slow and Infrequent)}: 278 SKUs (68.81\%) that are prime candidates for deep reserve storage or rationalization.
+
+\subsubsection{Quantity-Volatility ABC-XYZ Analysis}\label{quantity-volatility-abc-xyz-analysis}
+In addition to order frequency, we also evaluated demand variability. Volatility is measured using the Coefficient of Variation (CV) over monthly demand.
+\begin{itemize}
+\item \textbf{Class X (Stable)}: $\text{CV} \le 0.50$
+\item \textbf{Class Y (Seasonal/Trend)}: $0.50 < \text{CV} \le 1.00$
+\item \textbf{Class Z (Erratic)}: $\text{CV} > 1.00$
 \end{itemize}
+
+The joint Quantity-Volatility ABC-XYZ matrix is shown in Figure \ref{fig:q11-abc-xyz-matrix-volatility}:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{../charts/q11_abc_xyz_matrix_volatility.png}
+\caption{Q1.1 ABC-XYZ Volatility SKU count matrix}
+\label{fig:q11-abc-xyz-matrix-volatility}
+\end{figure}
 
 \subsubsection{Identification of the ``Fast-Moving'' SKU Group}\label{identification-of-the-fast-moving-sku-group}
 The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by Quantity and Class X by Order Frequency (Class A-X). This group is the primary driver of warehouse operational workload and inventory velocity.

@@ -20,6 +20,9 @@ from src.logage2026.config import (
     Q11_VARIABILITY_GRAIN,
     Q11_VARIABILITY_PERIOD_END,
     Q11_VARIABILITY_PERIOD_START,
+    Q11_XYZ_CV_X_MAX,
+    Q11_XYZ_CV_Y_MAX,
+    Q11_XYZ_MIN_NONZERO_PERIODS,
     WINSORIZE_LIMITS,
 )
 from src.logage2026.geography import region_group
@@ -50,6 +53,18 @@ def classify_cumulative_share(
     if share <= b_threshold:
         return labels[1]
     return labels[2]
+
+
+def classify_xyz(
+    cv: float, x_max: float = Q11_XYZ_CV_X_MAX, y_max: float = Q11_XYZ_CV_Y_MAX
+) -> str:
+    if pd.isna(cv) or np.isinf(cv):
+        return "Z"
+    if cv <= x_max:
+        return "X"
+    if cv <= y_max:
+        return "Y"
+    return "Z"
 
 
 def filter_assignment_shipments(
@@ -117,6 +132,7 @@ def build_abc_xyz(
     variability_grain: str = Q11_VARIABILITY_GRAIN,
     variability_period_start: pd.Timestamp = Q11_VARIABILITY_START,
     variability_period_end: pd.Timestamp = Q11_VARIABILITY_END,
+    min_nonzero_periods: int = Q11_XYZ_MIN_NONZERO_PERIODS,
     keep_missing_sku_master: bool = Q11_KEEP_MISSING_SKU_MASTER,
 ) -> pd.DataFrame:
     sku_master = sku_master.copy()
@@ -149,6 +165,9 @@ def build_abc_xyz(
     sku["variability_mean_quantity"] = winsorized.mean(axis=1)
     sku["variability_std_quantity"] = winsorized.std(axis=1)
     sku["demand_cv"] = sku["variability_std_quantity"] / sku["variability_mean_quantity"].replace(0, np.nan)
+    sku["xyz_low_sample_flag"] = 0
+    if min_nonzero_periods > 0:
+        sku["xyz_low_sample_flag"] = sku["variability_nonzero_periods"].lt(min_nonzero_periods).astype(int)
     sku = sku.reset_index().sort_values("quantity", ascending=False)
     sku["quantity_share"] = sku["quantity"] / sku["quantity"].sum()
     sku["quantity_cumulative_share"] = sku["quantity_share"].cumsum()
@@ -157,13 +176,17 @@ def build_abc_xyz(
     sku = sku.sort_values("order_frequency", ascending=False)
     sku["frequency_share"] = sku["order_frequency"] / sku["order_frequency"].sum()
     sku["frequency_cumulative_share"] = sku["frequency_share"].cumsum()
-    sku["xyz"] = sku["frequency_cumulative_share"].apply(
+    sku["xyz_frequency"] = sku["frequency_cumulative_share"].apply(
         lambda x: classify_cumulative_share(x, labels=("X", "Y", "Z"))
     )
-    sku["abc_xyz"] = sku["abc_quantity"] + sku["xyz"]
+    sku["abc_xyz_frequency"] = sku["abc_quantity"] + sku["xyz_frequency"]
+    sku["xyz_volatility"] = sku["demand_cv"].map(classify_xyz)
+    low_sample_mask = sku["xyz_low_sample_flag"].eq(1)
+    sku.loc[low_sample_mask, "xyz_volatility"] = "Z"
+    sku["abc_xyz_volatility"] = sku["abc_quantity"] + sku["xyz_volatility"]
     sku["fast_moving_flag"] = (
         sku["abc_quantity"].eq(FAST_MOVING_ABC_QUANTITY)
-        & sku["xyz"].eq(FAST_MOVING_XYZ_FREQUENCY)
+        & sku["xyz_frequency"].eq(FAST_MOVING_XYZ_FREQUENCY)
     ).astype(int)
     if not keep_missing_sku_master:
         sku = sku[sku["sku_code"].isin(set(sku_master["sku_code"].dropna()))].copy()
@@ -183,8 +206,11 @@ def build_abc_xyz(
         "variability_std_quantity",
         "demand_cv",
         "variability_nonzero_periods",
-        "xyz",
-        "abc_xyz",
+        "xyz_low_sample_flag",
+        "xyz_frequency",
+        "abc_xyz_frequency",
+        "xyz_volatility",
+        "abc_xyz_volatility",
         "fast_moving_flag",
         "cbm_total",
         "pcs_per_carton",
@@ -200,12 +226,12 @@ def build_abc_xyz(
             "variability_nonzero_periods": f"{variability_grain}_nonzero_periods",
         }
     )
-    return result.sort_values(["abc_quantity", "xyz", "quantity"], ascending=[True, True, False])
+    return result.sort_values(["abc_quantity", "xyz_frequency", "quantity"], ascending=[True, True, False])
 
 
-def build_abc_xyz_matrix_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
+def build_abc_xyz_matrix_summary(abc_xyz: pd.DataFrame, xyz_col: str = "xyz_frequency") -> pd.DataFrame:
     return (
-        abc_xyz.groupby(["abc_quantity", "xyz"], dropna=False)
+        abc_xyz.groupby(["abc_quantity", xyz_col], dropna=False)
         .agg(
             sku_count=("sku_code", "nunique"),
             quantity=("quantity", "sum"),
@@ -213,7 +239,7 @@ def build_abc_xyz_matrix_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
             cbm_total=("cbm_total", "sum"),
         )
         .reset_index()
-        .sort_values(["abc_quantity", "xyz"])
+        .sort_values(["abc_quantity", xyz_col])
     )
 
 
@@ -280,8 +306,10 @@ def build_q11_monthly_demand_table(abc_xyz: pd.DataFrame, q11_shipments: pd.Data
                 "product_name",
                 "category",
                 "abc_quantity",
-                "xyz",
-                "abc_xyz",
+                "xyz_frequency",
+                "abc_xyz_frequency",
+                "xyz_volatility",
+                "abc_xyz_volatility",
                 "quantity",
                 "order_frequency",
                 "cbm_total",
@@ -297,8 +325,10 @@ def build_q11_monthly_demand_table(abc_xyz: pd.DataFrame, q11_shipments: pd.Data
         "product_name",
         "category",
         "abc_quantity",
-        "xyz",
-        "abc_xyz",
+        "xyz_frequency",
+        "abc_xyz_frequency",
+        "xyz_volatility",
+        "abc_xyz_volatility",
         *month_columns,
         "Total",
         "Mean/Mo",
@@ -1116,7 +1146,7 @@ def build_safety_stock_class_a(shipments: pd.DataFrame, abc_xyz: pd.DataFrame) -
         table["service_level_z"] * table["weekly_std_demand"] * np.sqrt(table["assumed_lead_time_weeks"])
     )
     table = table.merge(
-        abc_xyz[["sku_code", "product_name", "category", "abc_quantity", "xyz", "quantity"]],
+        abc_xyz[["sku_code", "product_name", "category", "abc_quantity", "xyz_frequency", "quantity"]],
         on="sku_code",
         how="left",
     )

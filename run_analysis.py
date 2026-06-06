@@ -104,7 +104,8 @@ def main() -> None:
     assignment_shipments = filter_assignment_shipments(assignment_base_shipments)
 
     abc_xyz = build_abc_xyz(q11_shipments, sku_master)
-    abc_xyz_matrix = build_abc_xyz_matrix_summary(abc_xyz)
+    abc_xyz_matrix_frequency = build_abc_xyz_matrix_summary(abc_xyz, "xyz_frequency")
+    abc_xyz_matrix_volatility = build_abc_xyz_matrix_summary(abc_xyz, "xyz_volatility")
 
     fast_moving_summary = build_fast_moving_summary(abc_xyz)
     classification_metadata = build_classification_metadata()
@@ -138,7 +139,8 @@ def main() -> None:
     shipments.to_csv(CLEANED_DIR / "shipments_cleaned.csv", index=False)
 
     abc_xyz.to_csv(TABLES_DIR / "q11_sku_abc_xyz.csv", index=False)
-    abc_xyz_matrix.to_csv(TABLES_DIR / "q11_abc_xyz_matrix_summary.csv", index=False)
+    abc_xyz_matrix_frequency.to_csv(TABLES_DIR / "q11_abc_xyz_matrix_frequency_summary.csv", index=False)
+    abc_xyz_matrix_volatility.to_csv(TABLES_DIR / "q11_abc_xyz_matrix_volatility_summary.csv", index=False)
 
     fast_moving_summary.to_csv(TABLES_DIR / "q11_fast_moving_summary.csv", index=False)
     classification_metadata.to_csv(TABLES_DIR / "q11_classification_metadata.csv", index=False)
@@ -230,7 +232,7 @@ def main() -> None:
     print("Exporting summary tables to summary_tables.xlsx...")
     write_summary_workbook(
         abc_xyz=abc_xyz,
-        abc_xyz_matrix=abc_xyz_matrix,
+        abc_xyz_matrix=abc_xyz_matrix_frequency,
         monthly_demand=q11_monthly_demand,
         q11_shipments=q11_shipments,
         warehouse_region_summary=warehouse_region_summary,
@@ -246,7 +248,8 @@ def main() -> None:
     save_charts(
         assignment_shipments,
         abc_xyz,
-        abc_xyz_matrix,
+        abc_xyz_matrix_frequency,
+        abc_xyz_matrix_volatility,
         warehouse_region_summary,
         q12_region_orders_quantity_summary,
         q12_province_cluster_summary,
@@ -264,7 +267,8 @@ def main() -> None:
     write_notes(
         assignment_shipments,
         abc_xyz,
-        abc_xyz_matrix,
+        abc_xyz_matrix_frequency,
+        abc_xyz_matrix_volatility,
         fast_moving_summary,
         classification_metadata,
         missing_data_summary,

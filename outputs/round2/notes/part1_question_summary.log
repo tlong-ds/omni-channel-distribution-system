@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  6 JUN 2026 21:01
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  6 JUN 2026 23:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -765,70 +765,92 @@ File: ../charts/q11_abc_quantity_distribution.png Graphic file (type bmp)
 ]
 File: ../charts/q11_xyz_frequency_distribution.png Graphic file (type bmp)
 <../charts/q11_xyz_frequency_distribution.png>
-File: ../charts/q11_abc_xyz_matrix.png Graphic file (type bmp)
-<../charts/q11_abc_xyz_matrix.png>
+File: ../charts/q11_abc_xyz_matrix_frequency.png Graphic file (type bmp)
+<../charts/q11_abc_xyz_matrix_frequency.png>
 
 
 [2]
-
-[3]
-File: ../charts/q12_geography_coverage_map.png Graphic file (type bmp)
-<../charts/q12_geography_coverage_map.png>
-
-
-[4]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.665pt on input line 160.
+(Font)              scaled to size 7.665pt on input line 102.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.475pt on input line 160.
+(Font)              scaled to size 5.475pt on input line 102.
 LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-60.
+02.
  (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 10.95099pt on input line 160.
+(Font)              scaled to size 10.95099pt on input line 102.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.66568pt on input line 160.
+(Font)              scaled to size 7.66568pt on input line 102.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.4755pt on input line 160.
+(Font)              scaled to size 5.4755pt on input line 102.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 10.94882pt on input line 160.
+(Font)              scaled to size 10.94882pt on input line 102.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.66417pt on input line 160.
+(Font)              scaled to size 7.66417pt on input line 102.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.47441pt on input line 160.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 160
+(Font)              scaled to size 5.47441pt on input line 102.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 102
 .
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 160
+LaTeX Font Info:    Trying to load font information for U+msb on input line 102
 .
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
+File: ../charts/q11_abc_xyz_matrix_volatility.png Graphic file (type bmp)
+<../charts/q11_abc_xyz_matrix_volatility.png>
+
+
+[3]
+Overfull \hbox (17.8874pt too wide) in paragraph at lines 123--124
+[]\TU/lmr/bx/n/10.95 Top 10 Fast-Moving SKUs\TU/lmr/m/n/10.95 : \TU/lmtt/m/n/10
+.95 4200009163, 4200009000, 4200008102, 4200000163,
+ []
+
+
+Overfull \hbox (3.95355pt too wide) in paragraph at lines 123--124
+\TU/lmtt/m/n/10.95 4200008999, 4200007858, 4200008101, 4200008229, 4200009001, 
+4200009382\TU/lmr/m/n/10.95 . 
+ []
+
+
+
+[4]
+Overfull \hbox (0.25641pt too wide) in paragraph at lines 145--146
+[]\TU/lmr/bx/n/10.95 Migration (Dec 2025)\TU/lmr/m/n/10.95 : Billing migrated t
+o Vinh Loc, causing My Phuoc’s
+ []
+
+File: ../charts/q12_geography_coverage_map.png Graphic file (type bmp)
+<../charts/q12_geography_coverage_map.png>
+
 
 [5]
+
+[6]
 File: ../charts/q12_warehouse_imbalance.png Graphic file (type bmp)
 <../charts/q12_warehouse_imbalance.png>
 File: ../charts/q12_region_reference_map.png Graphic file (type bmp)
 <../charts/q12_region_reference_map.png>
 
 
-[6]
+[7]
 File: ../charts/q12_region_quantity_orders.png Graphic file (type bmp)
 <../charts/q12_region_quantity_orders.png>
 
 
-[7]
+[8]
 File: ../charts/q12_top_demand_provinces_map.png Graphic file (type bmp)
 <../charts/q12_top_demand_provinces_map.png>
 
 
-[8]
+[9]
 File: ../charts/q12_province_demand_choropleths.png Graphic file (type bmp)
 <../charts/q12_province_demand_choropleths.png>
 File: ../charts/q12_warehouse_region_quantity_split.png Graphic file (type bmp)
@@ -836,45 +858,63 @@ File: ../charts/q12_warehouse_region_quantity_split.png Graphic file (type bmp)
 <../charts/q12_warehouse_region_quantity_split.png>
 
 
-[9]
+[10]
 File: ../charts/q12_warehouse_dominance_map.png Graphic file (type bmp)
 <../charts/q12_warehouse_dominance_map.png>
 File: ../charts/q12_province_distance_correlation.png Graphic file (type bmp)
 <../charts/q12_province_distance_correlation.png>
 
 
-[10]
+[11]
 File: ../charts/q13_order_profile_comparison.png Graphic file (type bmp)
 <../charts/q13_order_profile_comparison.png>
 
 
-[11]
+[12]
 File: ../charts/q13_packaging_mix.png Graphic file (type bmp)
 <../charts/q13_packaging_mix.png>
 
 
-[12]
+[13]
 File: ../charts/q13_geographic_spread.png Graphic file (type bmp)
 <../charts/q13_geographic_spread.png>
 File: ../charts/q13_segment_geographic_maps.png Graphic file (type bmp)
 <../charts/q13_segment_geographic_maps.png>
 
 
-[13]
+[14]
 
-[14] (./part1_question_summary.aux)
+! LaTeX Error: \begin{itemize} on input line 93 ended by \end{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.346 \end{document}
+                    
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+
+[15] (./part1_question_summary.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
- ) 
-Here is how much of TeX's memory you used:
- 16964 strings out of 473832
- 313518 string characters out of 5729482
- 861395 words of memory out of 5000000
- 39833 multiletter control sequences out of 15000+600000
- 562348 words of font info for 65 fonts, out of 8000000 for 9000
- 1348 hyphenation exceptions out of 8191
- 90i,10n,114p,609b,454s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ )
+(\end occurred inside a group at level 1)
 
-Output written on part1_question_summary.pdf (14 pages).
+### semi simple group (level 1) entered at line 93 (\begingroup)
+### bottom level 
+Here is how much of TeX's memory you used:
+ 16982 strings out of 473832
+ 314288 string characters out of 5729482
+ 861535 words of memory out of 5000000
+ 39846 multiletter control sequences out of 15000+600000
+ 562364 words of font info for 67 fonts, out of 8000000 for 9000
+ 1348 hyphenation exceptions out of 8191
+ 90i,10n,114p,609b,582s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+Output written on part1_question_summary.pdf (15 pages).

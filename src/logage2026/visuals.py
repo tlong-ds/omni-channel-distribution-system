@@ -40,7 +40,8 @@ SEGMENT_COLOR_MAP = {
 def save_charts(
     shipments: pd.DataFrame,
     abc_xyz: pd.DataFrame,
-    abc_xyz_matrix: pd.DataFrame,
+    abc_xyz_matrix_frequency: pd.DataFrame,
+    abc_xyz_matrix_volatility: pd.DataFrame,
     warehouse_region_summary: pd.DataFrame,
     q12_region_orders_quantity_summary: pd.DataFrame,
     q12_province_cluster_summary: pd.DataFrame,
@@ -60,7 +61,8 @@ def save_charts(
 
     _abc_bar(abc_xyz)
     _xyz_frequency_bar(abc_xyz)
-    _abc_xyz_matrix_chart(abc_xyz_matrix)
+    _abc_xyz_matrix_chart(abc_xyz_matrix_frequency, title_suffix="Frequency", save_suffix="frequency")
+    _abc_xyz_matrix_chart(abc_xyz_matrix_volatility, title_suffix="Volatility", save_suffix="volatility")
     _region_bar(q12_region_orders_quantity_summary)
     _warehouse_quantity_bar(shipments)
     _q12_province_cluster_chart(q12_province_cluster_summary)
@@ -258,7 +260,7 @@ def _abc_bar(abc_xyz: pd.DataFrame) -> None:
 
 
 def _xyz_frequency_bar(abc_xyz: pd.DataFrame) -> None:
-    chart = abc_xyz.groupby("xyz")["order_frequency"].sum().reindex(["X", "Y", "Z"])
+    chart = abc_xyz.groupby("xyz_frequency")["order_frequency"].sum().reindex(["X", "Y", "Z"])
     fig, ax = plt.subplots(figsize=(8, 4))
     chart.plot(kind="bar", color="#fb8500", ax=ax, edgecolor="black")
     ax.set_title(f"Order Frequency Distribution by XYZ Class\n{_window_label()}")
@@ -277,15 +279,15 @@ def _xyz_frequency_bar(abc_xyz: pd.DataFrame) -> None:
     plt.close(fig)
 
 
-def _abc_xyz_matrix_chart(abc_xyz_matrix: pd.DataFrame) -> None:
+def _abc_xyz_matrix_chart(abc_xyz_matrix: pd.DataFrame, title_suffix="Frequency", save_suffix="frequency") -> None:
     pivot = (
-        abc_xyz_matrix.pivot(index="abc_quantity", columns="xyz", values="sku_count")
+        abc_xyz_matrix.pivot(index="abc_quantity", columns=abc_xyz_matrix.columns[1], values="sku_count")
         .reindex(index=["A", "B", "C"], columns=["X", "Y", "Z"])
         .fillna(0)
     )
     fig, ax = plt.subplots(figsize=(6, 4.5))
     image = ax.imshow(pivot.values, cmap="YlGnBu")
-    ax.set_title(f"ABC-XYZ SKU count matrix\n{_window_label()}")
+    ax.set_title(f"ABC-XYZ SKU count matrix ({title_suffix})\n{_window_label()}")
     ax.set_xlabel("XYZ class")
     ax.set_ylabel("ABC quantity class")
     ax.set_xticks(range(len(pivot.columns)), labels=pivot.columns)
@@ -295,7 +297,7 @@ def _abc_xyz_matrix_chart(abc_xyz_matrix: pd.DataFrame) -> None:
             ax.text(col_idx, row_idx, f"{int(pivot.loc[row_label, col_label])}", ha="center", va="center", color="#102a43")
     fig.colorbar(image, ax=ax, shrink=0.85, label="SKU count")
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "q11_abc_xyz_matrix.png", dpi=160)
+    fig.savefig(CHARTS_DIR / f"q11_abc_xyz_matrix_{save_suffix}.png", dpi=160)
     plt.close(fig)
 
 
@@ -615,7 +617,8 @@ if __name__ == "__main__":
     try:
         shipments = pd.read_csv(CLEANED_DIR / "shipments_cleaned.csv")
         abc_xyz = pd.read_csv(TABLES_DIR / "q11_sku_abc_xyz.csv")
-        abc_xyz_matrix = pd.read_csv(TABLES_DIR / "q11_abc_xyz_matrix_summary.csv")
+        abc_xyz_matrix_frequency = pd.read_csv(TABLES_DIR / "q11_abc_xyz_matrix_frequency_summary.csv")
+        abc_xyz_matrix_volatility = pd.read_csv(TABLES_DIR / "q11_abc_xyz_matrix_volatility_summary.csv")
         warehouse_region_summary = pd.read_csv(TABLES_DIR / "q12_warehouse_region_summary.csv")
         q12_region_orders_quantity_summary = pd.read_csv(TABLES_DIR / "q12_region_quantity_orders_summary.csv")
         q12_province_cluster_summary = pd.read_csv(TABLES_DIR / "q12_top_demand_provinces_summary.csv")
@@ -636,7 +639,8 @@ if __name__ == "__main__":
         save_charts(
             shipments,
             abc_xyz,
-            abc_xyz_matrix,
+            abc_xyz_matrix_frequency,
+            abc_xyz_matrix_volatility,
             warehouse_region_summary,
             q12_region_orders_quantity_summary,
             q12_province_cluster_summary,

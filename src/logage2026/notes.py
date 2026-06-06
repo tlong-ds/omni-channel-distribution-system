@@ -14,7 +14,8 @@ NOTE_FILENAME = "part1_question_summary.tex"
 def write_notes(
     shipments: pd.DataFrame,
     abc_xyz: pd.DataFrame,
-    abc_xyz_matrix: pd.DataFrame,
+    abc_xyz_matrix_frequency: pd.DataFrame,
+    abc_xyz_matrix_volatility: pd.DataFrame,
     fast_moving_summary: pd.DataFrame,
     classification_metadata: pd.DataFrame,
     missing_data_summary: pd.DataFrame,
@@ -52,8 +53,8 @@ def write_notes(
     
     # Build dictionary of matrix cells
     matrix_dict = {}
-    for _, row in abc_xyz_matrix.iterrows():
-        matrix_dict[(row['abc_quantity'], row['xyz'])] = {
+    for _, row in abc_xyz_matrix_frequency.iterrows():
+        matrix_dict[(row['abc_quantity'], row['xyz_frequency'])] = {
             'sku_count': int(row['sku_count']),
             'quantity': float(row['quantity']),
         }
@@ -72,9 +73,9 @@ def write_notes(
     class_b_skus = len(abc_xyz[abc_xyz['abc_quantity'] == 'B'])
     class_c_skus = len(abc_xyz[abc_xyz['abc_quantity'] == 'C'])
     
-    class_x_freq = len(abc_xyz[abc_xyz['xyz'] == 'X'])
-    class_y_freq = len(abc_xyz[abc_xyz['xyz'] == 'Y'])
-    class_z_freq = len(abc_xyz[abc_xyz['xyz'] == 'Z'])
+    class_x_freq = len(abc_xyz[abc_xyz['xyz_frequency'] == 'X'])
+    class_y_freq = len(abc_xyz[abc_xyz['xyz_frequency'] == 'Y'])
+    class_z_freq = len(abc_xyz[abc_xyz['xyz_frequency'] == 'Z'])
     
     fast_mov_sku_share = fast_mov['sku_count'] / total_skus if total_skus else 0.0
 
@@ -176,7 +177,7 @@ def write_notes(
         r"",
         r"\begin{figure}[H]",
         r"\centering",
-        r"\includegraphics[width=0.75\linewidth]{../charts/q11_abc_xyz_matrix.png}",
+        r"\includegraphics[width=0.75\linewidth]{../charts/q11_abc_xyz_matrix_frequency.png}",
         r"\caption{Q1.1 ABC-XYZ SKU count matrix}",
         r"\label{fig:q11-abc-xyz-matrix}",
         r"\end{figure}",
@@ -188,7 +189,24 @@ def write_notes(
         f"\\item \\textbf{{A-Y / A-Z (Bulk/Spiky Movers)}}: {ay_az_count} SKUs ({pct(ay_az_count/total_skus)}) that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.",
         f"\\item \\textbf{{B-X / C-X (Frequent but Low Volume)}}: {bx_cx_count} SKUs ({pct(bx_cx_count/total_skus)}) that are picked often but contribute little to total volume, creating disproportionate labor pressure relative to their volume contribution.",
         f"\\item \\textbf{{C-Z (Slow and Infrequent)}}: {cz_count} SKUs ({pct(cz_count/total_skus)}) that are prime candidates for deep reserve storage or rationalization.",
+
+        r"",
+        r"\subsubsection{Quantity-Volatility ABC-XYZ Analysis}\label{quantity-volatility-abc-xyz-analysis}",
+        r"In addition to order frequency, we also evaluated demand variability. Volatility is measured using the Coefficient of Variation (CV) over monthly demand.",
+        r"\begin{itemize}",
+        r"\item \textbf{Class X (Stable)}: $\text{CV} \le 0.50$",
+        r"\item \textbf{Class Y (Seasonal/Trend)}: $0.50 < \text{CV} \le 1.00$",
+        r"\item \textbf{Class Z (Erratic)}: $\text{CV} > 1.00$",
         r"\end{itemize}",
+        r"",
+        r"The joint Quantity-Volatility ABC-XYZ matrix is shown in Figure \ref{fig:q11-abc-xyz-matrix-volatility}:",
+        r"",
+        r"\begin{figure}[H]",
+        r"\centering",
+        r"\includegraphics[width=0.75\linewidth]{../charts/q11_abc_xyz_matrix_volatility.png}",
+        r"\caption{Q1.1 ABC-XYZ Volatility SKU count matrix}",
+        r"\label{fig:q11-abc-xyz-matrix-volatility}",
+        r"\end{figure}",
         r"",
         r"\subsubsection{Identification of the ``Fast-Moving'' SKU Group}\label{identification-of-the-fast-moving-sku-group}",
         r"The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by Quantity and Class X by Order Frequency (Class A-X). This group is the primary driver of warehouse operational workload and inventory velocity.",

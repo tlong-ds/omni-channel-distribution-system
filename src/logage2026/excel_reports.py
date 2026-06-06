@@ -190,14 +190,23 @@ def _dashboard_abc_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
     return summary.set_index("abc_quantity").reindex(["A", "B", "C"]).reset_index()
 
 
-def _dashboard_xyz_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
+def _dashboard_xyz_frequency_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
     summary = (
-        abc_xyz.groupby("xyz", dropna=False)
+        abc_xyz.groupby("xyz_frequency", dropna=False)
+        .agg(sku_count=("sku_code", "nunique"), total_freq=("order_frequency", "sum"))
+        .reset_index()
+    )
+    summary["sku_share"] = summary["sku_count"] / abc_xyz["sku_code"].nunique()
+    return summary.set_index("xyz_frequency").reindex(["X", "Y", "Z"]).reset_index()
+
+def _dashboard_xyz_volatility_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
+    summary = (
+        abc_xyz.groupby("xyz_volatility", dropna=False)
         .agg(sku_count=("sku_code", "nunique"), avg_cv=("demand_cv", "mean"))
         .reset_index()
     )
     summary["sku_share"] = summary["sku_count"] / abc_xyz["sku_code"].nunique()
-    return summary.set_index("xyz").reindex(["X", "Y", "Z"]).reset_index()
+    return summary.set_index("xyz_volatility").reindex(["X", "Y", "Z"]).reset_index()
 
 
 def _write_dashboard(
@@ -221,80 +230,70 @@ def _write_dashboard(
     ws["B2"].alignment = LEFT
     ws["B2"].font = Font(italic=True, color="5B5B5B")
 
+    r = 4
     abc_summary = _dashboard_abc_summary(abc_xyz)
-    ws.merge_cells("B4:I4")
-    ws["B4"] = "A.  ABC CLASSIFICATION — OUTBOUND QUANTITY (threshold: A=70%, B=90%, C=100%)"
-    _style_range(ws, 4, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "A.  ABC CLASSIFICATION — OUTBOUND QUANTITY (threshold: A=70%, B=90%, C=100%)"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
     headers = ["Class", "SKU Count", "% of SKUs", "Total Qty (pcs)", "% of Total Qty", "Total CBM", "Threshold", "Action"]
     for col, value in enumerate(headers, start=2):
-        ws.cell(5, col, value)
-    _style_range(ws, 5, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
-    thresholds = {
-        "A": "Cum. top 70% volume",
-        "B": "70-90% cum. volume",
-        "C": "Bottom 10% volume",
-    }
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    thresholds = {"A": "Cum. top 70% volume", "B": "70-90% cum. volume", "C": "Bottom 10% volume"}
     actions = {
         "A": "Pick-face zone | Daily cycle count | Min lead time",
         "B": "Intermediate zone | Weekly review",
         "C": "Reserve/bulk zone | Monthly review",
     }
-    for row_idx, row in enumerate(abc_summary.itertuples(index=False), start=6):
-        values = [
-            row.abc_quantity,
-            int(row.sku_count),
-            _format_share(row.sku_share),
-            round(_safe_float(row.total_qty)),
-            _format_share(row.qty_share),
-            round(_safe_float(row.total_cbm)),
-            thresholds[row.abc_quantity],
-            actions[row.abc_quantity],
-        ]
+    for row in abc_summary.itertuples(index=False):
+        values = [row.abc_quantity, int(row.sku_count), _format_share(row.sku_share), round(_safe_float(row.total_qty)), _format_share(row.qty_share), round(_safe_float(row.total_cbm)), thresholds[row.abc_quantity], actions[row.abc_quantity]]
         for col, value in enumerate(values, start=2):
-            ws.cell(row_idx, col, value)
-        _style_range(ws, row_idx, 2, 9, fill=CLASS_FILLS[row.abc_quantity], alignment=LEFT)
+            ws.cell(r, col, value)
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[row.abc_quantity], alignment=LEFT)
+        r += 1
 
-    xyz_summary = _dashboard_xyz_summary(abc_xyz)
-    ws.merge_cells("B10:I10")
-    ws["B10"] = f"B.  XYZ CLASSIFICATION — DEMAND VARIABILITY (Coefficient of Variation over {month_count} months)"
-    _style_range(ws, 10, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
-    xyz_headers = ["Class", "SKU Count", "% of SKUs", "CV Range", "Avg CV", "Demand Pattern", "Replenishment Logic", "Safety Stock"]
+    r += 1
+    xyz_freq_summary = _dashboard_xyz_frequency_summary(abc_xyz)
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "B.  XYZ CLASSIFICATION — ORDER FREQUENCY"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    xyz_headers = ["Class", "SKU Count", "% of SKUs", "Order Frequency", "Demand Pattern", "Replenishment Logic", "Safety Stock", ""]
     for col, value in enumerate(xyz_headers, start=2):
-        ws.cell(11, col, value)
-    _style_range(ws, 11, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
-    cv_ranges = {"X": "CV <= 0.50", "Y": "0.50 < CV <= 1.00", "Z": "CV > 1.00"}
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    demand = {"X": "High Frequency", "Y": "Medium Frequency", "Z": "Low Frequency"}
     repl = {"X": "Fixed reorder point (ROP)", "Y": "Dynamic MRP/forecast-based", "Z": "Demand-driven + buffer stock"}
     safety = {"X": "Low — 1-2 weeks cover", "Y": "Medium — 2-4 weeks cover", "Z": "High — 4-8 weeks cover"}
-    demand = {"X": "Stable / consistent", "Y": "Seasonal or trend", "Z": "Erratic / unpredictable"}
-    for row_idx, row in enumerate(xyz_summary.itertuples(index=False), start=12):
-        values = [
-            row.xyz,
-            int(row.sku_count),
-            _format_share(row.sku_share),
-            cv_ranges[row.xyz],
-            round(_safe_float(row.avg_cv), 2),
-            demand[row.xyz],
-            repl[row.xyz],
-            safety[row.xyz],
-        ]
+    for row in xyz_freq_summary.itertuples(index=False):
+        cls = getattr(row, "xyz_frequency")
+        values = [cls, int(row.sku_count), _format_share(row.sku_share), round(_safe_float(row.total_freq)), demand[cls], repl[cls], safety[cls], ""]
         for col, value in enumerate(values, start=2):
-            ws.cell(row_idx, col, value)
-        _style_range(ws, row_idx, 2, 9, fill=CLASS_FILLS[row.xyz], alignment=LEFT)
+            ws.cell(r, col, value)
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[cls], alignment=LEFT)
+        r += 1
 
-    ws.merge_cells("B17:I17")
-    ws["B17"] = "C.  COMBINED ABC-XYZ MATRIX — SKU Count"
-    _style_range(ws, 17, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
-    matrix = (
-        abc_xyz_matrix.pivot(index="abc_quantity", columns="xyz", values="sku_count")
+    r += 1
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "C.  COMBINED ABC-XYZ MATRIX — FREQUENCY"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    
+    # We need to compute matrix for frequency
+    matrix_freq = (
+        abc_xyz.groupby(["abc_quantity", "xyz_frequency"]).size().unstack(fill_value=0)
         .reindex(index=["A", "B", "C"], columns=["X", "Y", "Z"])
         .fillna(0)
         .astype(int)
     )
-    ws.append([])
-    headers = ["", "X (Stable)", "Y (Seasonal)", "Z (Erratic)", "Row Total", "% Volume", "% Freq", "Key Implication"]
+    headers = ["", "X (High Freq)", "Y (Med Freq)", "Z (Low Freq)", "Row Total", "% Volume", "% Freq", "Key Implication"]
     for col, value in enumerate(headers, start=2):
-        ws.cell(18, col, value)
-    _style_range(ws, 18, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
     volume_share = abc_xyz.groupby("abc_quantity")["quantity"].sum() / abc_xyz["quantity"].sum()
     freq_share = abc_xyz.groupby("abc_quantity")["order_frequency"].sum() / abc_xyz["order_frequency"].sum()
     implications = {
@@ -302,37 +301,82 @@ def _write_dashboard(
         "B": "MODERATE — Standard fulfillment, replenishment planning",
         "C": "LOW PRIORITY — Bulk storage, periodic review",
     }
-    for row_idx, abc_class in enumerate(["A", "B", "C"], start=19):
-        values = [
-            abc_class,
-            int(matrix.loc[abc_class, "X"]),
-            int(matrix.loc[abc_class, "Y"]),
-            int(matrix.loc[abc_class, "Z"]),
-            int(matrix.loc[abc_class].sum()),
-            _format_share(_safe_float(volume_share.get(abc_class))),
-            _format_share(_safe_float(freq_share.get(abc_class))),
-            implications[abc_class],
-        ]
+    for abc_class in ["A", "B", "C"]:
+        values = [abc_class, int(matrix_freq.loc[abc_class, "X"]), int(matrix_freq.loc[abc_class, "Y"]), int(matrix_freq.loc[abc_class, "Z"]), int(matrix_freq.loc[abc_class].sum()), _format_share(_safe_float(volume_share.get(abc_class))), _format_share(_safe_float(freq_share.get(abc_class))), implications[abc_class]]
         for col, value in enumerate(values, start=2):
-            ws.cell(row_idx, col, value)
-        _style_range(ws, row_idx, 2, 9, fill=CLASS_FILLS[abc_class], alignment=LEFT)
-    total_row = 22
-    total_values = ["TOTAL", int(matrix["X"].sum()), int(matrix["Y"].sum()), int(matrix["Z"].sum()), int(matrix.values.sum()), "", "", ""]
+            ws.cell(r, col, value)
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[abc_class], alignment=LEFT)
+        r += 1
+    total_values = ["TOTAL", int(matrix_freq["X"].sum()), int(matrix_freq["Y"].sum()), int(matrix_freq["Z"].sum()), int(matrix_freq.values.sum()), "", "", ""]
     for col, value in enumerate(total_values, start=2):
-        ws.cell(total_row, col, value)
-    _style_range(ws, total_row, 2, 9, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=CENTER)
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=CENTER)
+    r += 1
 
+    r += 1
+    xyz_vol_summary = _dashboard_xyz_volatility_summary(abc_xyz)
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = f"D.  XYZ CLASSIFICATION — DEMAND VARIABILITY (Coefficient of Variation over {month_count} months)"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    xyz_headers = ["Class", "SKU Count", "% of SKUs", "CV Range", "Avg CV", "Demand Pattern", "Replenishment Logic", "Safety Stock"]
+    for col, value in enumerate(xyz_headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    cv_ranges = {"X": "CV <= 0.50", "Y": "0.50 < CV <= 1.00", "Z": "CV > 1.00"}
+    demand = {"X": "Stable / consistent", "Y": "Seasonal or trend", "Z": "Erratic / unpredictable"}
+    for row in xyz_vol_summary.itertuples(index=False):
+        cls = getattr(row, "xyz_volatility")
+        values = [cls, int(row.sku_count), _format_share(row.sku_share), cv_ranges[cls], round(_safe_float(row.avg_cv), 2), demand[cls], repl[cls], safety[cls]]
+        for col, value in enumerate(values, start=2):
+            ws.cell(r, col, value)
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[cls], alignment=LEFT)
+        r += 1
+
+    r += 1
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "E.  COMBINED ABC-XYZ MATRIX — VOLATILITY"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    
+    matrix_vol = (
+        abc_xyz.groupby(["abc_quantity", "xyz_volatility"]).size().unstack(fill_value=0)
+        .reindex(index=["A", "B", "C"], columns=["X", "Y", "Z"])
+        .fillna(0)
+        .astype(int)
+    )
+    headers = ["", "X (Stable)", "Y (Seasonal)", "Z (Erratic)", "Row Total", "% Volume", "% Freq", "Key Implication"]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    for abc_class in ["A", "B", "C"]:
+        values = [abc_class, int(matrix_vol.loc[abc_class, "X"]), int(matrix_vol.loc[abc_class, "Y"]), int(matrix_vol.loc[abc_class, "Z"]), int(matrix_vol.loc[abc_class].sum()), _format_share(_safe_float(volume_share.get(abc_class))), _format_share(_safe_float(freq_share.get(abc_class))), implications[abc_class]]
+        for col, value in enumerate(values, start=2):
+            ws.cell(r, col, value)
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[abc_class], alignment=LEFT)
+        r += 1
+    total_values = ["TOTAL", int(matrix_vol["X"].sum()), int(matrix_vol["Y"].sum()), int(matrix_vol["Z"].sum()), int(matrix_vol.values.sum()), "", "", ""]
+    for col, value in enumerate(total_values, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=CENTER)
+    r += 1
+
+    r += 1
     class_a = abc_xyz[abc_xyz["abc_quantity"].eq("A")].copy()
-    ws.merge_cells("B24:I24")
-    ws["B24"] = "D.  FAST-MOVING SKU GROUP (Class A) — Primary Source of Warehouse Operational Pressure"
-    _style_range(ws, 24, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "F.  FAST-MOVING SKU GROUP (Class A) — Primary Source of Warehouse Operational Pressure"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
     headers = ["Metric", "AX — Stable Fast", "AY — Seasonal Fast", "AZ — Volatile Fast", "ALL Class A Total", "% of Grand Total", "Operational Priority"]
     for col, value in enumerate(headers, start=2):
-        ws.cell(25, col, value)
-    _style_range(ws, 25, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
     subgroup_values = {}
     for subgroup in ["AX", "AY", "AZ"]:
-        subset = class_a[class_a["abc_xyz"].eq(subgroup)]
+        subset = class_a[class_a["abc_xyz_frequency"].eq(subgroup)]
         subgroup_values[subgroup] = {
             "sku_count": int(subset["sku_code"].nunique()),
             "quantity": subset["quantity"].sum(),
@@ -348,8 +392,8 @@ def _write_dashboard(
         ("Avg CV (Variability)", "avg_cv", "-", "High safety stock needed"),
         ("Total CBM", "cbm_total", f"{_format_share(class_a['cbm_total'].sum() / abc_xyz['cbm_total'].sum())} of total CBM", "Slotting space priority"),
     ]
-    for row_idx, (metric, key, pct_text, priority_text) in enumerate(metrics, start=26):
-        ws.cell(row_idx, 2, metric)
+    for metric, key, pct_text, priority_text in metrics:
+        ws.cell(r, 2, metric)
         for col_idx, subgroup in enumerate(["AX", "AY", "AZ"], start=3):
             value = subgroup_values[subgroup].get(key) if key else "-"
             if key in {"quantity", "order_frequency", "cbm_total"}:
@@ -358,7 +402,7 @@ def _write_dashboard(
                 value = f"{_safe_float(value):.2f}"
             elif key == "sku_count":
                 value = str(value)
-            ws.cell(row_idx, col_idx, value)
+            ws.cell(r, col_idx, value)
         total_value = "-"
         if key == "sku_count":
             total_value = str(int(class_a["sku_code"].nunique()))
@@ -372,13 +416,14 @@ def _write_dashboard(
             total_value = f"{round(class_a['cbm_total'].sum()):,}"
         elif metric == "Avg Monthly Demand":
             total_value = f"{round(class_a['quantity'].sum() / month_count):,}"
-        ws.cell(row_idx, 6, total_value)
-        ws.cell(row_idx, 7, pct_text)
-        ws.cell(row_idx, 8, priority_text)
-        _style_range(ws, row_idx, 2, 8, fill=SUBHEADER_FILL if row_idx % 2 == 0 else None, alignment=LEFT)
+        ws.cell(r, 6, total_value)
+        ws.cell(r, 7, pct_text)
+        ws.cell(r, 8, priority_text)
+        _style_range(ws, r, 2, 8, fill=SUBHEADER_FILL if r % 2 == 0 else None, alignment=LEFT)
+        r += 1
 
-    predictable = int(class_a["abc_xyz"].isin(["AX", "AY"]).sum())
-    volatile = int(class_a["abc_xyz"].eq("AZ").sum())
+    predictable = int(class_a["abc_xyz_frequency"].isin(["AX", "AY"]).sum())
+    volatile = int(class_a["abc_xyz_frequency"].eq("AZ").sum())
     key_finding = (
         f"KEY FINDING: {int(class_a['sku_code'].nunique())} Class A SKUs "
         f"({_format_share(class_a['sku_code'].nunique() / abc_xyz['sku_code'].nunique())} of portfolio) account for "
@@ -387,10 +432,10 @@ def _write_dashboard(
         f"Of these, {predictable} SKUs (AX+AY) are predictable enough for fixed slotting and ROP-based replenishment. "
         f"The {volatile} AZ SKUs require demand buffering and escalation protocols."
     )
-    ws.merge_cells("B34:I34")
-    ws["B34"] = key_finding
-    _style_range(ws, 34, 2, 9, fill=TITLE_FILL, font=Font(bold=True, color="FFFFFF"), alignment=LEFT)
-
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = key_finding
+    _style_range(ws, r, 2, 9, fill=TITLE_FILL, font=Font(bold=True, color="FFFFFF"), alignment=LEFT)
+    r += 1
 
 def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
     widths = [3, 10, 14, 15, 10, 11, 10, 10, 10, 10, 11, 10, 12, 10, 8, 10, 22, 28]
@@ -415,8 +460,10 @@ def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
         "Cum Freq Share",
         "Total CBM",
         "CV",
-        "XYZ",
-        "ABC-XYZ",
+        "XYZ\n(Freq)",
+        "ABC-XYZ\n(Freq)",
+        "XYZ\n(Vol)",
+        "ABC-XYZ\n(Vol)",
         "Operational Category",
         "Slotting Zone",
     ]
@@ -443,9 +490,11 @@ def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
             _safe_float(row.frequency_cumulative_share),
             _safe_float(row.cbm_total),
             _safe_float(row.demand_cv),
-            row.xyz,
-            row.abc_xyz,
-            _operational_category(row.abc_xyz),
+            row.xyz_frequency,
+            row.abc_xyz_frequency,
+            row.xyz_volatility,
+            row.abc_xyz_volatility,
+            _operational_category(row.abc_xyz_frequency),
             _slotting_zone(row.abc_quantity),
         ]
         for col, value in enumerate(values, start=2):
@@ -469,8 +518,8 @@ def _write_monthly_demand_sheet(ws, monthly_demand: pd.DataFrame) -> None:
     widths = [3, 14, 8, 8] + [11] * len(month_columns) + [12, 11, 11, 8, 10]
     for idx, width in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(idx)].width = width
-    _apply_title(ws, "B1", 4 + len(month_columns) + 5, "MONTHLY DEMAND TABLE — A & B CLASS SKUs (XYZ Calculation Base)")
-    headers = ["SKU Code", "ABC", "XYZ", *month_columns, "Total", "Mean/Mo", "Std Dev", "CV", "ABC-XYZ"]
+    _apply_title(ws, "B1", 6 + len(month_columns) + 4, "MONTHLY DEMAND TABLE — A & B CLASS SKUs (XYZ Calculation Base)")
+    headers = ["SKU Code", "ABC", "XYZ (Freq)", "ABC-XYZ (Freq)", "XYZ (Vol)", "ABC-XYZ (Vol)", *month_columns, "Total", "Mean/Mo", "Std Dev", "CV"]
     for col, value in enumerate(headers, start=2):
         ws.cell(2, col, value)
     _style_range(ws, 2, 2, 1 + len(headers), fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
@@ -478,19 +527,21 @@ def _write_monthly_demand_sheet(ws, monthly_demand: pd.DataFrame) -> None:
         values = [
             row["sku_code"],
             row["abc_quantity"],
-            row["xyz"],
+            row["xyz_frequency"],
+            row["abc_xyz_frequency"],
+            row["xyz_volatility"],
+            row["abc_xyz_volatility"],
             *[row[column] for column in month_columns],
             row["Total"],
             row["Mean/Mo"],
             row["Std Dev"],
             row["CV"],
-            row["abc_xyz"],
         ]
         for col, value in enumerate(values, start=2):
             ws.cell(row_idx, col, value)
         _style_range(ws, row_idx, 2, 1 + len(headers), fill=CLASS_FILLS.get(row["abc_quantity"]), alignment=CENTER)
         ws.cell(row_idx, 2).alignment = LEFT
-        total_col = 2 + 3 + len(month_columns)
+        total_col = 2 + 6 + len(month_columns)
         mean_col = total_col + 1
         std_col = total_col + 2
         cv_col = total_col + 3
@@ -522,7 +573,8 @@ def _write_class_a_deep_dive(ws, monthly_demand: pd.DataFrame) -> None:
     headers = [
         "Rank",
         "SKU Code",
-        "ABC-XYZ\nGroup",
+        "ABC-XYZ\n(Freq)",
+        "ABC-XYZ\n(Vol)",
         "Total Qty\n(pcs)",
         "% of Total\nQty",
         "Order\nFrequency",
@@ -544,7 +596,8 @@ def _write_class_a_deep_dive(ws, monthly_demand: pd.DataFrame) -> None:
         values = [
             row_idx - 3,
             row["sku_code"],
-            row["abc_xyz"],
+            row["abc_xyz_frequency"],
+            row["abc_xyz_volatility"],
             _safe_float(row["quantity"]),
             _safe_float(row["quantity"]) / total_qty if total_qty else 0.0,
             _safe_float(row["order_frequency"]),
@@ -552,14 +605,14 @@ def _write_class_a_deep_dive(ws, monthly_demand: pd.DataFrame) -> None:
             _safe_float(row["cbm_total"]),
             _safe_float(row["Mean/Mo"]),
             _safe_float(row["CV"]),
-            _demand_pattern(row["xyz"]),
-            _stock_strategy(row["xyz"]),
+            _demand_pattern(row["xyz_volatility"]),
+            _stock_strategy(row["xyz_volatility"]),
             "Ground Level - Zone 1",
-            _reorder_logic(row["xyz"]),
+            _reorder_logic(row["xyz_frequency"]),
         ]
         for col, value in enumerate(values, start=2):
             ws.cell(row_idx, col, value)
-        _style_range(ws, row_idx, 2, 15, fill=CLASS_FILLS.get(row["xyz"]), alignment=CENTER)
+        _style_range(ws, row_idx, 2, 15, fill=CLASS_FILLS.get(row["xyz_frequency"]), alignment=CENTER)
         ws.cell(row_idx, 3).alignment = LEFT
         ws.cell(row_idx, 6).number_format = "0.00%"
         ws.cell(row_idx, 8).number_format = "0.00%"
