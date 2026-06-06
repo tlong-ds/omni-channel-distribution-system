@@ -474,9 +474,8 @@ def clean_shipments(
     frame["province"] = frame["province"].fillna("Unknown")
     frame["region"] = frame["province"].map(region_group)
 
-    # Filter out shipments where the customer doesn't exist in the distributor network
-    matched_mask = ~frame["customer_match_status"].isin(["unmatched_customer_key", "missing_customer_name"])
-    frame = frame[matched_mask].copy()
+    # Retain all shipments to count numerical values aggregately
+    # Shipments with missing or unmatched customers will have province='Unknown' and known_geography_flag=False
 
     frame["known_geography_flag"] = frame["province"].ne("Unknown")
     frame["segment_source"] = "unresolved"

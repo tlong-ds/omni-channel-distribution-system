@@ -36,11 +36,11 @@
 
 \subsection{Executive Summary}\label{executive-summary}
 
-This report provides the outbound flow analysis, customer profiling, and geographic demand mapping for the Round 2 competition based on the transaction logs spanning June to December 2025. The core analysis focuses on the 7-month Assignment Window (June 1 -- December 31, 2025), which contains \textbf{20,733 shipment rows}, \textbf{263,854.73 units of outbound demand}, and \textbf{15,059.52 m³ of volume}.
+This report provides the outbound flow analysis, customer profiling, and geographic demand mapping for the Round 2 competition based on the transaction logs spanning June to December 2025. The core analysis focuses on the 7-month Assignment Window (June 1 -- December 31, 2025), which contains \textbf{21,344 shipment rows}, \textbf{277,294.73 units of outbound demand}, and \textbf{15,842.28 m³ of volume}.
 
 Key takeaways include:
 \begin{enumerate}
-\item \textbf{Extreme Assortment Concentration}: A tiny fraction of SKUs drives the vast majority of volume and warehouse activities. A dedicated ``Fast-Moving'' group of 18 SKUs accounts for 60.28\% of outbound quantity and 26.10\% of order frequency.
+\item \textbf{Extreme Assortment Concentration}: A tiny fraction of SKUs drives the vast majority of volume and warehouse activities. A dedicated ``Fast-Moving'' group of 19 SKUs accounts for 57.87\% of outbound quantity and 25.88\% of order frequency.
 \item \textbf{ERP Centralized Invoicing Distortion}: Geographic demand analyses reveal that My Phuoc seemingly dominates 92.22\% of resolved volume. However, this is an artificial bias caused by centralized ERP invoicing. In reality, Vinh Loc's raw outbound shipments account for 28.75\% of total volume, but 80.10\% of its transactions have missing customer names and are excluded from standard maps. Using \textbf{Approach A (Statistical Scaling)}, we restore and analyze the true 71.25\% My Phuoc vs 28.75\% Vinh Loc volume split.
 \item \textbf{Clear Segment Profiles}: Modern Trade orders are large, consolidated, and heavily palletized (69.17\% of quantity). Traditional Trade orders are smaller, highly fragmented (51.49\% carton / 8.07\% loose), and spread across 57 provinces, presenting different operational picking requirements.
 \end{enumerate}
@@ -74,7 +74,7 @@ The distribution of outbound quantities and order frequencies across the SKUs sh
 \end{figure}
 
 \subsubsection{Joint ABC-XYZ Matrix Summary}\label{joint-abc-xyz-matrix-summary}
-A total of \textbf{404 unique SKUs} were classified. The product distribution across the ABC-XYZ matrix (using ABC by Quantity) is shown in Figure \ref{fig:q11-abc-xyz-matrix}:
+A total of \textbf{470 unique SKUs} were classified. The product distribution across the ABC-XYZ matrix (using ABC by Quantity) is shown in Figure \ref{fig:q11-abc-xyz-matrix}:
 In this matrix:
 \begin{itemize}
 \item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs based on their contribution to total outbound quantity (Class A: top 70\%, Class B: next 20\%, Class C: bottom 10\%).
@@ -91,10 +91,10 @@ In this matrix:
 
 This cross-tabulation reveals four key SKU profiles:
 \begin{itemize}
-\item \textbf{A-X (Fast-Moving)}: 18 SKUs (4.46\%) that drive both high volume and high picking frequency, representing the operational core.
-\item \textbf{A-Y / A-Z (Bulk/Spiky Movers)}: 7 SKUs (1.73\%) that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.
-\item \textbf{B-X / C-X (Frequent but Low Volume)}: 32 SKUs (7.92\%) that are picked often but contribute little to total volume, creating disproportionate labor pressure relative to their volume contribution.
-\item \textbf{C-Z (Slow and Infrequent)}: 278 SKUs (68.81\%) that are prime candidates for deep reserve storage or rationalization.
+\item \textbf{A-X (Fast-Moving)}: 19 SKUs (4.04\%) that drive both high volume and high picking frequency, representing the operational core.
+\item \textbf{A-Y / A-Z (Bulk/Spiky Movers)}: 9 SKUs (1.91\%) that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.
+\item \textbf{B-X / C-X (Frequent but Low Volume)}: 34 SKUs (7.23\%) that are picked often but contribute little to total volume, creating disproportionate labor pressure relative to their volume contribution.
+\item \textbf{C-Z (Slow and Infrequent)}: 329 SKUs (70.00\%) that are prime candidates for deep reserve storage or rationalization.
 
 \subsubsection{Quantity-Volatility ABC-XYZ Analysis}\label{quantity-volatility-abc-xyz-analysis}
 In addition to order frequency, we also evaluated demand variability. Volatility is measured using the Coefficient of Variation (CV) over monthly demand.
@@ -117,14 +117,14 @@ The joint Quantity-Volatility ABC-XYZ matrix is shown in Figure \ref{fig:q11-abc
 The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by Quantity and Class X by Order Frequency (Class A-X). This group is the primary driver of warehouse operational workload and inventory velocity.
 
 \begin{itemize}
-\item \textbf{SKU Count}: \textbf{18 SKUs} (representing \textbf{4.46\%} of the total assortment).
-\item \textbf{Volume Contribution}: Accounts for \textbf{159874.67 units} (\textbf{60.28\%} of total outbound volume).
-\item \textbf{Fulfillment Workload}: Drives \textbf{5277 orders} (\textbf{26.10\%} of all outbound transaction lines).
+\item \textbf{SKU Count}: \textbf{19 SKUs} (representing \textbf{4.04\%} of the total assortment).
+\item \textbf{Volume Contribution}: Accounts for \textbf{163013.67 units} (\textbf{57.87\%} of total outbound volume).
+\item \textbf{Fulfillment Workload}: Drives \textbf{5381 orders} (\textbf{25.88\%} of all outbound transaction lines).
 \item \textbf{Top 10 Fast-Moving SKUs}: \texttt{4200009163, 4200009000, 4200008102, 4200000163, 4200008999, 4200007858, 4200008101, 4200008229, 4200009001, 4200009382}.
 \end{itemize}
 
 \begin{quote}
-\textbf{Operational Recommendation}: Because only \textasciitilde4\% of the SKUs drive \textasciitilde60\% of all shipped quantities, these 18 SKUs should be assigned to the most ergonomic pick-faces (lower levels, close to the packing stations) with dedicated replenishment pathways to minimize picking travel time.
+\textbf{Operational Recommendation}: Because only \textasciitilde4\% of the SKUs drive \textasciitilde58\% of all shipped quantities, these 19 SKUs should be assigned to the most ergonomic pick-faces (lower levels, close to the packing stations) with dedicated replenishment pathways to minimize picking travel time.
 \end{quote}
 
 \subsection{Q1.2 Distribution Heatmap and Warehouse Imbalance Analysis}\label{q1.2-distribution-heatmap-and-warehouse-imbalance-analysis}
@@ -133,9 +133,9 @@ The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by 
 
 A critical finding from our data cleansing pipeline is a \textbf{severe geography resolution ceiling}:
 \begin{itemize}
-\item \textbf{Row-level coverage}: Only \textbf{100.00\%} of transaction rows (16,104 out of 43,894) could be mapped to a known customer location.
-\item \textbf{Quantity-level coverage}: Only \textbf{100.00\%} of outbound quantities (159,635.70 out of 355,364.80) are linked to known coordinates.
-\item \textbf{Root Cause}: \texttt{0} assignment-window rows are unresolved, of which \textbf{0 rows} are due to \texttt{Ship-to Customer} being logged as \texttt{'unknown'} in the database.
+\item \textbf{Row-level coverage}: Only \textbf{99.90\%} of transaction rows (16,104 out of 43,894) could be mapped to a known customer location.
+\item \textbf{Quantity-level coverage}: Only \textbf{95.83\%} of outbound quantities (159,635.70 out of 355,364.80) are linked to known coordinates.
+\item \textbf{Root Cause}: \texttt{21} assignment-window rows are unresolved, of which \textbf{611 rows} are due to \texttt{Ship-to Customer} being logged as \texttt{'unknown'} in the database.
 \end{itemize}
 
 \begin{quote}
@@ -284,17 +284,17 @@ The comparison across the required dimensions is summarized below:
 \toprule
 Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \midrule
-\textbf{Active Customers} & 119 & 260 \\
-\textbf{Order Count} & 1564 & 3482 \\
-\textbf{Avg. Order Quantity} & 80.19 pcs & 39.76 pcs \\
-\textbf{Avg. Order Volume (m³)} & 5.16 m³ & 2.01 m³ \\
-\textbf{Avg. SKU Breadth / Order} & 2.84 SKUs & 4.53 SKUs \\
-\textbf{Order Frequency (per customer/month)} & 2.19 & 2.23 \\
+\textbf{Active Customers} & 119 & 264 \\
+\textbf{Order Count} & 1564 & 3776 \\
+\textbf{Avg. Order Quantity} & 80.19 pcs & 40.22 pcs \\
+\textbf{Avg. Order Volume (m³)} & 5.16 m³ & 2.06 m³ \\
+\textbf{Avg. SKU Breadth / Order} & 2.84 SKUs & 4.33 SKUs \\
+\textbf{Order Frequency (per customer/month)} & 2.19 & 2.38 \\
 \textbf{Geographic Footprint} & 34 provinces / 6 regions & 60 provinces / 6 regions \\
-\textbf{Avg. Delivery Distance} & 277.70 km & 287.64 km \\
-\textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{43.40\%} \\
-\textbf{Carton Share (\%)} & \textbf{22.52\%} & \textbf{49.15\%} \\
-\textbf{Loose Share (\%)} & \textbf{2.23\%} & \textbf{7.45\%} \\
+\textbf{Avg. Delivery Distance} & 277.70 km & 270.28 km \\
+\textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{42.91\%} \\
+\textbf{Carton Share (\%)} & \textbf{22.52\%} & \textbf{49.94\%} \\
+\textbf{Loose Share (\%)} & \textbf{2.23\%} & \textbf{7.15\%} \\
 \bottomrule
 \end{tabular}%
 }
@@ -304,7 +304,7 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 
 \subsubsection{Key Profile Insights}\label{key-profile-insights}
 \begin{enumerate}
-\item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{39.76 pcs} and \textbf{2.01 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
+\item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{40.22 pcs} and \textbf{2.06 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
 
 \begin{figure}[H]
 \centering
@@ -313,9 +313,9 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \label{fig:q13-order-profile}
 \end{figure}
 
-\item \textbf{Assortment Breadth vs. Depth}: As shown in Figure \ref{fig:q13-order-profile}, Traditional Trade orders have a higher average SKU breadth (\textbf{4.53 SKUs} per order) than Modern Trade (\textbf{2.84 SKUs}). This indicates that TT customers order small quantities of a wide variety of SKUs, increasing warehouse sorting complexity.
+\item \textbf{Assortment Breadth vs. Depth}: As shown in Figure \ref{fig:q13-order-profile}, Traditional Trade orders have a higher average SKU breadth (\textbf{4.33 SKUs} per order) than Modern Trade (\textbf{2.84 SKUs}). This indicates that TT customers order small quantities of a wide variety of SKUs, increasing warehouse sorting complexity.
 
-\item \textbf{Packaging Unit Mix}: Modern Trade is highly pallet-centric, with \textbf{75.25\%} of their items shipped as full pallets. Traditional Trade is highly carton-centric (\textbf{49.15\%} of items) and has more loose picking (\textbf{7.45\%} vs. 2.23\% for MT). This breakdown of packaging unit selections is compared in Figure \ref{fig:q13-pkg-mix}.
+\item \textbf{Packaging Unit Mix}: Modern Trade is highly pallet-centric, with \textbf{75.25\%} of their items shipped as full pallets. Traditional Trade is highly carton-centric (\textbf{49.94\%} of items) and has more loose picking (\textbf{7.15\%} vs. 2.23\% for MT). This breakdown of packaging unit selections is compared in Figure \ref{fig:q13-pkg-mix}.
 
 \begin{figure}[H]
 \centering
@@ -324,7 +324,7 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \label{fig:q13-pkg-mix}
 \end{figure}
 
-\item \textbf{Geographic Spread}: Traditional Trade has a much wider geographic spread, covering \textbf{60 provinces} compared to MT's \textbf{34 provinces}, representing a highly fragmented, nation-wide distribution profile. Traditional Trade's demand is also more concentrated, with its top province accounting for \textbf{27.49\%} of its total volume, compared to \textbf{23.50\%} for Modern Trade. The province coverage and top-province quantity share for each segment are shown in Figure \ref{fig:q13-geo-spread}.
+\item \textbf{Geographic Spread}: Traditional Trade has a much wider geographic spread, covering \textbf{60 provinces} compared to MT's \textbf{34 provinces}, representing a highly fragmented, nation-wide distribution profile. Traditional Trade's demand is also more concentrated, with its top province accounting for \textbf{27.12\%} of its total volume, compared to \textbf{23.50\%} for Modern Trade. The province coverage and top-province quantity share for each segment are shown in Figure \ref{fig:q13-geo-spread}.
 
 \begin{figure}[H]
 \centering
