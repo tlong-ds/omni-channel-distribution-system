@@ -1,2 +1,2 @@
 assignment_start_date,assignment_end_date,shipment_rows_total,shipment_rows_known_geography,shipment_row_coverage,shipment_rows_unknown_geography,shipment_row_unknown_share,quantity_total,quantity_known_geography,quantity_coverage,quantity_unknown_geography,quantity_unknown_share,orders_total,orders_known_geography,rows_distributor_match,rows_transaction_text_parse,rows_unresolved,rows_ambiguous_customer,rows_unresolved_customer
-2025-06-01,2025-12-31,21344,18153,0.8504966266866567,3191,0.14950337331334332,277294.73293650796,218088.7041666667,0.7864870055667532,59206.02876984127,0.21351299443324676,5184,4351,5508,12645,3191,14980,856
+2025-06-01,2025-12-31,20733,20733,1.0,0,0.0,263854.7329365079,263854.7329365079,1.0,0.0,0.0,4890,4890,20733,0,0,7420,0

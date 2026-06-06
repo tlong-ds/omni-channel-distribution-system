@@ -1,0 +1,406 @@
+[2026-06-06 19:39:00] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Imputed values: 463
+  - Weight conflicts: 78
+
+[2026-06-06 19:39:05] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+
+[2026-06-06 19:39:09] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+
+[2026-06-06 19:39:12] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 34)
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 19:42:02] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 19:42:06] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 19:42:10] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 19:42:14] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 34)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 19:43:23] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 19:43:28] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 19:43:31] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 34)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 19:49:02] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 19:49:42] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 19:49:46] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 19:49:50] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 19:52:26] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 19:52:30] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 19:52:33] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 19:55:35] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 19:55:40] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 19:55:43] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 19:57:33] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 19:57:37] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 19:57:41] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 20:00:10] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:00:27] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:01:30] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:01:47] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:02:16] --- Data Quality Log: clean_distributors ---
+Shape: (1369, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 1108
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:02:59] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:03:03] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:03:07] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 20:05:30] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:05:35] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:05:38] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 20:06:20] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:09:02] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:09:06] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:09:10] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 20:09:51] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:09:55] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:09:58] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 20:15:40] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:15:45] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:15:48] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 36)
+[2026-06-06 20:19:32] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:19:32] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:20:02] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:20:07] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:20:10] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 20:25:37] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:25:42] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:25:45] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+
+[2026-06-06 20:27:48] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-06 20:27:52] --- Data Quality Log: clean_distributors ---
+Shape: (1218, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 860
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-06 20:27:55] --- Data Quality Log: clean_shipments ---
+Shape: (20783, 35)
+  - Total Quantity: 265,212.73
+  - Total Volume (CBM): 15,198.85
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 0
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+

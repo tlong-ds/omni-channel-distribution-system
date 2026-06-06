@@ -1,4 +1,4 @@
 source_warehouse,document_type,shipment_rows,rows_missing_quantity,rows_missing_cbm,rows_missing_either,missing_row_share
-My Phuoc,A/R INVOICE,16142,0,0,0,0.0
+My Phuoc,A/R INVOICE,15525,0,0,0,0.0
 Vinh Loc,A/R INVOICE,5258,0,0,0,0.0
-All,All,21400,0,0,0,0.0
+All,All,20783,0,0,0,0.0

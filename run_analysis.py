@@ -172,6 +172,69 @@ def main() -> None:
     unresolved_customer_summary.to_csv(TABLES_DIR / "q12_unresolved_customer_summary.csv", index=False)
     write_q11_workbook(abc_xyz, abc_xyz_matrix, q11_monthly_demand, q11_shipments)
 
+    import pandas as pd
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+    
+    print("Exporting cleaned data to cleaned_data.xlsx...")
+    cleaned_path = OUTPUT_DIR / "cleaned_data.xlsx"
+    with pd.ExcelWriter(cleaned_path, engine='openpyxl') as writer:
+        for csv_file in CLEANED_DIR.glob("*.csv"):
+            df = pd.read_csv(csv_file)
+            df.to_excel(writer, sheet_name=csv_file.stem[:31], index=False)
+            
+    # Apply formatting
+    wb = openpyxl.load_workbook(cleaned_path)
+    
+    # Format distributors
+    if 'distributors_cleaned' in wb.sheetnames:
+        ws = wb['distributors_cleaned']
+        keep_letters = {'A', 'D', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'}
+        for col in range(1, ws.max_column + 1):
+            letter = get_column_letter(col)
+            if letter not in keep_letters:
+                ws.column_dimensions[letter].hidden = True
+                
+    # Format sku_master
+    if 'sku_master_cleaned' in wb.sheetnames:
+        ws = wb['sku_master_cleaned']
+        keep_letters = {'A', 'E', 'F', 'H'}
+        for c in range(ord('I'), ord('Z')+1):
+            keep_letters.add(chr(c))
+        for col in range(1, ws.max_column + 1):
+            letter = get_column_letter(col)
+            if letter not in keep_letters:
+                ws.column_dimensions[letter].hidden = True
+                
+    # Format shipments
+    if 'shipments_cleaned' in wb.sheetnames:
+        ws = wb['shipments_cleaned']
+        headers = [cell.value for cell in ws[1]]
+        for col, header in enumerate(headers, 1):
+            if header and str(header).endswith('_flag'):
+                letter = get_column_letter(col)
+                ws.column_dimensions[letter].hidden = True
+
+    # Auto-fit all sheets
+    for ws in wb.worksheets:
+        for col in range(1, ws.max_column + 1):
+            letter = get_column_letter(col)
+            if ws.column_dimensions[letter].hidden:
+                continue
+            max_length = 0
+            for cell in ws[letter][0:1000]: 
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            ws.column_dimensions[letter].width = min(max_length + 2, 50)
+            
+    wb.save(cleaned_path)
+            
+    print("Exporting summary tables to summary_tables.xlsx...")
+    with pd.ExcelWriter(OUTPUT_DIR / "summary_tables.xlsx") as writer:
+        for csv_file in TABLES_DIR.glob("*.csv"):
+            df = pd.read_csv(csv_file)
+            df.to_excel(writer, sheet_name=csv_file.stem[:31], index=False)
+
     _remove_stale_outputs()
     save_charts(
         assignment_shipments,

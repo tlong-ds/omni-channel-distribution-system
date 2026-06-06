@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
+import re
 import pandas as pd
 
 from src.logage2026.geography import (
@@ -19,6 +20,27 @@ from src.logage2026.geography import (
 
 DEMAND_DOCUMENT_TYPES = {"A/R INVOICE"}
 
+
+import functools
+from typing import Callable
+
+def log_quality(metrics_func: Callable[[pd.DataFrame], list[str]]):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            df = func(*args, **kwargs)
+            from src.logage2026.config import ROOT_DIR
+            log_path = ROOT_DIR / "data.log"
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(f"[{pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}] --- Data Quality Log: {func.__name__} ---\n")
+                f.write(f"Shape: {df.shape}\n")
+                if metrics_func:
+                    for line in metrics_func(df):
+                        f.write(f"  - {line}\n")
+                f.write("\n")
+            return df
+        return wrapper
+    return decorator
 
 def _replace_blank_like_values(frame: pd.DataFrame) -> pd.DataFrame:
     return frame.replace(r"^\s*$", pd.NA, regex=True)
@@ -70,6 +92,15 @@ def _analysis_exclusion_reason(document_type: pd.Series, flag: pd.Series) -> pd.
     return reasons
 
 
+def _sku_metrics(df: pd.DataFrame) -> list[str]:
+    return [
+        f"Total Unique SKUs: {df['sku_code'].nunique() if 'sku_code' in df.columns else df.shape[0]}",
+        f"Imputed values: {df['imputation_notes'].notna().sum()}",
+        f"Weight conflicts: {df['weight_conflict_flag'].sum() if 'weight_conflict_flag' in df.columns else 0}",
+        f"Top 3 Categories: {', '.join(df['category'].value_counts().head(3).index) if 'category' in df.columns else 'N/A'}"
+    ]
+
+@log_quality(_sku_metrics)
 def clean_sku_master(raw: pd.DataFrame) -> pd.DataFrame:
     frame = _replace_blank_like_values(raw.copy())
     sap_code_2 = _to_nullable_code(frame["SAP Code (2)"])
@@ -227,6 +258,15 @@ def clean_sku_master(raw: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
+def _dist_metrics(df: pd.DataFrame) -> list[str]:
+    return [
+        f"Unique Customers: {df['customer_key'].nunique()}",
+        f"Ambiguous locations (Multi-branch): {df['customer_key_is_ambiguous'].sum()}",
+        f"Unusable/Unknown geography: {df['province'].eq('Unknown').sum()}",
+        f"Top 3 Provinces: {', '.join(df['province'].value_counts().head(3).index)}"
+    ]
+
+@log_quality(_dist_metrics)
 def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
     frame = _replace_blank_like_values(raw.copy())
     frame["Customer Name"] = frame["Customer Name"].ffill()
@@ -262,7 +302,32 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
     frame["district"] = frame["address_district"]
     frame["ward"] = frame["address_ward"]
     frame["region"] = frame["province"].map(region_group)
-    dedupe_columns = ["customer_key", "address_street", "address_ward", "address_district", "address_province", "region"]
+    def _get_base_address(addr: str) -> str:
+        if pd.isna(addr): return ""
+        first_part = str(addr).split(',')[0].lower()
+        first_part = re.sub(r'\b(số|đường|tầng|khu phố|kp|ấp|thôn|lô|km|kcn|tòa nhà|tòa)\b', '', first_part)
+        return re.sub(r'[^a-z0-9]', '', first_part)
+
+    frame["base_address"] = frame["delivery_address"].apply(_get_base_address)
+    frame["address_length"] = frame["delivery_address"].str.len()
+    frame["has_geo"] = frame["latitude"].notna()
+    
+    # Sort so the record with the most complete information is kept
+    frame = frame.sort_values(
+        ["customer_key", "province", "has_geo", "address_length"], 
+        ascending=[True, True, False, False]
+    )
+
+    # First deduplicate by exact lat/long
+    frame = frame.drop_duplicates(subset=["customer_key", "province", "latitude", "longitude"])
+    
+    # Next deduplicate by base address (excluding empty base addresses)
+    valid_base_mask = frame["base_address"] != ""
+    duplicates = frame.duplicated(subset=["customer_key", "province", "base_address"]) & valid_base_mask
+    frame = frame[~duplicates]
+
+    frame = frame.drop(columns=["base_address", "address_length", "has_geo"])
+    dedupe_columns = ["customer_key", "province", "latitude", "longitude"]
     frame = frame.drop_duplicates(subset=dedupe_columns).copy()
     frame["customer_location_count"] = frame.groupby("customer_key")["customer_location_key"].transform("nunique")
     frame["customer_key_is_ambiguous"] = frame["customer_location_count"].gt(1)
@@ -313,6 +378,19 @@ def _build_segment_override_map(overrides: pd.DataFrame | None) -> dict[str, str
     return mapping
 
 
+def _shipment_metrics(df: pd.DataFrame) -> list[str]:
+    lines = [
+        f"Total Quantity: {df['quantity'].sum():,.2f}",
+        f"Total Volume (CBM): {df['cbm_total'].sum():,.2f}",
+        f"Date Range: {df['created_date'].min().strftime('%Y-%m-%d')} to {df['created_date'].max().strftime('%Y-%m-%d')}",
+        f"Unknown Provinces remaining: {df['province'].eq('Unknown').sum()}",
+        f"Geographic source breakdown:"
+    ]
+    for source, count in df['geography_source'].value_counts().items():
+        lines.append(f"    * {source}: {count}")
+    return lines
+
+@log_quality(_shipment_metrics)
 def clean_shipments(
     raw: pd.DataFrame, distributors: pd.DataFrame, segment_overrides: pd.DataFrame | None = None
 ) -> pd.DataFrame:
@@ -331,8 +409,14 @@ def clean_shipments(
     frame["cbm_missing_flag"] = cbm_total.isna()
     frame["data_error_flag"] = frame["quantity_missing_flag"] | frame["cbm_missing_flag"]
     frame["created_date"] = pd.to_datetime(frame["Created Date"], errors="coerce")
-    frame["ship_to_customer"] = _normalize_string(frame["Ship-to Customer"], default="unknown")
+    frame["ship_to_customer"] = _normalize_string(frame["Ship-to Customer"], default="unknown").str.replace(r"\s*\(FOC\)\s*", "", regex=True, flags=re.IGNORECASE)
     frame["customer_key"] = frame["ship_to_customer"].map(normalize_text)
+    
+    b2b_pattern = r"CÔNG TY|CTY|HỘ KINH DOANH|HKD|CHI NHÁNH|SIÊU THỊ|CỬA HÀNG|\bCH\b|ĐẠI LÝ|NPP|TTMS|TRUNG TÂM|TNHH|COOP|GO!|EB|LOTTE|AEON|MM MEGA|DOANH NGHIỆP|DNTN|PHÂN PHỐI|LTD|LIMITED|HTX|HỢP TÁC XÃ|SCHENKER|LOGISTICS|TAX"
+    b2b_mask = frame["ship_to_customer"].str.contains(b2b_pattern, case=False, na=False)
+    frame["channel"] = "B2C"
+    frame.loc[b2b_mask, "channel"] = "B2B"
+    
     frame.loc[frame["ship_to_customer"].eq("unknown"), "customer_key"] = "UNKNOWN"
     frame["analysis_document_flag"] = _analysis_document_flag(frame["document_type"])
     frame["exclusion_reason"] = _analysis_exclusion_reason(frame["document_type"], frame["analysis_document_flag"])
@@ -357,7 +441,7 @@ def clean_shipments(
     parsed_has_geo = frame["parsed_province"].ne("Unknown")
 
     frame["geography_source"] = "unresolved"
-    distributor_geo_mask = frame["customer_match_status"].eq("unique_resolvable_customer_geography")
+    distributor_geo_mask = frame["customer_match_status"].isin(["unique_resolvable_customer_geography", "ambiguous_multi_location_customer"])
     transaction_geo_mask = ~distributor_geo_mask & parsed_has_geo
 
     frame["province"] = "Unknown"
@@ -389,6 +473,10 @@ def clean_shipments(
 
     frame["province"] = frame["province"].fillna("Unknown")
     frame["region"] = frame["province"].map(region_group)
+
+    # Filter out shipments where the customer doesn't exist in the distributor network
+    matched_mask = ~frame["customer_match_status"].isin(["unmatched_customer_key", "missing_customer_name"])
+    frame = frame[matched_mask].copy()
 
     frame["known_geography_flag"] = frame["province"].ne("Unknown")
     frame["segment_source"] = "unresolved"
@@ -446,13 +534,25 @@ def clean_shipments(
         "longitude",
         "distance_from_my_phuoc_km",
         "distance_from_vinh_loc_km",
+        "channel",
     ]
     return frame[keep]
 
 
 def _build_distributor_match_table(distributors: pd.DataFrame) -> pd.DataFrame:
-    unique = distributors[distributors["customer_match_status"].eq("unique_resolvable_customer_geography")].copy()
-    unique = unique.sort_values(["customer_key", "Source Sheet", "customer_location_key"])
+    valid_status = ["unique_resolvable_customer_geography", "ambiguous_multi_location_customer"]
+    unique = distributors[distributors["customer_match_status"].isin(valid_status)].copy()
+    unique["has_geo"] = unique["latitude"].notna()
+    
+    unique["name_matches_province"] = unique.apply(
+        lambda row: normalize_text(row["province"]) in row["customer_key"] if pd.notna(row["province"]) else False,
+        axis=1
+    )
+    
+    unique = unique.sort_values(
+        by=["customer_key", "name_matches_province", "has_geo", "Source Sheet"],
+        ascending=[True, False, False, True]
+    )
     unique = unique.drop_duplicates("customer_key", keep="first")
     counts = (
         distributors.groupby("customer_key")
@@ -549,24 +649,18 @@ if __name__ == "__main__":
     CLEANED_DIR.mkdir(parents=True, exist_ok=True)
     
     if args.sku or args.all:
-        print("Cleaning SKU Master Data...")
         sku = clean_sku_master(load_sku_master())
         out_path = CLEANED_DIR / "sku_master_cleaned.csv"
         sku.to_csv(out_path, index=False)
-        print(f"Saved cleaned SKU Master to {out_path} (shape: {sku.shape})")
         
     if args.distributor or args.all:
-        print("Cleaning Distributor Network Data...")
         dist = clean_distributors(load_distributors())
         out_path = CLEANED_DIR / "distributors_cleaned.csv"
         dist.to_csv(out_path, index=False)
-        print(f"Saved cleaned Distributors to {out_path} (shape: {dist.shape})")
         
     if args.shipment or args.all:
-        print("Cleaning Outbound Shipment Transactions...")
         dist = clean_distributors(load_distributors())
         overrides = load_segment_overrides()
         shipments = clean_shipments(load_transactions(), dist, segment_overrides=overrides)
         out_path = CLEANED_DIR / "shipments_cleaned.csv"
         shipments.to_csv(out_path, index=False)
-        print(f"Saved cleaned Shipments to {out_path} (shape: {shipments.shape})")
