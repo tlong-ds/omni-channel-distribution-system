@@ -775,8 +775,10 @@ def build_q12_warehouse_imbalance_visual_summary(shipments: pd.DataFrame) -> pd.
 
 
 def _calculate_packaging_components(known: pd.DataFrame, sku_master: pd.DataFrame) -> pd.DataFrame:
-    sku_pkg = sku_master[["sku_code", "pcs_per_pallet", "pcs_per_carton"]].copy()
-    known = known.merge(sku_pkg, on="sku_code", how="left")
+    missing_cols = [c for c in ["pcs_per_pallet", "pcs_per_carton"] if c not in known.columns]
+    if missing_cols:
+        sku_pkg = sku_master[["sku_code"] + missing_cols].copy()
+        known = known.merge(sku_pkg, on="sku_code", how="left")
 
     qty = known["quantity"].fillna(0).astype(float)
     ppp = known["pcs_per_pallet"].astype(float).fillna(qty + 1.0)
