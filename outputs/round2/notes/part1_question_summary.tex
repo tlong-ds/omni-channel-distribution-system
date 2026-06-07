@@ -131,21 +131,12 @@ The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by 
 
 \subsubsection{Data Quality and Resolution Ceiling}\label{data-quality-and-resolution-ceiling}
 
-A critical finding from our data cleansing pipeline is a \textbf{severe geography resolution ceiling}:
+A finding from our data cleansing pipeline is a \textbf{minor geography resolution limit}:
 \begin{itemize}
-\item \textbf{Row-level coverage}: Only \textbf{99.88\%} of transaction rows (16,104 out of 43,894) could be mapped to a known customer location.
-\item \textbf{Quantity-level coverage}: Only \textbf{94.81\%} of outbound quantities (159,635.70 out of 355,364.80) are linked to known coordinates.
+\item \textbf{Row-level coverage}: \textbf{99.88\%} of transaction rows (21,374 out of 21,400) could be mapped to a known customer location.
+\item \textbf{Quantity-level coverage}: \textbf{94.81\%} of outbound quantities (267,097.73 out of 281,704.73) are linked to known coordinates.
 \item \textbf{Root Cause}: \texttt{26} assignment-window rows are unresolved, of which \textbf{617 rows} are due to \texttt{Ship-to Customer} being logged as \texttt{'unknown'} in the database.
 \end{itemize}
-
-\begin{quote}
-\textbf{Central Invoicing Data Bias}: This missing customer data is systemic:
-\begin{itemize}
-\item \textbf{Centralization (Pre-Dec 2025)}: Customer billing was centralized under My Phuoc's ERP account. Consequently, Vinh Loc shipments (representing Tefal products) were logged as internal stock depletion entries without customer details, affecting \textbf{80.10\%} of Vinh Loc rows.
-\item \textbf{Migration (Dec 2025)}: Billing migrated to Vinh Loc, causing My Phuoc's December transactions to lack customer details.
-\item \textbf{Operational Impact}: Vinh Loc is left with an extremely low geographic coverage of \textbf{12.12\% of its volume}, skewing all raw geographic charts to make Vinh Loc look artificially inactive. This systematic bias and the resulting spatial coverage limits are visualized in Figure \ref{fig:q12-geo-coverage}.
-\end{itemize}
-\end{quote}
 
 \begin{figure}[H]
 \centering
@@ -154,8 +145,8 @@ A critical finding from our data cleansing pipeline is a \textbf{severe geograph
 \label{fig:q12-geo-coverage}
 \end{figure}
 
-\subsubsection{Corrected Warehouse Imbalance (Approach A: Statistical Scaling)}\label{corrected-warehouse-imbalance}
-To provide a safe and unbiased view of warehouse throughput, we compare raw volume totals against resolved volumes and apply \textbf{Approach A (Statistical Scaling)}:
+\subsubsection{Warehouse Imbalance}\label{warehouse-imbalance}
+To provide a clear view of warehouse throughput, we compare raw volume totals against the geographically resolved volumes:
 
 \begin{table}[H]
 \centering
@@ -166,19 +157,18 @@ Metric & \multicolumn{2}{c}{My Phuoc Warehouse} & \multicolumn{2}{c}{Vinh Loc Wa
 \cmidrule(r){2-3} \cmidrule(lr){4-5} \cmidrule(l){6-7}
  & Value & \% & Value & \% & Value & \% \\
 \midrule
-\textbf{Raw Outbound Quantity} & 253,197.00 & 71.25\% & 102,167.80 & 28.75\% & 355,364.80 & 100.00\% \\
-\textbf{Raw Outbound CBM} & 13,948.74 & 70.97\% & 5,705.04 & 29.03\% & 19,653.78 & 100.00\% \\
-\textbf{Raw Transaction Rows} & 17,423 & 39.70\% & 26,471 & 60.30\% & 43,894 & 100.00\% \\
-\textbf{Resolved Quantity (Raw)} & 147,258.80 & 92.25\% & 12,382.80 & 7.75\% & 159,635.70 & 100.00\% \\
-\textbf{Imputed Quantity (Approach A)} & \textbf{253,196.01} & \textbf{71.25\%} & \textbf{102,168.32} & \textbf{28.75\%} & \textbf{355,364.33} & \textbf{100.00\%} \\
+\textbf{Raw Outbound Quantity} & 262,053.00 & 93.02\% & 19,651.73 & 6.98\% & 281,704.73 & 100.00\% \\
+\textbf{Raw Outbound CBM} & 15,034.28 & 93.22\% & 1,093.78 & 6.78\% & 16,128.06 & 100.00\% \\
+\textbf{Raw Transaction Rows} & 16,142 & 75.43\% & 5,258 & 24.57\% & 21,400 & 100.00\% \\
+\textbf{Resolved Quantity} & 247,446.00 & 92.64\% & 19,651.73 & 7.36\% & 267,097.73 & 100.00\% \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Comparison of Raw, Resolved, and Imputed Throughput}
+\caption{Comparison of Raw and Resolved Throughput}
 \label{tab:q12-wh-throughput}
 \end{table}
 
-\textbf{Conclusion}: While Vinh Loc represents 60.30\% of transaction rows (small, frequent orders of Tefal items), it accounts for 28.75\% of outbound quantity. My Phuoc handles 71.25\% of the quantity. The raw resolved geography is heavily biased (92\% vs 8%), but the true operational split is \textbf{71\% My Phuoc vs 29\% Vinh Loc}. The comparison of raw, resolved, and imputed throughput is detailed in the table above, while the regional warehouse dominance gap in the resolved transactions is shown in Figure \ref{fig:q12-wh-imbalance}.
+\textbf{Conclusion}: While Vinh Loc represents 24.57\% of transaction rows, it accounts for 6.98\% of outbound quantity. My Phuoc handles 93.02\% of the quantity. The geographic resolution coverage is very high, so the resolved regional distribution perfectly aligns with the true operational split of \textbf{93\% My Phuoc vs 7\% Vinh Loc}. The comparison of raw and resolved throughput is detailed in the table above, while the regional warehouse dominance is shown in Figure \ref{fig:q12-wh-imbalance}.
 
 \begin{figure}[H]
 \centering
@@ -252,7 +242,7 @@ Because My Phuoc holds Fans and Vinh Loc holds Tefal, both warehouses ship to th
 \label{fig:q12-wh-region-split}
 \end{figure}
 
-However, due to the centralized billing bias, My Phuoc appears dominant in almost all regions. This dominance pattern and the resulting spatial market coverage of both warehouses are mapped in Figure \ref{fig:q12-wh-dominance}.
+My Phuoc handles significantly more volume than Vinh Loc and appears dominant in almost all regions. This dominance pattern and the resulting spatial market coverage of both warehouses are mapped in Figure \ref{fig:q12-wh-dominance}.
 
 \begin{figure}[H]
 \centering
@@ -284,17 +274,17 @@ The comparison across the required dimensions is summarized below:
 \toprule
 Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \midrule
-\textbf{Active Customers} & 119 & 264 \\
-\textbf{Order Count} & 1564 & 3782 \\
-\textbf{Avg. Order Quantity} & 80.19 pcs & 41.33 pcs \\
-\textbf{Avg. Order Volume (m³)} & 5.16 m³ & 2.13 m³ \\
-\textbf{Avg. SKU Breadth / Order} & 2.84 SKUs & 4.33 SKUs \\
-\textbf{Order Frequency (per customer/month)} & 2.19 & 2.39 \\
+\textbf{Active Customers} & 119 & 261 \\
+\textbf{Order Count} & 1564 & 3762 \\
+\textbf{Avg. Order Quantity} & 80.19 pcs & 37.66 pcs \\
+\textbf{Avg. Order Volume (m³)} & 5.16 m³ & 1.92 m³ \\
+\textbf{Avg. SKU Breadth / Order} & 2.84 SKUs & 4.35 SKUs \\
+\textbf{Order Frequency (per customer/month)} & 2.19 & 2.40 \\
 \textbf{Geographic Footprint} & 34 provinces / 6 regions & 60 provinces / 6 regions \\
 \textbf{Avg. Delivery Distance} & 277.70 km & 270.37 km \\
-\textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{41.70\%} \\
-\textbf{Carton Share (\%)} & \textbf{22.52\%} & \textbf{48.54\%} \\
-\textbf{Loose Share (\%)} & \textbf{2.23\%} & \textbf{9.77\%} \\
+\textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{42.86\%} \\
+\textbf{Carton Share (\%)} & \textbf{22.52\%} & \textbf{48.52\%} \\
+\textbf{Loose Share (\%)} & \textbf{2.23\%} & \textbf{8.62\%} \\
 \bottomrule
 \end{tabular}%
 }
@@ -304,7 +294,7 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 
 \subsubsection{Key Profile Insights}\label{key-profile-insights}
 \begin{enumerate}
-\item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{41.33 pcs} and \textbf{2.13 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
+\item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{37.66 pcs} and \textbf{1.92 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
 
 \begin{figure}[H]
 \centering
@@ -313,9 +303,9 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \label{fig:q13-order-profile}
 \end{figure}
 
-\item \textbf{Assortment Breadth vs. Depth}: As shown in Figure \ref{fig:q13-order-profile}, Traditional Trade orders have a higher average SKU breadth (\textbf{4.33 SKUs} per order) than Modern Trade (\textbf{2.84 SKUs}). This indicates that TT customers order small quantities of a wide variety of SKUs, increasing warehouse sorting complexity.
+\item \textbf{Assortment Breadth vs. Depth}: As shown in Figure \ref{fig:q13-order-profile}, Traditional Trade orders have a higher average SKU breadth (\textbf{4.35 SKUs} per order) than Modern Trade (\textbf{2.84 SKUs}). This indicates that TT customers order small quantities of a wide variety of SKUs, increasing warehouse sorting complexity.
 
-\item \textbf{Packaging Unit Mix}: Modern Trade is highly pallet-centric, with \textbf{75.25\%} of their items shipped as full pallets. Traditional Trade is highly carton-centric (\textbf{48.54\%} of items) and has more loose picking (\textbf{9.77\%} vs. 2.23\% for MT). This breakdown of packaging unit selections is compared in Figure \ref{fig:q13-pkg-mix}.
+\item \textbf{Packaging Unit Mix}: Modern Trade is highly pallet-centric, with \textbf{75.25\%} of their items shipped as full pallets. Traditional Trade is highly carton-centric (\textbf{48.52\%} of items) and has more loose picking (\textbf{8.62\%} vs. 2.23\% for MT). This breakdown of packaging unit selections is compared in Figure \ref{fig:q13-pkg-mix}.
 
 \begin{figure}[H]
 \centering

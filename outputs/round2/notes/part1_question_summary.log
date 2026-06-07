@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  7 JUN 2026 11:55
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  7 JUN 2026 17:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -820,37 +820,37 @@ Overfull \hbox (3.95355pt too wide) in paragraph at lines 123--124
  []
 
 
-
-[4]
-Overfull \hbox (0.25641pt too wide) in paragraph at lines 145--146
-[]\TU/lmr/bx/n/10.95 Migration (Dec 2025)\TU/lmr/m/n/10.95 : Billing migrated t
-o Vinh Loc, causing My Phuoc’s
+Overfull \hbox (24.2202pt too wide) in paragraph at lines 137--138
+[]\TU/lmr/bx/n/10.95 Quantity-level coverage\TU/lmr/m/n/10.95 : \TU/lmr/bx/n/10
+.95 94.81% \TU/lmr/m/n/10.95 of outbound quantities (267,097.73 out of 281,704.
+73)
  []
 
+
+
+[4]
 File: ../charts/q12_geography_coverage_map.png Graphic file (type bmp)
 <../charts/q12_geography_coverage_map.png>
 
 
 [5]
-
-[6]
 File: ../charts/q12_warehouse_imbalance.png Graphic file (type bmp)
 <../charts/q12_warehouse_imbalance.png>
 File: ../charts/q12_region_reference_map.png Graphic file (type bmp)
 <../charts/q12_region_reference_map.png>
 
 
-[7]
+[6]
 File: ../charts/q12_region_quantity_orders.png Graphic file (type bmp)
 <../charts/q12_region_quantity_orders.png>
 
 
-[8]
+[7]
 File: ../charts/q12_top_demand_provinces_map.png Graphic file (type bmp)
 <../charts/q12_top_demand_provinces_map.png>
 
 
-[9]
+[8]
 File: ../charts/q12_province_demand_choropleths.png Graphic file (type bmp)
 <../charts/q12_province_demand_choropleths.png>
 File: ../charts/q12_warehouse_region_quantity_split.png Graphic file (type bmp)
@@ -858,31 +858,31 @@ File: ../charts/q12_warehouse_region_quantity_split.png Graphic file (type bmp)
 <../charts/q12_warehouse_region_quantity_split.png>
 
 
-[10]
+[9]
 File: ../charts/q12_warehouse_dominance_map.png Graphic file (type bmp)
 <../charts/q12_warehouse_dominance_map.png>
 File: ../charts/q12_province_distance_correlation.png Graphic file (type bmp)
 <../charts/q12_province_distance_correlation.png>
 
 
-[11]
+[10]
 File: ../charts/q13_order_profile_comparison.png Graphic file (type bmp)
 <../charts/q13_order_profile_comparison.png>
 
 
-[12]
+[11]
 File: ../charts/q13_packaging_mix.png Graphic file (type bmp)
 <../charts/q13_packaging_mix.png>
 
 
-[13]
+[12]
 File: ../charts/q13_geographic_spread.png Graphic file (type bmp)
 <../charts/q13_geographic_spread.png>
 File: ../charts/q13_segment_geographic_maps.png Graphic file (type bmp)
 <../charts/q13_segment_geographic_maps.png>
 
 
-[14]
+[13]
 
 ! LaTeX Error: \begin{itemize} on input line 93 ended by \end{document}.
 
@@ -890,7 +890,7 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.346 \end{document}
+l.336 \end{document}
                     
 Your command was ignored.
 Type  I <command> <return>  to replace it with another command,
@@ -898,7 +898,7 @@ or  <return>  to continue without it.
 
 
 
-[15] (./part1_question_summary.aux)
+[14] (./part1_question_summary.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
@@ -910,11 +910,11 @@ L3 programming layer <2025-01-18>
 ### bottom level 
 Here is how much of TeX's memory you used:
  16982 strings out of 473832
- 314288 string characters out of 5729482
- 861535 words of memory out of 5000000
+ 314278 string characters out of 5729482
+ 861478 words of memory out of 5000000
  39846 multiletter control sequences out of 15000+600000
  562364 words of font info for 67 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  90i,10n,114p,609b,582s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on part1_question_summary.pdf (15 pages).
+Output written on part1_question_summary.pdf (14 pages).

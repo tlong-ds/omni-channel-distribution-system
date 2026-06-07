@@ -799,7 +799,11 @@ def _calculate_packaging_components(known: pd.DataFrame, sku_master: pd.DataFram
 
 
 def _prepare_segment_order_lines(shipments: pd.DataFrame, sku_master: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    known = shipments[shipments["analysis_document_flag"] & shipments["customer_segment"].isin(SEGMENT_ORDER)].copy()
+    known = shipments[
+        shipments["analysis_document_flag"] 
+        & shipments["customer_segment"].isin(SEGMENT_ORDER)
+        & shipments["known_geography_flag"]
+    ].copy()
     known["distance_km"] = np.where(
         known["source_warehouse"] == "My Phuoc",
         known["distance_from_my_phuoc_km"],

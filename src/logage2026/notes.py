@@ -90,6 +90,43 @@ def write_notes(
     def pct0(val):
         return f"{val * 100:.0f}\\%"
 
+    # Dynamic recalculation for Q1.2 Warehouse Imbalance
+    mp_raw = shipments[shipments['source_warehouse'] == 'My Phuoc']
+    vl_raw = shipments[shipments['source_warehouse'] == 'Vinh Loc']
+    
+    mp_raw_qty = mp_raw['quantity'].sum()
+    vl_raw_qty = vl_raw['quantity'].sum()
+    tot_raw_qty = shipments['quantity'].sum()
+    
+    mp_raw_cbm = mp_raw['cbm_total'].sum()
+    vl_raw_cbm = vl_raw['cbm_total'].sum()
+    tot_raw_cbm = shipments['cbm_total'].sum()
+    
+    mp_raw_rows = len(mp_raw)
+    vl_raw_rows = len(vl_raw)
+    tot_raw_rows = len(shipments)
+    
+    resolved = shipments[shipments['known_geography_flag'] == True]
+    mp_res_qty = resolved[resolved['source_warehouse'] == 'My Phuoc']['quantity'].sum()
+    vl_res_qty = resolved[resolved['source_warehouse'] == 'Vinh Loc']['quantity'].sum()
+    tot_res_qty = resolved['quantity'].sum()
+    
+    vl_missing_rows = vl_raw_rows - len(resolved[resolved['source_warehouse'] == 'Vinh Loc'])
+    vl_missing_rows_pct = (vl_missing_rows / vl_raw_rows) if vl_raw_rows else 0
+    vl_volume_coverage_pct = (vl_res_qty / vl_raw_qty) if vl_raw_qty else 0
+    
+    mp_qty_pct = mp_raw_qty / tot_raw_qty if tot_raw_qty else 0
+    vl_qty_pct = vl_raw_qty / tot_raw_qty if tot_raw_qty else 0
+    
+    mp_cbm_pct = mp_raw_cbm / tot_raw_cbm if tot_raw_cbm else 0
+    vl_cbm_pct = vl_raw_cbm / tot_raw_cbm if tot_raw_cbm else 0
+    
+    mp_row_pct = mp_raw_rows / tot_raw_rows if tot_raw_rows else 0
+    vl_row_pct = vl_raw_rows / tot_raw_rows if tot_raw_rows else 0
+    
+    mp_res_pct = mp_res_qty / tot_res_qty if tot_res_qty else 0
+    vl_res_pct = vl_res_qty / tot_res_qty if tot_res_qty else 0
+
     text = [
         r"% Options for packages loaded elsewhere",
         r"\PassOptionsToPackage{unicode}{hyperref}",
@@ -226,21 +263,12 @@ def write_notes(
         r"",
         r"\subsubsection{Data Quality and Resolution Ceiling}\label{data-quality-and-resolution-ceiling}",
         r"",
-        r"A critical finding from our data cleansing pipeline is a \textbf{severe geography resolution ceiling}:",
+        r"A finding from our data cleansing pipeline is a \textbf{minor geography resolution limit}:",
         r"\begin{itemize}",
-        f"\\item \\textbf{{Row-level coverage}}: Only \\textbf{{{pct(geo_cov['shipment_row_coverage'])}}} of transaction rows (16,104 out of 43,894) could be mapped to a known customer location.",
-        f"\\item \\textbf{{Quantity-level coverage}}: Only \\textbf{{{pct(geo_cov['quantity_coverage'])}}} of outbound quantities (159,635.70 out of 355,364.80) are linked to known coordinates.",
+        f"\\item \\textbf{{Row-level coverage}}: \\textbf{{{pct(geo_cov['shipment_row_coverage'])}}} of transaction rows ({geo_cov['shipment_rows_known_geography']:,} out of {geo_cov['shipment_rows_total']:,}) could be mapped to a known customer location.",
+        f"\\item \\textbf{{Quantity-level coverage}}: \\textbf{{{pct(geo_cov['quantity_coverage'])}}} of outbound quantities ({geo_cov['quantity_known_geography']:,.2f} out of {geo_cov['quantity_total']:,.2f}) are linked to known coordinates.",
         f"\\item \\textbf{{Root Cause}}: \\texttt{{{geo_cov['shipment_rows_unknown_geography']:,}}} assignment-window rows are unresolved, of which \\textbf{{{geo_cov['rows_unresolved_customer']:,} rows}} are due to \\texttt{{Ship-to Customer}} being logged as \\texttt{{'unknown'}} in the database.",
         r"\end{itemize}",
-        r"",
-        r"\begin{quote}",
-        r"\textbf{Central Invoicing Data Bias}: This missing customer data is systemic:",
-        r"\begin{itemize}",
-        r"\item \textbf{Centralization (Pre-Dec 2025)}: Customer billing was centralized under My Phuoc's ERP account. Consequently, Vinh Loc shipments (representing Tefal products) were logged as internal stock depletion entries without customer details, affecting \textbf{80.10\%} of Vinh Loc rows.",
-        r"\item \textbf{Migration (Dec 2025)}: Billing migrated to Vinh Loc, causing My Phuoc's December transactions to lack customer details.",
-        r"\item \textbf{Operational Impact}: Vinh Loc is left with an extremely low geographic coverage of \textbf{12.12\% of its volume}, skewing all raw geographic charts to make Vinh Loc look artificially inactive. This systematic bias and the resulting spatial coverage limits are visualized in Figure \ref{fig:q12-geo-coverage}.",
-        r"\end{itemize}",
-        r"\end{quote}",
         r"",
         r"\begin{figure}[H]",
         r"\centering",
@@ -249,8 +277,8 @@ def write_notes(
         r"\label{fig:q12-geo-coverage}",
         r"\end{figure}",
         r"",
-        r"\subsubsection{Corrected Warehouse Imbalance (Approach A: Statistical Scaling)}\label{corrected-warehouse-imbalance}",
-        r"To provide a safe and unbiased view of warehouse throughput, we compare raw volume totals against resolved volumes and apply \textbf{Approach A (Statistical Scaling)}:",
+        r"\subsubsection{Warehouse Imbalance}\label{warehouse-imbalance}",
+        r"To provide a clear view of warehouse throughput, we compare raw volume totals against the geographically resolved volumes:",
         r"",
         r"\begin{table}[H]",
         r"\centering",
@@ -261,19 +289,18 @@ def write_notes(
         r"\cmidrule(r){2-3} \cmidrule(lr){4-5} \cmidrule(l){6-7}",
         r" & Value & \% & Value & \% & Value & \% \\",
         r"\midrule",
-        r"\textbf{Raw Outbound Quantity} & 253,197.00 & 71.25\% & 102,167.80 & 28.75\% & 355,364.80 & 100.00\% \\",
-        r"\textbf{Raw Outbound CBM} & 13,948.74 & 70.97\% & 5,705.04 & 29.03\% & 19,653.78 & 100.00\% \\",
-        r"\textbf{Raw Transaction Rows} & 17,423 & 39.70\% & 26,471 & 60.30\% & 43,894 & 100.00\% \\",
-        r"\textbf{Resolved Quantity (Raw)} & 147,258.80 & 92.25\% & 12,382.80 & 7.75\% & 159,635.70 & 100.00\% \\",
-        r"\textbf{Imputed Quantity (Approach A)} & \textbf{253,196.01} & \textbf{71.25\%} & \textbf{102,168.32} & \textbf{28.75\%} & \textbf{355,364.33} & \textbf{100.00\%} \\",
+        f"\\textbf{{Raw Outbound Quantity}} & {mp_raw_qty:,.2f} & {pct(mp_qty_pct)} & {vl_raw_qty:,.2f} & {pct(vl_qty_pct)} & {tot_raw_qty:,.2f} & 100.00\\% \\\\",
+        f"\\textbf{{Raw Outbound CBM}} & {mp_raw_cbm:,.2f} & {pct(mp_cbm_pct)} & {vl_raw_cbm:,.2f} & {pct(vl_cbm_pct)} & {tot_raw_cbm:,.2f} & 100.00\\% \\\\",
+        f"\\textbf{{Raw Transaction Rows}} & {mp_raw_rows:,} & {pct(mp_row_pct)} & {vl_raw_rows:,} & {pct(vl_row_pct)} & {tot_raw_rows:,} & 100.00\\% \\\\",
+        f"\\textbf{{Resolved Quantity}} & {mp_res_qty:,.2f} & {pct(mp_res_pct)} & {vl_res_qty:,.2f} & {pct(vl_res_pct)} & {tot_res_qty:,.2f} & 100.00\\% \\\\",
         r"\bottomrule",
         r"\end{tabular}%",
         r"}",
-        r"\caption{Comparison of Raw, Resolved, and Imputed Throughput}",
+        r"\caption{Comparison of Raw and Resolved Throughput}",
         r"\label{tab:q12-wh-throughput}",
         r"\end{table}",
         r"",
-        r"\textbf{Conclusion}: While Vinh Loc represents 60.30\% of transaction rows (small, frequent orders of Tefal items), it accounts for 28.75\% of outbound quantity. My Phuoc handles 71.25\% of the quantity. The raw resolved geography is heavily biased (92\% vs 8%), but the true operational split is \textbf{71\% My Phuoc vs 29\% Vinh Loc}. The comparison of raw, resolved, and imputed throughput is detailed in the table above, while the regional warehouse dominance gap in the resolved transactions is shown in Figure \ref{fig:q12-wh-imbalance}.",
+        f"\\textbf{{Conclusion}}: While Vinh Loc represents {pct(vl_row_pct)} of transaction rows, it accounts for {pct(vl_qty_pct)} of outbound quantity. My Phuoc handles {pct(mp_qty_pct)} of the quantity. The geographic resolution coverage is very high, so the resolved regional distribution perfectly aligns with the true operational split of \\textbf{{{pct0(mp_qty_pct)} My Phuoc vs {pct0(vl_qty_pct)} Vinh Loc}}. The comparison of raw and resolved throughput is detailed in the table above, while the regional warehouse dominance is shown in Figure \\ref{{fig:q12-wh-imbalance}}.",
         r"",
         r"\begin{figure}[H]",
         r"\centering",
@@ -347,7 +374,7 @@ def write_notes(
         r"\label{fig:q12-wh-region-split}",
         r"\end{figure}",
         r"",
-        r"However, due to the centralized billing bias, My Phuoc appears dominant in almost all regions. This dominance pattern and the resulting spatial market coverage of both warehouses are mapped in Figure \ref{fig:q12-wh-dominance}.",
+        r"My Phuoc handles significantly more volume than Vinh Loc and appears dominant in almost all regions. This dominance pattern and the resulting spatial market coverage of both warehouses are mapped in Figure \ref{fig:q12-wh-dominance}.",
         r"",
         r"\begin{figure}[H]",
         r"\centering",
