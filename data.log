@@ -1212,3 +1212,27 @@ Shape: (21400, 35)
   -     * distributor_match: 20783
   -     * unresolved: 617
 
+[2026-06-07 20:19:15] --- Data Quality Log: clean_sku_master ---
+Shape: (1324, 26)
+  - Total Unique SKUs: 1324
+  - Imputed values: 463
+  - Weight conflicts: 78
+  - Top 3 Categories: CW, Fan, SDA
+
+[2026-06-07 20:19:20] --- Data Quality Log: clean_distributors ---
+Shape: (1193, 16)
+  - Unique Customers: 569
+  - Ambiguous locations (Multi-branch): 829
+  - Unusable/Unknown geography: 0
+  - Top 3 Provinces: Hồ Chí Minh, Hà Nội, Bình Dương
+
+[2026-06-07 20:19:22] --- Data Quality Log: clean_shipments ---
+Shape: (21400, 35)
+  - Total Quantity: 281,704.73
+  - Total Volume (CBM): 16,128.06
+  - Date Range: 2025-06-02 to 2025-12-30
+  - Unknown Provinces remaining: 617
+  - Geographic source breakdown:
+  -     * distributor_match: 20783
+  -     * unresolved: 617
+
