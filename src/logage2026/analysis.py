@@ -802,7 +802,6 @@ def _prepare_segment_order_lines(shipments: pd.DataFrame, sku_master: pd.DataFra
     known = shipments[
         shipments["analysis_document_flag"] 
         & shipments["customer_segment"].isin(SEGMENT_ORDER)
-        & shipments["known_geography_flag"]
     ].copy()
     known["distance_km"] = np.where(
         known["source_warehouse"] == "My Phuoc",
@@ -851,7 +850,6 @@ def build_q13_segment_profile_summary(shipments: pd.DataFrame, sku_master: pd.Da
         order_level.groupby("customer_segment", dropna=False)
         .agg(
             orders=("order_id", "nunique"),
-            customers=("customer_key", "nunique"),
             avg_order_quantity=("quantity", "mean"),
             median_order_quantity=("quantity", "median"),
             avg_order_cbm=("cbm_total", "mean"),
@@ -862,7 +860,22 @@ def build_q13_segment_profile_summary(shipments: pd.DataFrame, sku_master: pd.Da
         )
         .reset_index()
     )
-    customer_orders = order_level.groupby(["customer_segment", "customer_key"], dropna=False)["order_id"].nunique().reset_index()
+    true_customers = known.groupby("customer_segment", dropna=False)["customer_key"].nunique().rename("customers")
+    summary = summary.merge(true_customers.reset_index(), on="customer_segment", how="left")
+    summary = summary[[
+        "customer_segment",
+        "orders",
+        "customers",
+        "avg_order_quantity",
+        "median_order_quantity",
+        "avg_order_cbm",
+        "median_order_cbm",
+        "avg_sku_breadth",
+        "avg_lines_per_order",
+        "avg_distance_km"
+    ]]
+
+    customer_orders = known.groupby(["customer_segment", "customer_key"], dropna=False)["order_id"].nunique().reset_index()
     customer_orders["orders_per_month"] = customer_orders["order_id"] / 6.0
     avg_freq = customer_orders.groupby("customer_segment", dropna=False)["orders_per_month"].mean().rename(
         "avg_orders_per_customer_month"

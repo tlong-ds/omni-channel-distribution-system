@@ -262,7 +262,7 @@ def main() -> None:
     # Format shipments
     if 'shipments_cleaned' in wb.sheetnames:
         ws = wb['shipments_cleaned']
-        keep_letters = {'B', 'C', 'F', 'G', 'H', 'I', 'J', 'N', 'U', 'X', 'Y', 'Z', 'AA', 'AB'}
+        keep_letters = {'B', 'C', 'F', 'G', 'H', 'I', 'J', 'N', 'U', 'X', 'Y', 'Z', 'AA', 'AB', 'AE', 'AF', 'AG', 'AH', 'AI'}
         for col in range(1, ws.max_column + 1):
             letter = get_column_letter(col)
             if letter not in keep_letters:

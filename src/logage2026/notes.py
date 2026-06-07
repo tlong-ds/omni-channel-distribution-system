@@ -127,6 +127,24 @@ def write_notes(
     mp_res_pct = mp_res_qty / tot_res_qty if tot_res_qty else 0
     vl_res_pct = vl_res_qty / tot_res_qty if tot_res_qty else 0
 
+    top_regions = q12_region_orders_quantity_summary.sort_values("quantity", ascending=False).head(3)
+    tot_region_qty = q12_region_orders_quantity_summary["quantity"].sum()
+    region_items = []
+    for _, r in top_regions.iterrows():
+        qty_share = r['quantity'] / tot_region_qty if tot_region_qty else 0
+        region_items.append(rf"\item \textbf{{{r['region']}}}: Accounts for \textbf{{{pct(qty_share)}}} of resolved volume ({r['quantity']:,.2f} units).")
+    region_list_tex = "\n".join(region_items)
+
+    top_provs = q12_province_cluster_summary.sort_values("quantity", ascending=False).head(5)
+    tot_prov_qty = q12_province_cluster_summary["quantity"].sum()
+    tot_prov_orders = q12_province_cluster_summary["orders"].sum()
+    prov_items = []
+    for _, p in top_provs.iterrows():
+        qty_share = p['quantity'] / tot_prov_qty if tot_prov_qty else 0
+        ord_share = p['orders'] / tot_prov_orders if tot_prov_orders else 0
+        prov_items.append(rf"\item \textbf{{{p['province']}}}: {int(p['orders']):,} orders, {p['quantity']:,.2f} quantity (representing \textbf{{{pct(ord_share)}}} of resolved orders and \textbf{{{pct(qty_share)}}} of resolved quantity).")
+    prov_list_tex = "\n".join(prov_items)
+
     text = [
         r"% Options for packages loaded elsewhere",
         r"\PassOptionsToPackage{unicode}{hyperref}",
@@ -172,7 +190,7 @@ def write_notes(
         r"\begin{enumerate}",
         f"\\item \\textbf{{Extreme Assortment Concentration}}: A tiny fraction of SKUs drives the vast majority of volume and warehouse activities. A dedicated ``Fast-Moving'' group of {fast_mov['sku_count']} SKUs accounts for {pct(fast_mov['quantity_share'])} of outbound quantity and {pct(fast_mov['frequency_share'])} of order frequency.",
         r"\item \textbf{ERP Centralized Invoicing Distortion}: Geographic demand analyses reveal that My Phuoc seemingly dominates 92.22\% of resolved volume. However, this is an artificial bias caused by centralized ERP invoicing. In reality, Vinh Loc's raw outbound shipments account for 28.75\% of total volume, but 80.10\% of its transactions have missing customer names and are excluded from standard maps. Using \textbf{Approach A (Statistical Scaling)}, we restore and analyze the true 71.25\% My Phuoc vs 28.75\% Vinh Loc volume split.",
-        r"\item \textbf{Clear Segment Profiles}: Modern Trade orders are large, consolidated, and heavily palletized (69.17\% of quantity). Traditional Trade orders are smaller, highly fragmented (51.49\% carton / 8.07\% loose), and spread across 57 provinces, presenting different operational picking requirements.",
+        f"\\item \\textbf{{Clear Segment Profiles}}: Modern Trade orders are large, consolidated, and heavily palletized ({pct(mt_pkg_shares.get('pallet', 0.0))} of quantity). Traditional Trade orders are smaller, highly fragmented ({pct(tt_pkg_shares.get('carton', 0.0))} carton / {pct(tt_pkg_shares.get('loose', 0.0))} loose), and spread across {tt_prof['province_count']} provinces, presenting different operational picking requirements.",
         r"\end{enumerate}",
         r"",
         r"\subsection{Q1.1 Demand Pattern Classification (ABC-XYZ Analysis)}\label{q1.1-demand-pattern-classification-abc-xyz-analysis}",
@@ -321,9 +339,7 @@ def write_notes(
         r"",
         r"Within these boundaries, the resolved outbound demand is highly concentrated. As shown in Figure \ref{fig:q12-region-qty}, the region-level order and quantity shares are led by the following regions:",
         r"\begin{itemize}",
-        r"\item \textbf{Đông Nam Bộ}: The largest demand region, accounting for \textbf{42.78\%} of resolved volume (68,289.44 units).",
-        r"\item \textbf{Bắc Trung Bộ và Duyên hải miền Trung}: The second largest, representing \textbf{28.22\%} (45,044.48 units).",
-        r"\item \textbf{Đồng bằng sông Cửu Long}: Accounts for \textbf{13.86\%} (22,132.83 units).",
+        region_list_tex,
         r"\end{itemize}",
         r"",
         r"\begin{figure}[H]",
@@ -345,11 +361,7 @@ def write_notes(
         r"",
         r"Specifically, the top five provinces by resolved volume and order counts are led by Hồ Chí Minh City by an overwhelming margin:",
         r"\begin{itemize}",
-        r"\item \textbf{Hồ Chí Minh}: 1,267 orders, 42,256.09 quantity (representing \textbf{34.62\% of resolved orders} and \textbf{26.47\% of resolved quantity}).",
-        r"\item \textbf{Đồng Nai}: 387 orders, 5,579.33 quantity.",
-        r"\item \textbf{Bình Dương}: 194 orders, 19,814.17 quantity (high volume per order).",
-        r"\item \textbf{Đà Nẵng}: 204 orders, 15,522.98 quantity (Central hub).",
-        r"\item \textbf{Cần Thơ}: 177 orders, 10,561.08 quantity (Mekong Delta hub).",
+        prov_list_tex,
         r"\end{itemize}",
         r"",
         r"To visualize the full provincial distribution across the nation, Figure \ref{fig:q12-province-demand} displays the provincial demand choropleth maps (by total quantity and total orders).",

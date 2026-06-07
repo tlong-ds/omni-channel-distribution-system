@@ -42,7 +42,7 @@ Key takeaways include:
 \begin{enumerate}
 \item \textbf{Extreme Assortment Concentration}: A tiny fraction of SKUs drives the vast majority of volume and warehouse activities. A dedicated ``Fast-Moving'' group of 19 SKUs accounts for 57.87\% of outbound quantity and 25.88\% of order frequency.
 \item \textbf{ERP Centralized Invoicing Distortion}: Geographic demand analyses reveal that My Phuoc seemingly dominates 92.22\% of resolved volume. However, this is an artificial bias caused by centralized ERP invoicing. In reality, Vinh Loc's raw outbound shipments account for 28.75\% of total volume, but 80.10\% of its transactions have missing customer names and are excluded from standard maps. Using \textbf{Approach A (Statistical Scaling)}, we restore and analyze the true 71.25\% My Phuoc vs 28.75\% Vinh Loc volume split.
-\item \textbf{Clear Segment Profiles}: Modern Trade orders are large, consolidated, and heavily palletized (69.17\% of quantity). Traditional Trade orders are smaller, highly fragmented (51.49\% carton / 8.07\% loose), and spread across 57 provinces, presenting different operational picking requirements.
+\item \textbf{Clear Segment Profiles}: Modern Trade orders are large, consolidated, and heavily palletized (75.25\% of quantity). Traditional Trade orders are smaller, highly fragmented (48.54\% carton / 9.77\% loose), and spread across 60 provinces, presenting different operational picking requirements.
 \end{enumerate}
 
 \subsection{Q1.1 Demand Pattern Classification (ABC-XYZ Analysis)}\label{q1.1-demand-pattern-classification-abc-xyz-analysis}
@@ -133,9 +133,9 @@ The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by 
 
 A finding from our data cleansing pipeline is a \textbf{minor geography resolution limit}:
 \begin{itemize}
-\item \textbf{Row-level coverage}: \textbf{99.88\%} of transaction rows (21,374 out of 21,400) could be mapped to a known customer location.
-\item \textbf{Quantity-level coverage}: \textbf{94.81\%} of outbound quantities (267,097.73 out of 281,704.73) are linked to known coordinates.
-\item \textbf{Root Cause}: \texttt{26} assignment-window rows are unresolved, of which \textbf{617 rows} are due to \texttt{Ship-to Customer} being logged as \texttt{'unknown'} in the database.
+\item \textbf{Row-level coverage}: \textbf{97.12\%} of transaction rows (20,783 out of 21,400) could be mapped to a known customer location.
+\item \textbf{Quantity-level coverage}: \textbf{94.15\%} of outbound quantities (265,212.73 out of 281,704.73) are linked to known coordinates.
+\item \textbf{Root Cause}: \texttt{617} assignment-window rows are unresolved, of which \textbf{617 rows} are due to \texttt{Ship-to Customer} being logged as \texttt{'unknown'} in the database.
 \end{itemize}
 
 \begin{figure}[H]
@@ -160,7 +160,7 @@ Metric & \multicolumn{2}{c}{My Phuoc Warehouse} & \multicolumn{2}{c}{Vinh Loc Wa
 \textbf{Raw Outbound Quantity} & 262,053.00 & 93.02\% & 19,651.73 & 6.98\% & 281,704.73 & 100.00\% \\
 \textbf{Raw Outbound CBM} & 15,034.28 & 93.22\% & 1,093.78 & 6.78\% & 16,128.06 & 100.00\% \\
 \textbf{Raw Transaction Rows} & 16,142 & 75.43\% & 5,258 & 24.57\% & 21,400 & 100.00\% \\
-\textbf{Resolved Quantity} & 247,446.00 & 92.64\% & 19,651.73 & 7.36\% & 267,097.73 & 100.00\% \\
+\textbf{Resolved Quantity} & 245,561.00 & 92.59\% & 19,651.73 & 7.41\% & 265,212.73 & 100.00\% \\
 \bottomrule
 \end{tabular}%
 }
@@ -189,9 +189,9 @@ To define the geographic boundaries of our analysis, the standard Vietnam admini
 
 Within these boundaries, the resolved outbound demand is highly concentrated. As shown in Figure \ref{fig:q12-region-qty}, the region-level order and quantity shares are led by the following regions:
 \begin{itemize}
-\item \textbf{Đông Nam Bộ}: The largest demand region, accounting for \textbf{42.78\%} of resolved volume (68,289.44 units).
-\item \textbf{Bắc Trung Bộ và Duyên hải miền Trung}: The second largest, representing \textbf{28.22\%} (45,044.48 units).
-\item \textbf{Đồng bằng sông Cửu Long}: Accounts for \textbf{13.86\%} (22,132.83 units).
+\item \textbf{Đông Nam Bộ}: Accounts for \textbf{47.36\%} of resolved volume (125,616.90 units).
+\item \textbf{Bắc Trung Bộ và Duyên hải miền Trung}: Accounts for \textbf{25.49\%} of resolved volume (67,606.23 units).
+\item \textbf{Đồng bằng sông Cửu Long}: Accounts for \textbf{15.16\%} of resolved volume (40,203.79 units).
 \end{itemize}
 
 \begin{figure}[H]
@@ -213,11 +213,11 @@ At the provincial level, demand clusters heavily around key urban centers. The a
 
 Specifically, the top five provinces by resolved volume and order counts are led by Hồ Chí Minh City by an overwhelming margin:
 \begin{itemize}
-\item \textbf{Hồ Chí Minh}: 1,267 orders, 42,256.09 quantity (representing \textbf{34.62\% of resolved orders} and \textbf{26.47\% of resolved quantity}).
-\item \textbf{Đồng Nai}: 387 orders, 5,579.33 quantity.
-\item \textbf{Bình Dương}: 194 orders, 19,814.17 quantity (high volume per order).
-\item \textbf{Đà Nẵng}: 204 orders, 15,522.98 quantity (Central hub).
-\item \textbf{Cần Thơ}: 177 orders, 10,561.08 quantity (Mekong Delta hub).
+\item \textbf{Hồ Chí Minh}: 1,402 orders, 65,527.28 quantity (representing \textbf{32.95\%} of resolved orders and \textbf{27.47\%} of resolved quantity).
+\item \textbf{Bình Dương}: 661 orders, 43,011.83 quantity (representing \textbf{15.53\%} of resolved orders and \textbf{18.03\%} of resolved quantity).
+\item \textbf{Đà Nẵng}: 296 orders, 24,340.48 quantity (representing \textbf{6.96\%} of resolved orders and \textbf{10.20\%} of resolved quantity).
+\item \textbf{Cần Thơ}: 257 orders, 19,444.88 quantity (representing \textbf{6.04\%} of resolved orders and \textbf{8.15\%} of resolved quantity).
+\item \textbf{Hà Nội}: 280 orders, 13,142.67 quantity (representing \textbf{6.58\%} of resolved orders and \textbf{5.51\%} of resolved quantity).
 \end{itemize}
 
 To visualize the full provincial distribution across the nation, Figure \ref{fig:q12-province-demand} displays the provincial demand choropleth maps (by total quantity and total orders).
@@ -274,17 +274,17 @@ The comparison across the required dimensions is summarized below:
 \toprule
 Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \midrule
-\textbf{Active Customers} & 119 & 261 \\
-\textbf{Order Count} & 1564 & 3762 \\
-\textbf{Avg. Order Quantity} & 80.19 pcs & 37.66 pcs \\
-\textbf{Avg. Order Volume (m³)} & 5.16 m³ & 1.92 m³ \\
-\textbf{Avg. SKU Breadth / Order} & 2.84 SKUs & 4.35 SKUs \\
-\textbf{Order Frequency (per customer/month)} & 2.19 & 2.40 \\
+\textbf{Active Customers} & 132 & 270 \\
+\textbf{Order Count} & 1564 & 3782 \\
+\textbf{Avg. Order Quantity} & 80.19 pcs & 41.33 pcs \\
+\textbf{Avg. Order Volume (m³)} & 5.16 m³ & 2.13 m³ \\
+\textbf{Avg. SKU Breadth / Order} & 2.84 SKUs & 4.33 SKUs \\
+\textbf{Order Frequency (per customer/month)} & 2.24 & 2.45 \\
 \textbf{Geographic Footprint} & 34 provinces / 6 regions & 60 provinces / 6 regions \\
-\textbf{Avg. Delivery Distance} & 277.70 km & 270.37 km \\
-\textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{42.86\%} \\
-\textbf{Carton Share (\%)} & \textbf{22.52\%} & \textbf{48.52\%} \\
-\textbf{Loose Share (\%)} & \textbf{2.23\%} & \textbf{8.62\%} \\
+\textbf{Avg. Delivery Distance} & 277.70 km & 287.72 km \\
+\textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{41.70\%} \\
+\textbf{Carton Share (\%)} & \textbf{22.52\%} & \textbf{48.54\%} \\
+\textbf{Loose Share (\%)} & \textbf{2.23\%} & \textbf{9.77\%} \\
 \bottomrule
 \end{tabular}%
 }
@@ -294,7 +294,7 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 
 \subsubsection{Key Profile Insights}\label{key-profile-insights}
 \begin{enumerate}
-\item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{37.66 pcs} and \textbf{1.92 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
+\item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{41.33 pcs} and \textbf{2.13 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
 
 \begin{figure}[H]
 \centering
@@ -303,9 +303,9 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \label{fig:q13-order-profile}
 \end{figure}
 
-\item \textbf{Assortment Breadth vs. Depth}: As shown in Figure \ref{fig:q13-order-profile}, Traditional Trade orders have a higher average SKU breadth (\textbf{4.35 SKUs} per order) than Modern Trade (\textbf{2.84 SKUs}). This indicates that TT customers order small quantities of a wide variety of SKUs, increasing warehouse sorting complexity.
+\item \textbf{Assortment Breadth vs. Depth}: As shown in Figure \ref{fig:q13-order-profile}, Traditional Trade orders have a higher average SKU breadth (\textbf{4.33 SKUs} per order) than Modern Trade (\textbf{2.84 SKUs}). This indicates that TT customers order small quantities of a wide variety of SKUs, increasing warehouse sorting complexity.
 
-\item \textbf{Packaging Unit Mix}: Modern Trade is highly pallet-centric, with \textbf{75.25\%} of their items shipped as full pallets. Traditional Trade is highly carton-centric (\textbf{48.52\%} of items) and has more loose picking (\textbf{8.62\%} vs. 2.23\% for MT). This breakdown of packaging unit selections is compared in Figure \ref{fig:q13-pkg-mix}.
+\item \textbf{Packaging Unit Mix}: Modern Trade is highly pallet-centric, with \textbf{75.25\%} of their items shipped as full pallets. Traditional Trade is highly carton-centric (\textbf{48.54\%} of items) and has more loose picking (\textbf{9.77\%} vs. 2.23\% for MT). This breakdown of packaging unit selections is compared in Figure \ref{fig:q13-pkg-mix}.
 
 \begin{figure}[H]
 \centering
@@ -314,7 +314,7 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \label{fig:q13-pkg-mix}
 \end{figure}
 
-\item \textbf{Geographic Spread}: Traditional Trade has a much wider geographic spread, covering \textbf{60 provinces} compared to MT's \textbf{34 provinces}, representing a highly fragmented, nation-wide distribution profile. Traditional Trade's demand is also more concentrated, with its top province accounting for \textbf{26.93\%} of its total volume, compared to \textbf{23.50\%} for Modern Trade. The province coverage and top-province quantity share for each segment are shown in Figure \ref{fig:q13-geo-spread}.
+\item \textbf{Geographic Spread}: Traditional Trade has a much wider geographic spread, covering \textbf{60 provinces} compared to MT's \textbf{34 provinces}, representing a highly fragmented, nation-wide distribution profile. Traditional Trade's demand is also more concentrated, with its top province accounting for \textbf{27.29\%} of its total volume, compared to \textbf{23.50\%} for Modern Trade. The province coverage and top-province quantity share for each segment are shown in Figure \ref{fig:q13-geo-spread}.
 
 \begin{figure}[H]
 \centering
