@@ -302,6 +302,17 @@ def clean_distributors(raw: pd.DataFrame) -> pd.DataFrame:
     frame["district"] = frame["address_district"]
     frame["ward"] = frame["address_ward"]
     frame["region"] = frame["province"].map(region_group)
+
+    # Drop generic province-only records if more specific records exist in the same customer/province
+    is_generic_initial = (frame["district"].eq("") | frame["district"].isna()) & (frame["ward"].eq("") | frame["ward"].isna()) & frame["province"].ne("Unknown")
+    has_specific = frame[~is_generic_initial].groupby(["customer_key", "province"]).size().to_frame("has_specific")
+    frame = frame.merge(has_specific, on=["customer_key", "province"], how="left")
+    frame["has_specific"] = frame["has_specific"].fillna(0) > 0
+    
+    is_generic_aligned = (frame["district"].eq("") | frame["district"].isna()) & (frame["ward"].eq("") | frame["ward"].isna()) & frame["province"].ne("Unknown")
+    frame = frame[~(is_generic_aligned & frame["has_specific"])].copy()
+    frame = frame.drop(columns=["has_specific"])
+
     def _get_base_address(addr: str) -> str:
         if pd.isna(addr): return ""
         first_part = str(addr).split(',')[0].lower()
