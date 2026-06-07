@@ -1,4 +1,4 @@
 customer_match_status,shipment_rows,orders,customers,quantity
-unique_resolvable_customer_geography,13313,2884,223,122497.6125
-ambiguous_multi_location_customer,7420,2179,175,141357.12043650795
-unmatched_customer_key,611,294,4,13440.0
+unique_resolvable_customer_geography,13353,2886,223,123576.6125
+ambiguous_multi_location_customer,7430,2180,175,141636.12043650795
+unmatched_customer_key,617,297,4,16492.0

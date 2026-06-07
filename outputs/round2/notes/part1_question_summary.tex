@@ -36,7 +36,7 @@
 
 \subsection{Executive Summary}\label{executive-summary}
 
-This report provides the outbound flow analysis, customer profiling, and geographic demand mapping for the Round 2 competition based on the transaction logs spanning June to December 2025. The core analysis focuses on the 7-month Assignment Window (June 1 -- December 31, 2025), which contains \textbf{21,344 shipment rows}, \textbf{277,294.73 units of outbound demand}, and \textbf{15,842.28 m³ of volume}.
+This report provides the outbound flow analysis, customer profiling, and geographic demand mapping for the Round 2 competition based on the transaction logs spanning June to December 2025. The core analysis focuses on the 7-month Assignment Window (June 1 -- December 31, 2025), which contains \textbf{21,400 shipment rows}, \textbf{281,704.73 units of outbound demand}, and \textbf{16,128.06 m³ of volume}.
 
 Key takeaways include:
 \begin{enumerate}
@@ -133,9 +133,9 @@ The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by 
 
 A critical finding from our data cleansing pipeline is a \textbf{severe geography resolution ceiling}:
 \begin{itemize}
-\item \textbf{Row-level coverage}: Only \textbf{99.90\%} of transaction rows (16,104 out of 43,894) could be mapped to a known customer location.
-\item \textbf{Quantity-level coverage}: Only \textbf{95.83\%} of outbound quantities (159,635.70 out of 355,364.80) are linked to known coordinates.
-\item \textbf{Root Cause}: \texttt{21} assignment-window rows are unresolved, of which \textbf{611 rows} are due to \texttt{Ship-to Customer} being logged as \texttt{'unknown'} in the database.
+\item \textbf{Row-level coverage}: Only \textbf{99.88\%} of transaction rows (16,104 out of 43,894) could be mapped to a known customer location.
+\item \textbf{Quantity-level coverage}: Only \textbf{94.81\%} of outbound quantities (159,635.70 out of 355,364.80) are linked to known coordinates.
+\item \textbf{Root Cause}: \texttt{26} assignment-window rows are unresolved, of which \textbf{617 rows} are due to \texttt{Ship-to Customer} being logged as \texttt{'unknown'} in the database.
 \end{itemize}
 
 \begin{quote}
@@ -285,16 +285,16 @@ The comparison across the required dimensions is summarized below:
 Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \midrule
 \textbf{Active Customers} & 119 & 264 \\
-\textbf{Order Count} & 1564 & 3776 \\
-\textbf{Avg. Order Quantity} & 80.19 pcs & 40.22 pcs \\
-\textbf{Avg. Order Volume (m³)} & 5.16 m³ & 2.06 m³ \\
+\textbf{Order Count} & 1564 & 3782 \\
+\textbf{Avg. Order Quantity} & 80.19 pcs & 41.33 pcs \\
+\textbf{Avg. Order Volume (m³)} & 5.16 m³ & 2.13 m³ \\
 \textbf{Avg. SKU Breadth / Order} & 2.84 SKUs & 4.33 SKUs \\
-\textbf{Order Frequency (per customer/month)} & 2.19 & 2.38 \\
+\textbf{Order Frequency (per customer/month)} & 2.19 & 2.39 \\
 \textbf{Geographic Footprint} & 34 provinces / 6 regions & 60 provinces / 6 regions \\
-\textbf{Avg. Delivery Distance} & 277.70 km & 270.28 km \\
-\textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{42.91\%} \\
-\textbf{Carton Share (\%)} & \textbf{22.52\%} & \textbf{49.94\%} \\
-\textbf{Loose Share (\%)} & \textbf{2.23\%} & \textbf{7.15\%} \\
+\textbf{Avg. Delivery Distance} & 277.70 km & 270.37 km \\
+\textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{41.70\%} \\
+\textbf{Carton Share (\%)} & \textbf{22.52\%} & \textbf{48.54\%} \\
+\textbf{Loose Share (\%)} & \textbf{2.23\%} & \textbf{9.77\%} \\
 \bottomrule
 \end{tabular}%
 }
@@ -304,7 +304,7 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 
 \subsubsection{Key Profile Insights}\label{key-profile-insights}
 \begin{enumerate}
-\item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{40.22 pcs} and \textbf{2.06 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
+\item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{41.33 pcs} and \textbf{2.13 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
 
 \begin{figure}[H]
 \centering
@@ -315,7 +315,7 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 
 \item \textbf{Assortment Breadth vs. Depth}: As shown in Figure \ref{fig:q13-order-profile}, Traditional Trade orders have a higher average SKU breadth (\textbf{4.33 SKUs} per order) than Modern Trade (\textbf{2.84 SKUs}). This indicates that TT customers order small quantities of a wide variety of SKUs, increasing warehouse sorting complexity.
 
-\item \textbf{Packaging Unit Mix}: Modern Trade is highly pallet-centric, with \textbf{75.25\%} of their items shipped as full pallets. Traditional Trade is highly carton-centric (\textbf{49.94\%} of items) and has more loose picking (\textbf{7.15\%} vs. 2.23\% for MT). This breakdown of packaging unit selections is compared in Figure \ref{fig:q13-pkg-mix}.
+\item \textbf{Packaging Unit Mix}: Modern Trade is highly pallet-centric, with \textbf{75.25\%} of their items shipped as full pallets. Traditional Trade is highly carton-centric (\textbf{48.54\%} of items) and has more loose picking (\textbf{9.77\%} vs. 2.23\% for MT). This breakdown of packaging unit selections is compared in Figure \ref{fig:q13-pkg-mix}.
 
 \begin{figure}[H]
 \centering
@@ -324,7 +324,7 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \label{fig:q13-pkg-mix}
 \end{figure}
 
-\item \textbf{Geographic Spread}: Traditional Trade has a much wider geographic spread, covering \textbf{60 provinces} compared to MT's \textbf{34 provinces}, representing a highly fragmented, nation-wide distribution profile. Traditional Trade's demand is also more concentrated, with its top province accounting for \textbf{27.12\%} of its total volume, compared to \textbf{23.50\%} for Modern Trade. The province coverage and top-province quantity share for each segment are shown in Figure \ref{fig:q13-geo-spread}.
+\item \textbf{Geographic Spread}: Traditional Trade has a much wider geographic spread, covering \textbf{60 provinces} compared to MT's \textbf{34 provinces}, representing a highly fragmented, nation-wide distribution profile. Traditional Trade's demand is also more concentrated, with its top province accounting for \textbf{26.93\%} of its total volume, compared to \textbf{23.50\%} for Modern Trade. The province coverage and top-province quantity share for each segment are shown in Figure \ref{fig:q13-geo-spread}.
 
 \begin{figure}[H]
 \centering

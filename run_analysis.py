@@ -98,10 +98,8 @@ def main() -> None:
     distributors = clean_distributors(load_distributors())
     segment_overrides = load_segment_overrides()
     shipments = clean_shipments(load_transactions(), distributors, segment_overrides=segment_overrides)
-    valid_skus = set(sku_master["sap_code_2"].dropna())
-    assignment_base_shipments = shipments[shipments["sku_code"].isin(valid_skus)].copy()
     q11_shipments = filter_q11_shipments(shipments)
-    assignment_shipments = filter_assignment_shipments(assignment_base_shipments)
+    assignment_shipments = filter_assignment_shipments(shipments)
 
     abc_xyz = build_abc_xyz(q11_shipments, sku_master)
     abc_xyz_matrix_frequency = build_abc_xyz_matrix_summary(abc_xyz, "xyz_frequency")
