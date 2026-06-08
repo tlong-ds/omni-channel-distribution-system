@@ -9,14 +9,17 @@ from src.logage2026.analysis import (
     build_geography_coverage_summary,
     build_geography_diagnostics_summary,
     build_geography_source_summary,
+    build_missing_data_summary,
     build_hcm_district_summary,
     build_inventory_pooling_summary,
     build_lead_time_sensitivity,
     build_network_model_evaluation,
+    build_q21_channel_flow_summary,
     build_order_profile_segments,
     build_q11_monthly_demand_table,
     build_q12_province_correlation_input_summary,
     build_q12_province_demand_summary,
+    build_q12_province_cluster_summary,
     build_q12_province_warehouse_dominance_summary,
     build_q12_region_orders_quantity_summary,
     build_q12_urban_provincial_summary,
@@ -138,6 +141,7 @@ def main() -> None:
     inventory_pooling_summary = build_inventory_pooling_summary(safety_stock_class_a)
     hcm_district_summary = build_hcm_district_summary(shipments)
     network_model_evaluation = build_network_model_evaluation(hcm_district_summary)
+    q21_channel_flow_summary = build_q21_channel_flow_summary(shipments)
 
     sku_master.to_csv(CLEANED_DIR / "sku_master_cleaned.csv", index=False)
     distributors.to_csv(CLEANED_DIR / "distributors_cleaned.csv", index=False)
@@ -183,6 +187,7 @@ def main() -> None:
     inventory_pooling_summary.to_csv(TABLES_DIR / "inventory_pooling_summary.csv", index=False)
     hcm_district_summary.to_csv(TABLES_DIR / "hcm_district_summary.csv", index=False)
     network_model_evaluation.to_csv(TABLES_DIR / "q21_network_model_evaluation.csv", index=False)
+    q21_channel_flow_summary.to_csv(TABLES_DIR / "q21_channel_flow_summary.csv", index=False)
     
     import pandas as pd
     import openpyxl
@@ -340,6 +345,7 @@ def main() -> None:
         inventory_pooling_summary,
         hcm_district_summary,
         network_model_evaluation,
+        q21_channel_flow_summary,
     )
     write_notes(
         assignment_shipments,
@@ -367,8 +373,10 @@ def main() -> None:
         inventory_pooling_summary,
         hcm_district_summary,
         network_model_evaluation,
+        q21_channel_flow_summary,
     )
     print(f"Round 2 analysis written to {OUTPUT_DIR}")
+    from src.logage2026.analysis import Q11_END, Q11_START, ASSIGNMENT_START, ASSIGNMENT_END
     print(
         "Q1.1 workbook window: "
         f"{Q11_START.date().isoformat()} to {Q11_END.date().isoformat()} "

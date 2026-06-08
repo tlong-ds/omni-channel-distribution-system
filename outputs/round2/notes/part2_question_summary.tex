@@ -33,14 +33,34 @@ The brand currently operates two Regional Distribution Centers (RDCs):
 
 \textbf{Strengths of the current model:}
 \begin{itemize}
-  \item Good regional separation: My Phuoc serves northern (B2B factory-sourced) flows; Vinh Loc handles inner-city B2C proximity.
-  \item Both RDCs already handle mixed-channel (B2B invoices and distributor orders) demonstrating operational flexibility.
-  \item Physical locations bracket the Eastern–Western commercial corridor of HCMC, covering most Đông Nam Bộ volume.
+  \item Good regional separation: My Phuoc serves northern (B2B factory-sourced) flows; Vinh Loc is positioned for inner-city B2C proximity.
+  \item Both RDCs handle mixed-channel flows, demonstrating operational flexibility.
+  \item Physical locations bracket the Eastern\textendash{}Western commercial corridor of HCMC, covering most \DJ{}\^ong Nam B\^o volume.
 \end{itemize}
+
+\textbf{Important context: Non-overlapping operating timelines}
+\begin{itemize}
+  \item \textbf{My Phuoc} (Primary RDC: Jun to Nov 2025 (6 months)): The \textit{primary} warehouse, operational across the full 6-month analysis window. All June--November 2025 throughput flowed through My Phuoc.
+  \item \textbf{Vinh Loc} (New RDC: Dec 2025 only (1 month)): A \textit{new} warehouse that came online in December 2025 only. Raw volume totals are therefore \textbf{not directly comparable} between the two facilities.
+\end{itemize}
+
+\textbf{Data-driven channel flow analysis} (per-day rates, Figure \ref{fig:q21-channel-flow}):
+\begin{itemize}
+  \item \textbf{My Phuoc} (3,492 B2B + 413 B2C orders over 6 months): B2B is a \textit{Mixed flow} accounting for \textbf{99.2\%} of CBM. B2B avg \textbf{25.5 orders/active day}, volatility index \textbf{B2B = 1.79}.
+  \item \textbf{Vinh Loc} (1,250 B2B + 47 B2C orders in 1 month): B2B is a \textit{Large-volume flow} accounting for \textbf{99.7\%} of CBM. B2B avg \textbf{48.7 orders/active day}, volatility index \textbf{B2B = 1.94}.
+  \item On a per-day basis, Vinh Loc processed B2B orders at a comparable daily rate to My Phuoc despite being open for only one month, indicating strong December surge demand (year-end push).
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../charts/q21_channel_flow_profile.png}
+\caption{Q2.1 Warehouse $\times$ Channel Flow Profile (per-day rates normalized to each RDC operating window)}
+\label{fig:q21-channel-flow}
+\end{figure}
 
 \textbf{Limitations for simultaneous B2B + B2C:}
 \begin{itemize}
-  \item Lead times from both RDCs are too long for the 2–4 hour B2C SLA required for e-commerce — even Vinh Loc is \textgreater{}10 km from central districts.
+  \item Lead times from both RDCs are too long for the 2\textendash{}4 hour B2C SLA required for e-commerce \textendash{} even Vinh Loc is \textgreater{}10 km from central districts.
   \item Shared inventory creates channel conflict: B2B bulk orders may deplete stock that B2C needs for same-day fulfillment.
   \item Pick-and-pack processes for large pallet B2B orders disrupt small-unit B2C wave picking.
 \end{itemize}

@@ -38,6 +38,7 @@ def write_notes(
     inventory_pooling_summary: pd.DataFrame,
     hcm_district_summary: pd.DataFrame,
     network_model_evaluation: pd.DataFrame,
+    q21_channel_flow_summary: pd.DataFrame,
 ) -> None:
     NOTES_DIR.mkdir(parents=True, exist_ok=True)
     metadata = classification_metadata.iloc[0] if not classification_metadata.empty else None
@@ -84,6 +85,59 @@ def write_notes(
     needs_ds_pct = needs_ds_qty / total_hcm_qty_nme if total_hcm_qty_nme else 0
     n_adequate = len(adequate_districts)
     n_needs_ds = len(needs_ds_districts)
+
+    # Q2.1 Channel flow variables (from build_q21_channel_flow_summary / Book5)
+    def _cf(wh, ch, col):
+        """Safe lookup for channel-flow KPI."""
+        sub = q21_channel_flow_summary[
+            (q21_channel_flow_summary["warehouse"] == wh)
+            & (q21_channel_flow_summary["channel"] == ch)
+        ]
+        return sub.iloc[0][col] if not sub.empty else 0
+
+    mp_b2b_orders = _cf("My Phuoc", "B2B", "orders")
+    mp_b2c_orders = _cf("My Phuoc", "B2C", "orders")
+    vl_b2b_orders = _cf("Vinh Loc", "B2B", "orders")
+    vl_b2c_orders = _cf("Vinh Loc", "B2C", "orders")
+
+    mp_b2b_cbm = _cf("My Phuoc", "B2B", "total_cbm")
+    mp_b2c_cbm = _cf("My Phuoc", "B2C", "total_cbm")
+    vl_b2b_cbm = _cf("Vinh Loc", "B2B", "total_cbm")
+    vl_b2c_cbm = _cf("Vinh Loc", "B2C", "total_cbm")
+
+    mp_b2b_vol_idx = _cf("My Phuoc", "B2B", "volatility_index")
+    mp_b2c_vol_idx = _cf("My Phuoc", "B2C", "volatility_index")
+    vl_b2b_vol_idx = _cf("Vinh Loc", "B2B", "volatility_index")
+    vl_b2c_vol_idx = _cf("Vinh Loc", "B2C", "volatility_index")
+
+    mp_b2b_flow = _cf("My Phuoc", "B2B", "flow_type")
+    mp_b2c_flow = _cf("My Phuoc", "B2C", "flow_type")
+    vl_b2b_flow = _cf("Vinh Loc", "B2B", "flow_type")
+    vl_b2c_flow = _cf("Vinh Loc", "B2C", "flow_type")
+
+    mp_total_orders = mp_b2b_orders + mp_b2c_orders
+    vl_total_orders = vl_b2b_orders + vl_b2c_orders
+
+    mp_b2b_cbm_share = mp_b2b_cbm / (mp_b2b_cbm + mp_b2c_cbm) if (mp_b2b_cbm + mp_b2c_cbm) else 0
+    vl_b2b_cbm_share = vl_b2b_cbm / (vl_b2b_cbm + vl_b2c_cbm) if (vl_b2b_cbm + vl_b2c_cbm) else 0
+
+    # Timeline metadata
+    mp_period_note = _cf("My Phuoc", "B2B", "period_note") if "period_note" in q21_channel_flow_summary.columns else "Jun to Nov 2025 (6 months)"
+    vl_period_note = _cf("Vinh Loc", "B2B", "period_note") if "period_note" in q21_channel_flow_summary.columns else "Dec 2025 only (1 month)"
+    mp_operating_months = _cf("My Phuoc", "B2B", "operating_months") if "operating_months" in q21_channel_flow_summary.columns else 6.0
+    vl_operating_months = _cf("Vinh Loc", "B2B", "operating_months") if "operating_months" in q21_channel_flow_summary.columns else 1.0
+    mp_avg_orders_per_day = _cf("My Phuoc", "B2B", "avg_orders_per_day")
+    vl_avg_orders_per_day = _cf("Vinh Loc", "B2B", "avg_orders_per_day")
+
+    # Pre-computed strings for f-string safety
+    mp_b2b_cbm_share_str = f"{mp_b2b_cbm_share * 100:.1f}\\%"
+    vl_b2b_cbm_share_str = f"{vl_b2b_cbm_share * 100:.1f}\\%"
+    mp_b2b_vol_idx_str = f"{mp_b2b_vol_idx:.2f}"
+    mp_b2c_vol_idx_str = f"{mp_b2c_vol_idx:.2f}"
+    vl_b2b_vol_idx_str = f"{vl_b2b_vol_idx:.2f}"
+    vl_b2c_vol_idx_str = f"{vl_b2c_vol_idx:.2f}"
+    mp_avg_orders_day_str = f"{mp_avg_orders_per_day:.1f}"
+    vl_avg_orders_day_str = f"{vl_avg_orders_per_day:.1f}"
     
     def get_cell_text(abc, xyz):
         cell = matrix_dict.get((abc, xyz))
@@ -543,14 +597,34 @@ def write_notes(
         r"",
         r"\textbf{Strengths of the current model:}",
         r"\begin{itemize}",
-        r"  \item Good regional separation: My Phuoc serves northern (B2B factory-sourced) flows; Vinh Loc handles inner-city B2C proximity.",
-        r"  \item Both RDCs already handle mixed-channel (B2B invoices and distributor orders) demonstrating operational flexibility.",
-        r"  \item Physical locations bracket the Eastern–Western commercial corridor of HCMC, covering most Đông Nam Bộ volume.",
+        r"  \item Good regional separation: My Phuoc serves northern (B2B factory-sourced) flows; Vinh Loc is positioned for inner-city B2C proximity.",
+        r"  \item Both RDCs handle mixed-channel flows, demonstrating operational flexibility.",
+        r"  \item Physical locations bracket the Eastern\textendash{}Western commercial corridor of HCMC, covering most \DJ{}\^ong Nam B\^o volume.",
         r"\end{itemize}",
+        r"",
+        r"\textbf{Important context: Non-overlapping operating timelines}",
+        r"\begin{itemize}",
+        f"  \\item \\textbf{{My Phuoc}} ({mp_period_note}): The \\textit{{primary}} warehouse, operational across the full 6-month analysis window. All June--November 2025 throughput flowed through My Phuoc.",
+        f"  \\item \\textbf{{Vinh Loc}} ({vl_period_note}): A \\textit{{new}} warehouse that came online in December 2025 only. Raw volume totals are therefore \\textbf{{not directly comparable}} between the two facilities.",
+        r"\end{itemize}",
+        r"",
+        r"\textbf{Data-driven channel flow analysis} (per-day rates, Figure \ref{fig:q21-channel-flow}):",
+        r"\begin{itemize}",
+        f"  \\item \\textbf{{My Phuoc}} ({int(mp_b2b_orders):,} B2B + {int(mp_b2c_orders):,} B2C orders over 6 months): B2B is a \\textit{{{mp_b2b_flow}}} accounting for \\textbf{{{mp_b2b_cbm_share_str}}} of CBM. B2B avg \\textbf{{{mp_avg_orders_day_str} orders/active day}}, volatility index \\textbf{{B2B = {mp_b2b_vol_idx_str}}}.",
+        f"  \\item \\textbf{{Vinh Loc}} ({int(vl_b2b_orders):,} B2B + {int(vl_b2c_orders):,} B2C orders in 1 month): B2B is a \\textit{{{vl_b2b_flow}}} accounting for \\textbf{{{vl_b2b_cbm_share_str}}} of CBM. B2B avg \\textbf{{{vl_avg_orders_day_str} orders/active day}}, volatility index \\textbf{{B2B = {vl_b2b_vol_idx_str}}}.",
+        r"  \item On a per-day basis, Vinh Loc processed B2B orders at a comparable daily rate to My Phuoc despite being open for only one month, indicating strong December surge demand (year-end push).",
+        r"\end{itemize}",
+        r"",
+        r"\begin{figure}[H]",
+        r"\centering",
+        r"\includegraphics[width=\linewidth]{../charts/q21_channel_flow_profile.png}",
+        r"\caption{Q2.1 Warehouse $\times$ Channel Flow Profile (per-day rates normalized to each RDC operating window)}",
+        r"\label{fig:q21-channel-flow}",
+        r"\end{figure}",
         r"",
         r"\textbf{Limitations for simultaneous B2B + B2C:}",
         r"\begin{itemize}",
-        r"  \item Lead times from both RDCs are too long for the 2–4 hour B2C SLA required for e-commerce — even Vinh Loc is \textgreater{}10 km from central districts.",
+        r"  \item Lead times from both RDCs are too long for the 2\textendash{}4 hour B2C SLA required for e-commerce \textendash{} even Vinh Loc is \textgreater{}10 km from central districts.",
         r"  \item Shared inventory creates channel conflict: B2B bulk orders may deplete stock that B2C needs for same-day fulfillment.",
         r"  \item Pick-and-pack processes for large pallet B2B orders disrupt small-unit B2C wave picking.",
         r"\end{itemize}",
@@ -1047,12 +1121,15 @@ if __name__ == "__main__":
             inventory_pooling_summary = pd.read_csv(TABLES_DIR / "inventory_pooling_summary.csv")
             hcm_district_summary = pd.read_csv(TABLES_DIR / "hcm_district_summary.csv")
             network_model_evaluation = pd.read_csv(TABLES_DIR / "q21_network_model_evaluation.csv")
+            cf_path = TABLES_DIR / "q21_channel_flow_summary.csv"
+            q21_channel_flow_summary = pd.read_csv(cf_path) if cf_path.exists() else pd.DataFrame()
         except FileNotFoundError:
             safety_stock_class_a = pd.DataFrame()
             lead_time_sensitivity = pd.DataFrame()
             inventory_pooling_summary = pd.DataFrame([{"scenario": "Separated B2B + B2C", "total_ss": 0, "savings_pct": 0}, {"scenario": "Pooled (Shared)", "total_ss": 0, "savings_pct": 0}])
             hcm_district_summary = pd.DataFrame({"quantity": [0]})
             network_model_evaluation = pd.DataFrame({"sla_status": [], "quantity": [], "orders": [], "best_rdc_km": []})
+            q21_channel_flow_summary = pd.DataFrame()
             
         abc_xyz_matrix_volatility = pd.read_csv(TABLES_DIR / "q11_abc_xyz_matrix_volatility_summary.csv")
         print("Generating report text from static output...")
@@ -1067,7 +1144,7 @@ if __name__ == "__main__":
             q13_segment_profile_summary, q13_segment_packaging_summary,
             q13_segment_geographic_spread_summary,
             safety_stock_class_a, lead_time_sensitivity, inventory_pooling_summary,
-            hcm_district_summary, network_model_evaluation,
+            hcm_district_summary, network_model_evaluation, q21_channel_flow_summary,
         )
         print(f"Reports written successfully to outputs/round2/notes/{NOTE1_FILENAME} and {NOTE2_FILENAME}!")
     except Exception as e:

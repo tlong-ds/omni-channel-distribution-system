@@ -1279,6 +1279,105 @@ def build_network_model_evaluation(hcm_district_summary: pd.DataFrame) -> pd.Dat
     return df.sort_values("quantity", ascending=False).reset_index(drop=True)
 
 
+def build_q21_channel_flow_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    """Q2.1: Compute warehouse x channel operational KPIs with timeline context.
+
+    The two RDCs operated in non-overlapping periods:
+      - My Phuoc: Jun-Nov 2025  (primary warehouse, 6 months)
+      - Vinh Loc: Dec 2025 only (new/secondary warehouse, 1 month)
+
+    All rate metrics (avg_orders_per_active_day, etc.) are normalized to each
+    warehouse's actual operating window so that the volatility index and order
+    intensity are comparable on a like-for-like basis.
+    """
+    df = shipments[
+        shipments["created_date"].between("2025-06-01", "2025-12-31")
+        & shipments["document_type"].eq("A/R INVOICE")
+    ].copy()
+
+    df["date"] = pd.to_datetime(df["created_date"]).dt.date
+
+    # Determine each warehouse's operating window from actual data
+    wh_windows: dict = {}
+    for wh, grp in df.groupby("source_warehouse"):
+        wh_windows[wh] = (grp["date"].min(), grp["date"].max(), grp["date"].nunique())
+
+    # Daily order counts per (warehouse, channel, date)
+    daily = (
+        df.groupby(["source_warehouse", "channel", "date"])
+        .agg(daily_orders=("order_id", "nunique"))
+        .reset_index()
+    )
+
+    rows = []
+    for (wh, ch), grp in df.groupby(["source_warehouse", "channel"]):
+        orders = grp["order_id"].nunique()
+        quantity = grp["quantity"].sum()
+        cbm = grp["cbm_total"].sum()
+        avg_cbm_per_order = cbm / orders if orders else 0.0
+
+        daily_grp = daily[(daily["source_warehouse"] == wh) & (daily["channel"] == ch)]
+        active_days_ch = len(daily_grp)
+        avg_orders_per_day = daily_grp["daily_orders"].mean() if active_days_ch else 0.0
+        peak_orders = daily_grp["daily_orders"].max() if active_days_ch else 0
+        p95_orders = float(daily_grp["daily_orders"].quantile(0.95)) if active_days_ch else 0.0
+        volatility_index = peak_orders / p95_orders if p95_orders else 0.0
+
+        # Operating window for this warehouse (across all channels)
+        wh_start, wh_end, wh_active_days = wh_windows.get(wh, (None, None, 0))
+        # Calendar months span: treat active_days / 30 as approximate operating months
+        operating_months = round(wh_active_days / 30, 1)
+
+        # Order share within warehouse
+        wh_df = df[df["source_warehouse"] == wh]
+        wh_orders = wh_df["order_id"].nunique()
+        wh_cbm = wh_df["cbm_total"].sum()
+        order_share = orders / wh_orders if wh_orders else 0.0
+        cbm_share = cbm / wh_cbm if wh_cbm else 0.0
+
+        # Qualitative flow-type classification
+        if order_share >= 0.9 and cbm_share >= 0.9:
+            flow_type = "Large-volume flow"
+        elif order_share < 0.1 or cbm_share < 0.05:
+            flow_type = "Small fragmented flow"
+        else:
+            flow_type = "Mixed flow"
+
+        # Human-readable period note
+        if wh == "My Phuoc":
+            period_note = "Primary RDC: Jun to Nov 2025 (6 months)"
+        elif wh == "Vinh Loc":
+            period_note = "New RDC: Dec 2025 only (1 month)"
+        else:
+            period_note = f"{wh_start} to {wh_end}"
+
+        rows.append({
+            "warehouse": wh,
+            "channel": ch,
+            "operating_start": str(wh_start),
+            "operating_end": str(wh_end),
+            "operating_months": operating_months,
+            "period_note": period_note,
+            "orders": orders,
+            "quantity": quantity,
+            "total_cbm": cbm,
+            "avg_cbm_per_order": avg_cbm_per_order,
+            "active_days": active_days_ch,
+            "avg_orders_per_day": avg_orders_per_day,
+            "peak_daily_orders": int(peak_orders),
+            "p95_daily_orders": p95_orders,
+            "volatility_index": volatility_index,
+            "order_share_in_warehouse": order_share,
+            "cbm_share_in_warehouse": cbm_share,
+            "flow_type": flow_type,
+        })
+
+    result = pd.DataFrame(rows).sort_values(
+        ["warehouse", "channel"], ascending=[True, True]
+    ).reset_index(drop=True)
+    return result
+
+
 def build_slotting_plan(abc_xyz: pd.DataFrame) -> pd.DataFrame:
     """Assign every SKU to a warehouse slotting zone based on ABC class and velocity.
 

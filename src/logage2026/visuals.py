@@ -60,6 +60,7 @@ def save_charts(
     inventory_pooling_summary: pd.DataFrame,
     hcm_district_summary: pd.DataFrame,
     network_model_evaluation: pd.DataFrame,
+    q21_channel_flow_summary: pd.DataFrame,
 ) -> None:
     CHARTS_DIR.mkdir(parents=True, exist_ok=True)
     province_layer = _prepare_vietnam_province_layer()
@@ -87,6 +88,7 @@ def save_charts(
     _q22_inventory_pooling_chart(inventory_pooling_summary)
     _q21_hcm_district_chart(hcm_district_summary)
     _q21_network_coverage_chart(network_model_evaluation)
+    _q21_channel_flow_chart(q21_channel_flow_summary)
 
 
 def _window_label() -> str:
@@ -692,6 +694,80 @@ def _q21_network_coverage_chart(df: pd.DataFrame) -> None:
 
     plt.tight_layout()
     plt.savefig(CHARTS_DIR / "q21_network_coverage.png", dpi=150)
+    plt.close()
+
+
+def _q21_channel_flow_chart(df: pd.DataFrame) -> None:
+    """Q2.1 warehouse x channel flow KPI chart — per-day rates, timeline-normalized.
+
+    My Phuoc ran Jun-Nov 2025 (6 months); Vinh Loc ran Dec 2025 only (1 month).
+    Raw order counts are not directly comparable, so panel 1 uses avg_orders_per_day.
+    """
+    if df.empty:
+        return
+
+    fig, axes = plt.subplots(1, 3, figsize=(16, 7))
+    fig.suptitle(
+        "Q2.1 Warehouse × Channel Flow Profile\n"
+        "Note: My Phuoc = Jun–Nov 2025 (6 months) | Vinh Loc = Dec 2025 only (1 month)",
+        fontsize=13, fontweight="bold", y=1.02
+    )
+
+    PALETTE = {"B2B": "#0f766e", "B2C": "#d97706"}
+    WH_ORDER = ["My Phuoc", "Vinh Loc"]
+
+    # Period labels for x-axis annotation
+    PERIOD_LABELS = {
+        "My Phuoc": "Jun–Nov 2025\n(6 months)",
+        "Vinh Loc": "Dec 2025\n(1 month)",
+    }
+
+    def _bar_group(ax, metric, ylabel, title, fmt="{:.1f}"):
+        b2b = df[df["channel"] == "B2B"].set_index("warehouse")[metric].reindex(WH_ORDER)
+        b2c = df[df["channel"] == "B2C"].set_index("warehouse")[metric].reindex(WH_ORDER)
+        x = np.arange(len(WH_ORDER))
+        w = 0.35
+        bars_b2b = ax.bar(x - w / 2, b2b, w, label="B2B", color=PALETTE["B2B"])
+        bars_b2c = ax.bar(x + w / 2, b2c, w, label="B2C", color=PALETTE["B2C"])
+        ax.set_xticks(x)
+        ax.set_xticklabels(
+            [f"{wh}\n{PERIOD_LABELS.get(wh, '')}" for wh in WH_ORDER],
+            fontsize=8.5
+        )
+        ax.set_ylabel(ylabel, fontsize=9)
+        ax.set_title(title, fontsize=10, fontweight="bold")
+        ax.legend(fontsize=8)
+        for bar in list(bars_b2b) + list(bars_b2c):
+            h = bar.get_height()
+            if h > 0:
+                ax.text(bar.get_x() + bar.get_width() / 2, h, fmt.format(h),
+                        ha="center", va="bottom", fontsize=8)
+
+    # Panel 1: avg orders per active day (fair cross-warehouse comparison)
+    avg_col = "avg_orders_per_day" if "avg_orders_per_day" in df.columns else "orders"
+    _bar_group(axes[0], avg_col, "Orders / Active Day", "Avg Daily Orders\n(normalized per warehouse period)", "{:.1f}")
+
+    # Panel 2: avg CBM per order
+    _bar_group(axes[1], "avg_cbm_per_order", "Avg CBM / Order", "Avg CBM per Order\n(order size proxy)", "{:.3f}")
+
+    # Panel 3: volatility index
+    _bar_group(axes[2], "volatility_index", "Volatility Index\n(Peak ÷ P95)", "Demand Volatility Index\n(higher = more erratic)", "{:.2f}")
+
+    # Annotate flow-type labels inside bars area
+    for ax in axes:
+        for wh_idx, wh in enumerate(WH_ORDER):
+            for ch_idx, ch in enumerate(["B2B", "B2C"]):
+                sub = df[(df["warehouse"] == wh) & (df["channel"] == ch)]
+                if sub.empty:
+                    continue
+                flow = sub.iloc[0]["flow_type"]
+                x_pos = wh_idx + (ch_idx - 0.5) * 0.35
+                ax.text(x_pos, -0.14, flow.replace(" flow", ""),
+                        transform=ax.get_xaxis_transform(), ha="center",
+                        va="top", fontsize=6.5, color="#475569", style="italic")
+
+    plt.tight_layout()
+    plt.savefig(CHARTS_DIR / "q21_channel_flow_profile.png", dpi=150, bbox_inches="tight")
     plt.close()
 
 

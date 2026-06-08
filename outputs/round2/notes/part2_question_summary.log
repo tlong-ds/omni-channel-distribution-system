@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  8 JUN 2026 15:40
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  9 JUN 2026 00:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -395,35 +395,40 @@ Overfull \hbox (0.47679pt too wide) in paragraph at lines 22--22
 []\TU/lmr/bx/n/14.4 PART 2: OMNI-CHANNEL FULFILLMENT STRATEGY DE-
  []
 
+File: ../charts/q21_channel_flow_profile.png Graphic file (type bmp)
+<../charts/q21_channel_flow_profile.png>
+
+
+[2]
 File: ../charts/q21_network_coverage.png Graphic file (type bmp)
 <../charts/q21_network_coverage.png>
 
 
-[2]
+[3]
 File: ../charts/q21_hcm_district_volume.png Graphic file (type bmp)
 <../charts/q21_hcm_district_volume.png>
 
 
-[3]
-Overfull \hbox (235.50764pt too wide) in paragraph at lines 106--120
+[4]
+Overfull \hbox (235.50764pt too wide) in paragraph at lines 126--140
  [][] 
  []
 
 
 
-[4]
+[5]
 File: ../charts/q22_lead_time_sensitivity.png Graphic file (type bmp)
 <../charts/q22_lead_time_sensitivity.png>
 
 
-[5]
+[6]
 File: ../charts/q22_inventory_pooling.png Graphic file (type bmp)
 <../charts/q22_inventory_pooling.png>
 
 
-[6]
+[7]
 
-[7] (./part2_question_summary.aux)
+[8] (./part2_question_summary.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
@@ -433,12 +438,12 @@ Package rerunfilecheck Info: File `part2_question_summary.out' has not changed.
 (rerunfilecheck)             Checksum: EEEA650163DB16C391FFA8172640F3E0;2463.
  ) 
 Here is how much of TeX's memory you used:
- 11110 strings out of 473832
- 179479 string characters out of 5729482
- 591446 words of memory out of 5000000
- 34054 multiletter control sequences out of 15000+600000
+ 11120 strings out of 473832
+ 179881 string characters out of 5729482
+ 591571 words of memory out of 5000000
+ 34063 multiletter control sequences out of 15000+600000
  562937 words of font info for 60 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 72i,9n,79p,421b,342s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 72i,9n,79p,421b,349s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on part2_question_summary.pdf (7 pages).
+Output written on part2_question_summary.pdf (8 pages).
