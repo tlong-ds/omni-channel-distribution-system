@@ -1,0 +1,3 @@
+scenario,formula,total_ss,savings_pct
+Separated B2B + B2C,Z * sigma * (sqrt(5) + sqrt(2)),31851.793922504687,0.0
+Pooled (Shared),Z * sigma * sqrt(3.5),16324.562737192484,0.4874837261314043

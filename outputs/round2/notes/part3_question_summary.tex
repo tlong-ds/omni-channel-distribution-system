@@ -1,0 +1,217 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp}
+\else
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{bookmark}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX}
+}
+\author{}
+\date{}
+
+\begin{document}
+
+\section{Part 3: Warehouse Operations Solutions}\label{part3}
+
+\subsection{Question 3.1: Slotting Optimization}\label{q3.1}
+
+Using the ABC-XYZ classification from Part 1 and the physical SKU attributes from the
+Master Data, we assigned all 470 classified SKUs to three warehouse zones following the
+VILAS SNP (Supply \& Network Planning) slotting framework.
+
+\subsubsection{Zone Assignment Framework}\label{zone-framework}
+
+\begin{itemize}
+    \item \textbf{Pick-Face Zone (Ground Level)} — Class A SKUs: lowest racks at ergonomic
+          height (waist-to-shoulder), positioned nearest to the I/O dock and packing station.
+          Pickers retrieve these items manually without MHE vertical travel.
+    \item \textbf{Forward Reserve Zone} — Class B SKUs: intermediate racking with a
+          two-bin replenishment logic. A forward pick-face bin is replenished from the
+          bulk reserve when stock hits its reorder point (WMS-triggered).
+    \item \textbf{Reserve / Bulk Zone} — Class C SKUs: upper racks and pallet-in /
+          pallet-out storage. Slow-movers occupy the highest slots farthest from the dock.
+\end{itemize}
+
+\subsubsection{Zone Distribution}\label{zone-distribution}
+
+\begin{table}[H]
+\centering
+\caption{Slotting Zone Summary — All SKUs}
+\begin{tabular}{lcccc}
+\toprule
+Zone & Class & SKU Count & \% of Picks & \% of Volume \\
+\midrule
+        Pick-Face Zone & A & 28 & 27.7\% & 69.83\% \\
+        Forward Reserve Zone & B & 39 & 38.2\% & 20.04\% \\
+        Reserve / Bulk Zone & C & 403 & 34.1\% & 10.13\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Pick-Face Zone contains only 28 SKUs (6.0\% of the assortment) yet
+they account for \textbf{27.7\%} of all pick transactions and
+\textbf{69.8\%} of total outbound volume.
+Within this zone, the \textbf{19 Class A-X fast-movers} (highest velocity
+\emph{and} highest consistency) occupy rank slots 1--19, directly adjacent to the packing
+station, and collectively drive \textbf{25.88\%} of pick frequency
+and \textbf{57.87\%} of total outbound volume.
+
+\subsubsection{Top Pick-Face SKUs (Class A, by Frequency)}\label{top-a}
+
+\begin{table}[H]
+\centering
+\caption{Top 5 Class-A SKUs assigned to Pick-Face Zone}
+\begin{tabular}{clllrr}
+\toprule
+Rank & SKU Code & Product & Class & Picks (6M) & Volume (units) \\
+\midrule
+        1 & 4200008229 & Quạt treo ASIAvina - VY377990 - Xám & A-X & 825 & 5,608 \\
+        2 & 4200008371 & QUẠT ĐỨNG VY619990 & A-X & 682 & 3,355 \\
+        3 & 4200008366 & QUẠT SÀN TURB0 VY616790 & A-X & 680 & 2,838 \\
+        4 & 4200008117 & Quạt treo ASIAvina - VY357690 - trắng & A-X & 666 & 4,033 \\
+        5 & 4200008102 & Quạt lửng ASIAvina - VY538790 - Xám & A-X & 514 & 12,677 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Quantitative Travel Time Analysis}\label{travel-time}
+
+\paragraph{Model Assumption.}
+The warehouse has $N$ numbered rack slots $1, 2, \ldots, N$ starting from the I/O dock.
+The travel cost of a single pick equals the slot number of the target SKU.
+Expected travel distance is therefore:
+$$E[\text{travel}] = \sum_{i=1}^{N} p_i \cdot s_i$$
+where $p_i$ is the pick probability of SKU $i$ (its order frequency share) and $s_i$ is
+its assigned slot number.
+
+\paragraph{Results.}
+
+\begin{table}[H]
+\centering
+\caption{Expected Picker Travel Distance by Slotting Scenario}
+\begin{tabular}{lrr}
+\toprule
+Scenario & Expected Distance (slot units) & Reduction vs Baseline \\
+\midrule
+        Random Baseline (no logic) & 235.50 & — \\
+        ABC Zoned (Quantity-Based) & 113.98 & \textbf{51.6\%} \\
+        XYZ Zoned (Frequency-Based) & 68.82 & \textbf{70.8\%} \\
+        Velocity-Ranked (Optimal) & 51.79 & 78.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ABC-zoned slotting plan achieves a \textbf{51.6\% reduction} in expected
+picker travel distance versus the random baseline, comfortably exceeding the
+\textbf{30\% target}. The concentration effect is structural: Class A SKUs generate
+27.7\% of all picks yet are confined to the nearest 28 slots.
+The XYZ-zoned variant reaches 70.8\% reduction by exploiting the
+even sharper pick-probability concentration among Class X (consistent-demand) SKUs.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\linewidth]{../charts/q31_slotting_analysis.png}
+\caption{Q3.1 Slotting Analysis: Zone Distribution and Travel Time Comparison}
+\label{fig:q31-slotting}
+\end{figure}
+
+\subsubsection{Layout Recommendations (VILAS SNP Framework)}\label{layout}
+\begin{itemize}
+    \item \textbf{U-flow configuration}: Receiving and shipping docks on the same wall
+          naturally concentrate the highest-convenience storage locations at the dock end.
+    \item \textbf{Golden Zone}: AX SKUs placed at waist-to-shoulder ergonomic height,
+          eliminating both horizontal travel distance and vertical MHE movement.
+    \item \textbf{Two-bin replenishment for Class B}: A forward pick-face bin is
+          replenished from the bulk reserve when on-hand drops below the ROP.
+          WMS triggers the replenishment task automatically.
+\end{itemize}
+
+\subsection{Question 3.2: Omni-Channel Pick-and-Pack Process Design}\label{q3.2}
+
+The outbound fulfillment process uses distinct operational pathways for B2B and B2C
+channels, unified by a structured inventory allocation policy when stock is contested.
+
+\subsubsection{B2B Pathway — Pallet / Total Picking}\label{b2b-path}
+\begin{enumerate}
+    \item \textbf{Order release}: WMS validates on-hand stock against the B2B
+          purchase order (contractual quantities and lead times).
+    \item \textbf{Pick instruction}: Full-pallet or full-CTN pick task issued to operator.
+    \item \textbf{Pick execution}: Operator uses forklift or reach truck to retrieve
+          entire pallet(s) from the Forward Reserve Zone (B) or Reserve/Bulk Zone (C).
+          Items bypass individual sortation.
+    \item \textbf{B2B QC Station}: Wrap inspection, quantity verification, and
+          outbound labeling.
+    \item \textbf{Dispatch}: Pallets staged at outbound dock, loaded onto FTL truck.
+\end{enumerate}
+
+\subsubsection{B2C / E-Commerce Pathway — Batch Picking + Zone Routing}\label{b2c-path}
+\begin{enumerate}
+    \item \textbf{Batch wave release}: Multiple B2C orders are grouped into a single
+          pick wave based on SKU proximity and delivery-window urgency.
+    \item \textbf{Batch pick-to-cart}: Picker traverses Zone 1 (Pick-Face Zone) in a
+          single pass with a multi-compartment cart, collecting all items for the wave.
+    \item \textbf{Sort \& consolidate}: At the sortation station, items are separated
+          by individual order and consolidated into shipment boxes.
+    \item \textbf{QC + pack}: Bubble wrap or polybag packing, shipping label applied.
+    \item \textbf{Dispatch}: Parcels handed to last-mile courier.
+\end{enumerate}
+
+\subsubsection{Stock Allocation Conflict and Escalation Policy}\label{conflict}
+
+When the same SKU is ordered simultaneously by a B2B client and a B2C customer
+and on-hand stock is insufficient for both, the system resolves the shortage in two stages:
+
+\paragraph{Stage 1 — Automated Allocation (WMS).}
+\begin{itemize}
+    \item \textit{Rule 1 (SLA Protection)}: Allocate the full contractual quantity to
+          the B2B order first, preventing penalty fees for under-delivery.
+    \item \textit{Rule 2 (Pro-rata B2C)}: Distribute remaining stock to B2C orders
+          pro-rata, with priority to orders with the shortest delivery windows.
+\end{itemize}
+
+\paragraph{Stage 2 — Managerial Escalation (if Stage 1 insufficient).}
+The WMS raises a critical ticket to the \textbf{Inventory Control \& Demand Planning Manager},
+who can execute one or more of:
+\begin{itemize}
+    \item \textit{Action 1 (Safety Stock Draw)}: Release uncommitted buffer safety stock
+          from the common pool (pre-computed for all Class A SKUs in Q2.2).
+    \item \textit{Action 2 (Emergency Transfer)}: Initiate an inter-hub transfer
+          between My Phuoc and Vinh Loc warehouses, leveraging their proximity
+          within the Greater Ho Chi Minh City area.
+    \item \textit{Action 3 (Partial Shipment)}: Contact the B2B client to obtain approval
+          for a partial fulfillment; B2C customers notified of delay with revised ETA.
+\end{itemize}
+
+Upon resolution, ERP and WMS records are updated and adjusted pick lists are
+released to the warehouse floor. Figure \ref{fig:q32-flowchart} illustrates the
+complete decision logic.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\linewidth]{../charts/q32_pick_pack_flowchart.png}
+\caption{Q3.2 Omni-Channel Pick-and-Pack Process and Conflict Resolution Flowchart}
+\label{fig:q32-flowchart}
+\end{figure}
+
+\end{document}

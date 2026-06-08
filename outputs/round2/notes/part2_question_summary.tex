@@ -1,0 +1,178 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{makecell}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\title{\textbf{LOGage 2026: Round 2 — Part 2 Summary}}
+\author{Omni-Channel Strategy Analysis}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{PART 2: OMNI-CHANNEL FULFILLMENT STRATEGY DESIGN}
+
+\subsection{Question 2.1: Network Model Evaluation \& Design}
+
+\subsubsection{Current Two-RDC Model Assessment}
+
+The brand currently operates two Regional Distribution Centers (RDCs):
+\begin{itemize}
+  \item \textbf{My Phuoc Warehouse} — Industrial Zone, Binh Duong Province
+  \item \textbf{Vinh Loc Warehouse} — Binh Chanh District, Ho Chi Minh City
+\end{itemize}
+
+\textbf{Strengths of the current model:}
+\begin{itemize}
+  \item Good regional separation: My Phuoc serves northern (B2B factory-sourced) flows; Vinh Loc handles inner-city B2C proximity.
+  \item Both RDCs already handle mixed-channel (B2B invoices and distributor orders) demonstrating operational flexibility.
+  \item Physical locations bracket the Eastern–Western commercial corridor of HCMC, covering most Đông Nam Bộ volume.
+\end{itemize}
+
+\textbf{Limitations for simultaneous B2B + B2C:}
+\begin{itemize}
+  \item Lead times from both RDCs are too long for the 2–4 hour B2C SLA required for e-commerce — even Vinh Loc is \textgreater{}10 km from central districts.
+  \item Shared inventory creates channel conflict: B2B bulk orders may deplete stock that B2C needs for same-day fulfillment.
+  \item Pick-and-pack processes for large pallet B2B orders disrupt small-unit B2C wave picking.
+\end{itemize}
+
+\subsubsection{B2C E-Commerce SLA Assessment}
+
+To meet a 2--4 hour delivery SLA across Ho Chi Minh City, we applied a 25 km distance threshold from the nearest RDC as the feasibility cut-off (assuming average urban speed of $\sim$25 km/h, 25 km $\approx$ 60 min travel, leaving buffer for pick/pack and handoff).
+
+The analysis of \textbf{21 HCM districts} reveals a clear split:
+\begin{itemize}
+  \item \textbf{\color{green!60!black}21 districts — Adequate:} These districts can be served within the 2h SLA from the existing RDCs and account for \textbf{100.0\%} of total HCM B2B volume (\textbf{65,527 units}).
+  \item \textbf{\color{red}0 districts — Require Dark Stores:} These are \textgreater{}25 km from both RDCs, placing them outside reliable SLA reach. They represent \textbf{0.0\%} of volume (\textbf{0 units}).
+\end{itemize}
+
+Figure \ref{fig:q21-network-coverage} shows the district-level breakdown.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../charts/q21_network_coverage.png}
+\caption{Q2.1 HCM District Proximity to Existing RDCs vs B2B Demand Volume}
+\label{fig:q21-network-coverage}
+\end{figure}
+
+\subsubsection{Dark Store Node Recommendation}
+
+Based on the demand concentration and distance analysis, we recommend placing \textbf{1--2 urban micro-fulfillment (dark store) nodes} in HCMC:
+\begin{enumerate}
+  \item \textbf{Primary node — Bình Tân / Tân Phú corridor}: These two adjacent districts are among the highest-volume B2B districts (combined \textgreater{}50,000 units) and are already well-served by Vinh Loc (5--7 km). Upgrading Vinh Loc's inner-city satellite for e-commerce picking operations in this corridor is the highest-ROI first step.
+  \item \textbf{Secondary node — District 1 / District 3 / Phú Nhuận cluster}: The CBD and premium residential cluster lies 14+ km from Vinh Loc, making 2h SLA difficult. A small dark store (200--300 m²) in this zone, stocked with the top Class A SKUs, would close the gap.
+\end{enumerate}
+
+\subsubsection{Order Split Logic Design (HCM)}
+
+For urban B2B order fulfillment in Ho Chi Minh City, network design relies on understanding sub-regional demand density. We analyzed the historical B2B shipments across all HCM districts.
+
+The demand is highly concentrated: the top 5 districts alone command \textbf{56,356 units} — \textbf{86.0\%} of all HCM B2B volume — as shown in Figure \ref{fig:q21-hcm-district-volume}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{../charts/q21_hcm_district_volume.png}
+\caption{Q2.1 Top Ho Chi Minh Districts by B2B Quantity}
+\label{fig:q21-hcm-district-volume}
+\end{figure}
+
+\textbf{Recommended order split logic:} Given this concentration, the dispatch decision tree should be:
+\begin{enumerate}
+  \item If delivery district is within 25 km of Vinh Loc $\rightarrow$ dispatch from \textbf{Vinh Loc} (B2C-optimized lane).
+  \item If delivery district is within 35 km of My Phuoc but $>$25 km from Vinh Loc $\rightarrow$ dispatch from \textbf{My Phuoc} (B2B bulk lane).
+  \item If district is $>$25 km from both RDCs $\rightarrow$ \textbf{route via dark store} (pending network expansion).
+\end{enumerate}
+
+\subsection{Question 2.2: Inventory Optimization}
+
+\subsubsection{Lead Time Assumptions \& Validation}
+
+\textbf{Definition:} Replenishment Lead Time is the duration from when the warehouse identifies a replenishment need until the goods are ready to pick again. This is distinct from the customer-facing delivery SLA.
+
+\textbf{Data limitation:} The dataset only contains \texttt{created\_date} (outbound dispatch date). There is no PO creation date or Goods Receipt date, so lead time cannot be measured directly. The values below are \textit{justified assumptions} cross-validated against inter-shipment intervals in the transaction log.
+
+\begin{table}[H]
+\centering
+\caption{Lead Time Component Breakdown by Channel}
+\begin{tabular}{lccl}
+\toprule
+\textbf{Component} & \textbf{B2B (Factory→RDC)} & \textbf{B2C (RDC→Dark Store)} & \textbf{Rationale} \\
+\midrule
+T\_review (stock check) & 1.0 day & 0.5 day & B2B daily review; B2C twice-daily auto-trigger \\
+T\_PO (create \& approve PO) & 0.5 day & 0 day & B2C uses auto-replenishment, no manual PO \\
+T\_supplier (preparation) & 1.5 days & 0 day & Factory batch lead time; B2C pulls from RDC stock \\
+T\_transport & 1.0 day & 0.5 day & Intra-ĐNB region; B2C last-mile $<$15 km same-day \\
+T\_receiving (QC check-in) & 0.5 day & 0.5 day & Physical count \& inspection \\
+T\_putaway (shelf-ready) & 0.5 day & 0.5 day & Ready to pick \\
+\midrule
+\textbf{Total Lead Time} & \textbf{5 days} & \textbf{2 days} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Empirical cross-validation from data:}
+\begin{itemize}
+  \item Median inter-shipment gap for Class A SKUs = \textbf{2.0 days} $\rightarrow$ matches LT\textsubscript{B2C} = 2 days
+  \item Mean inter-shipment gap = \textbf{7.7 days} (long tail from bulk lot orders) $\rightarrow$ consistent with LT\textsubscript{B2B} $\approx$ 5 days
+  \item \textit{Conclusion: Assumptions are well-calibrated to observable shipment rhythms.}
+\end{itemize}
+
+\subsubsection{Safety Stock Formula \& Results}
+
+Safety stock for each Class A SKU is calculated using the full lead-time uncertainty formula:
+\[
+SS = Z \cdot \sqrt{LT \cdot \sigma_d^2 + \mu_d^2 \cdot \sigma_{LT}^2}
+\]
+where $Z = 1.645$ (95\% service level), $\mu_d$ = mean daily demand, $\sigma_d$ = std of daily demand, $LT$ = mean lead time, and $\sigma_{LT}$ = lead time std dev (B2B: 1.0 day, B2C: 0.5 day).
+
+\textbf{Key result:} This section details the required safety stock for Class A SKUs to support omni-channel fulfillment under different lead time configurations.
+
+Under the \textbf{separated channel} setup (B2B: 5-day LT, B2C: 2-day LT), the total required safety stock for Class A SKUs is \textbf{31,852 units}.
+
+We then evaluated the impact of varying the replenishment lead time on total safety stock requirements. As illustrated in Figure \ref{fig:q22-lead-time-sensitivity}, safety stock exhibits a sub-linear (square root) growth relative to lead time.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{../charts/q22_lead_time_sensitivity.png}
+\caption{Q2.2 Lead Time Sensitivity for Class A Safety Stock}
+\label{fig:q22-lead-time-sensitivity}
+\end{figure}
+
+\subsubsection{Inventory Pooling Strategy}
+
+\textbf{Principle — Why pooling reduces safety stock:}
+\begin{itemize}
+  \item Separated: $SS = Z\sigma(\sqrt{LT_{B2B}} + \sqrt{LT_{B2C}}) = Z\sigma(\sqrt{5}+\sqrt{2}) = Z\sigma \times 3.650$
+  \item Pooled: $SS = Z\sigma\sqrt{\frac{LT_{B2B}+LT_{B2C}}{2}} = Z\sigma\sqrt{3.5} = Z\sigma \times 1.871$
+  \item \textbf{Reduction factor} = $\frac{\sqrt{3.5}}{\sqrt{5}+\sqrt{2}} = 0.5125$ $\rightarrow$ pooling reduces safety stock by $\approx$48.7\%
+\end{itemize}
+
+By centralizing inventory into a shared pool with an effective average lead time of 3.5 days, the required safety stock drops from \textbf{31,852} to \textbf{16,325 units}, saving \textbf{48.7\%} as shown in Figure \ref{fig:q22-inventory-pooling}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{../charts/q22_inventory_pooling.png}
+\caption{Q2.2 Inventory Pooling Impact on Safety Stock}
+\label{fig:q22-inventory-pooling}
+\end{figure}
+
+\textbf{Dynamic Allocation Rules (to prevent simultaneous stockout):}
+\begin{enumerate}
+  \item \textbf{R1 — Common Pool:} Merge B2B and B2C inventory per SKU into a single real-time pool tracked in WMS.
+  \item \textbf{R2 — Reserved Floor per channel:} Each channel maintains a floor reserve = its own ROP. Neither channel can dip below the other's floor.
+  \item \textbf{R3 — Amber Alert:} When total pool $<$ (SS\textsubscript{B2B} + SS\textsubscript{B2C}): system raises alert and prioritizes confirmed B2B purchase orders (contractual commitments).
+  \item \textbf{R4 — Red Conflict:} If same SKU is simultaneously short for both channels: B2B receives its full contracted PO quantity (penalty risk); B2C receives remainder + escalated to next pick wave + customer notified.
+  \item \textbf{R5 — AZ Spike Freeze:} For AZ-class SKUs showing demand spikes: temporarily freeze B2C allocations, concentrate stock for B2B, trigger emergency replenishment.
+  \item \textbf{R6 — End-of-Day Rebalance:} Rebalance channel inventory ratios to target ROP proportions based on rolling 7-day demand forecast.
+\end{enumerate}
+
+\end{document}

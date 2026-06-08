@@ -155,6 +155,21 @@ def _extract_province_from_text(address: str) -> str:
     return "Unknown"
 
 
+_vau_db_cache = None
+
+
+def _get_legacy_db_row(ward_code: str):
+    global _vau_db_cache
+    if _vau_db_cache is None:
+        try:
+            from vietnamadminunits.database import main as db_main
+            all_rows = db_main.query("SELECT * FROM admin_units_legacy")
+            _vau_db_cache = {row["wardCode"]: row for row in all_rows if row.get("wardCode")}
+        except Exception:
+            _vau_db_cache = {}
+    return _vau_db_cache.get(ward_code)
+
+
 def parse_address_components(address: object) -> dict:
     if not isinstance(address, str) or not address.strip():
         return {
@@ -181,10 +196,9 @@ def parse_address_components(address: object) -> dict:
 
         if result_legacy and getattr(result_legacy, "ward_code", None):
             try:
-                from vietnamadminunits.database import main as db_main
-                res_db = db_main.query(f"SELECT * FROM admin_units_legacy WHERE wardCode='{result_legacy.ward_code}'")
+                res_db = _get_legacy_db_row(result_legacy.ward_code)
                 if res_db:
-                    legacy_db = res_db[0]
+                    legacy_db = res_db
                     result = result_legacy
                     street = result_legacy.street or ""
             except Exception:
@@ -199,10 +213,9 @@ def parse_address_components(address: object) -> dict:
 
             if result_2025 and getattr(result_2025, "ward_code", None):
                 try:
-                    from vietnamadminunits.database import main as db_main
-                    res_db = db_main.query(f"SELECT * FROM admin_units_legacy WHERE wardCode='{result_2025.ward_code}'")
+                    res_db = _get_legacy_db_row(result_2025.ward_code)
                     if res_db:
-                        legacy_db = res_db[0]
+                        legacy_db = res_db
                         result = result_2025
                         street = result_2025.street or ""
                 except Exception:

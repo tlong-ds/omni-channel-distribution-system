@@ -1,22 +1,20 @@
 from src.logage2026.analysis import (
-    ASSIGNMENT_END,
-    ASSIGNMENT_START,
-    Q11_END,
-    Q11_START,
     build_abc_xyz,
     build_abc_xyz_matrix_summary,
     build_classification_metadata,
-    build_customer_match_quality_summary,
     build_customer_cluster_summary,
+    build_customer_match_quality_summary,
     build_document_type_summary,
     build_fast_moving_summary,
-    build_geography_diagnostics_summary,
     build_geography_coverage_summary,
+    build_geography_diagnostics_summary,
     build_geography_source_summary,
-    build_missing_data_summary,
+    build_hcm_district_summary,
+    build_inventory_pooling_summary,
+    build_lead_time_sensitivity,
+    build_network_model_evaluation,
     build_order_profile_segments,
     build_q11_monthly_demand_table,
-    build_q12_province_cluster_summary,
     build_q12_province_correlation_input_summary,
     build_q12_province_demand_summary,
     build_q12_province_warehouse_dominance_summary,
@@ -25,12 +23,15 @@ from src.logage2026.analysis import (
     build_q12_warehouse_imbalance_visual_summary,
     build_q13_segment_geographic_spread_summary,
     build_q13_segment_packaging_summary,
-    build_q13_segment_province_spread_summary,
     build_q13_segment_profile_summary,
+    build_q13_segment_province_spread_summary,
+    build_safety_stock_class_a,
+    build_slotting_plan,
     build_unresolved_candidate_region_summary,
     build_unresolved_customer_summary,
     build_warehouse_imbalance_summary,
     build_warehouse_region_summary,
+    compute_travel_time_metrics,
     filter_assignment_shipments,
     filter_q11_shipments,
 )
@@ -42,9 +43,9 @@ from src.logage2026.loading import (
     load_sku_master,
     load_transactions,
 )
-from src.logage2026.notes import write_notes
+from src.logage2026.notes import write_notes, write_part3_notes
 from src.logage2026.excel_reports import write_summary_workbook
-from src.logage2026.visuals import boundary_province_names, save_charts
+from src.logage2026.visuals import boundary_province_names, save_charts, save_q31_slotting_chart, save_q32_flowchart_image
 
 
 EXPECTED_ASSIGNMENT_ROWS = 43_894
@@ -58,9 +59,7 @@ NOTE_FILENAME = "part1_question_summary.tex"
 
 STALE_OUTPUTS = [
     TABLES_DIR / "safety_stock_class_a.csv",
-    TABLES_DIR / "slotting_plan.csv",
     NOTES_DIR / "recommendations.md",
-    NOTES_DIR / "pick_pack_flowchart.md",
     NOTES_DIR / "question_summary.md",
     TABLES_DIR / "abc_xyz.csv",
     TABLES_DIR / "abc_xyz_matrix_summary.csv",
@@ -93,6 +92,8 @@ STALE_OUTPUTS = [
 def main() -> None:
     for directory in [CLEANED_DIR, TABLES_DIR, NOTES_DIR]:
         directory.mkdir(parents=True, exist_ok=True)
+
+    _remove_stale_outputs()
 
     sku_master = clean_sku_master(load_sku_master())
     distributors = clean_distributors(load_distributors())
@@ -132,6 +133,12 @@ def main() -> None:
     geography_source_summary = build_geography_source_summary(assignment_shipments)
     unresolved_customer_summary = build_unresolved_customer_summary(assignment_shipments)
 
+    safety_stock_class_a = build_safety_stock_class_a(shipments, abc_xyz)
+    lead_time_sensitivity = build_lead_time_sensitivity(safety_stock_class_a)
+    inventory_pooling_summary = build_inventory_pooling_summary(safety_stock_class_a)
+    hcm_district_summary = build_hcm_district_summary(shipments)
+    network_model_evaluation = build_network_model_evaluation(hcm_district_summary)
+
     sku_master.to_csv(CLEANED_DIR / "sku_master_cleaned.csv", index=False)
     distributors.to_csv(CLEANED_DIR / "distributors_cleaned.csv", index=False)
     shipments.to_csv(CLEANED_DIR / "shipments_cleaned.csv", index=False)
@@ -170,6 +177,13 @@ def main() -> None:
     customer_match_quality_summary.to_csv(TABLES_DIR / "q12_customer_match_quality_summary.csv", index=False)
     geography_source_summary.to_csv(TABLES_DIR / "q12_geography_source_summary.csv", index=False)
     unresolved_customer_summary.to_csv(TABLES_DIR / "q12_unresolved_customer_summary.csv", index=False)
+    
+    safety_stock_class_a.to_csv(TABLES_DIR / "safety_stock_class_a.csv", index=False)
+    lead_time_sensitivity.to_csv(TABLES_DIR / "lead_time_sensitivity.csv", index=False)
+    inventory_pooling_summary.to_csv(TABLES_DIR / "inventory_pooling_summary.csv", index=False)
+    hcm_district_summary.to_csv(TABLES_DIR / "hcm_district_summary.csv", index=False)
+    network_model_evaluation.to_csv(TABLES_DIR / "q21_network_model_evaluation.csv", index=False)
+    
     import pandas as pd
     import openpyxl
     from openpyxl.utils import get_column_letter
@@ -296,10 +310,13 @@ def main() -> None:
         q13_segment_profile_summary=q13_segment_profile_summary,
         q13_segment_packaging_summary=q13_segment_packaging_summary,
         q13_segment_geographic_spread_summary=q13_segment_geographic_spread_summary,
+        safety_stock_class_a=safety_stock_class_a,
+        lead_time_sensitivity=lead_time_sensitivity,
+        inventory_pooling_summary=inventory_pooling_summary,
+        hcm_district_summary=hcm_district_summary,
         output_path=OUTPUT_DIR / "summary_tables.xlsx",
     )
 
-    _remove_stale_outputs()
     save_charts(
         assignment_shipments,
         abc_xyz,
@@ -318,6 +335,11 @@ def main() -> None:
         q13_segment_geographic_spread_summary,
         q13_segment_province_spread_summary,
         sku_master,
+        safety_stock_class_a,
+        lead_time_sensitivity,
+        inventory_pooling_summary,
+        hcm_district_summary,
+        network_model_evaluation,
     )
     write_notes(
         assignment_shipments,
@@ -340,6 +362,11 @@ def main() -> None:
         q13_segment_profile_summary,
         q13_segment_packaging_summary,
         q13_segment_geographic_spread_summary,
+        safety_stock_class_a,
+        lead_time_sensitivity,
+        inventory_pooling_summary,
+        hcm_district_summary,
+        network_model_evaluation,
     )
     print(f"Round 2 analysis written to {OUTPUT_DIR}")
     print(
@@ -356,6 +383,21 @@ def main() -> None:
         f"| CBM: {assignment_shipments['cbm_total'].sum():,.2f}"
     )
     print(f"Classified SKUs: {abc_xyz['sku_code'].nunique():,}")
+
+    # ── Part 3 ────────────────────────────────────────────────────────────────
+    print("Building Part 3: Slotting Optimization ...")
+    from src.logage2026.analysis import compute_travel_time_metrics
+    slotting_plan = build_slotting_plan(abc_xyz)
+    slotting_plan.to_csv(TABLES_DIR / "slotting_plan.csv", index=False)
+    travel_metrics = compute_travel_time_metrics(abc_xyz)
+
+    print("Rendering Part 3 charts ...")
+    save_q31_slotting_chart(abc_xyz, travel_metrics)
+    save_q32_flowchart_image()
+
+    print("Writing Part 3 LaTeX report ...")
+    write_part3_notes(abc_xyz)
+    print("Part 3 complete.")
 
 
 def _remove_stale_outputs() -> None:

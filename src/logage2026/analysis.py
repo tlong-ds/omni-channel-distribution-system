@@ -1143,36 +1143,250 @@ def build_unresolved_customer_summary(shipments: pd.DataFrame, top_n: int = 20) 
 
 def build_safety_stock_class_a(shipments: pd.DataFrame, abc_xyz: pd.DataFrame) -> pd.DataFrame:
     class_a = set(abc_xyz.loc[abc_xyz["abc_quantity"].eq("A"), "sku_code"])
-    weekly = (
-        shipments[shipments["sku_code"].isin(class_a)]
-        .assign(week=shipments["created_date"].dt.to_period("W").astype(str))
-        .groupby(["sku_code", "week"])["quantity"]
+    class_a_shipments = shipments[
+        shipments["sku_code"].isin(class_a)
+        & shipments["created_date"].between("2025-06-01", "2025-12-31")
+    ].copy()
+    
+    monthly = (
+        class_a_shipments
+        .assign(month=class_a_shipments["created_date"].dt.to_period("M"))
+        .groupby(["sku_code", "month"])["quantity"]
         .sum()
         .unstack(fill_value=0)
     )
-    weeks = pd.period_range(start=ASSIGNMENT_START, end=ASSIGNMENT_END, freq="W").astype(str)
-    weekly = weekly.reindex(columns=weeks, fill_value=0)
+    months = pd.period_range(start="2025-06", end="2025-12", freq="M")
+    monthly = monthly.reindex(columns=months, fill_value=0)
+    
     table = pd.DataFrame(
         {
-            "sku_code": weekly.index,
-            "weekly_mean_demand": weekly.mean(axis=1).values,
-            "weekly_std_demand": weekly.std(axis=1).values,
+            "sku_code": monthly.index,
+            "mu_monthly": monthly.mean(axis=1).values,
+            "sigma_monthly": monthly.std(axis=1, ddof=1).values,
         }
     )
-    table["service_level_z"] = 1.65
-    table["assumed_lead_time_weeks"] = 1.0
-    table["safety_stock_units"] = (
-        table["service_level_z"] * table["weekly_std_demand"] * np.sqrt(table["assumed_lead_time_weeks"])
-    )
+    
+    table["mu_daily"] = table["mu_monthly"] / 30
+    table["sigma_daily"] = table["sigma_monthly"] / np.sqrt(30)
+    table["Z"] = 1.645
+    
+    lt_b2b, sigma_lt_b2b = 5.0, 1.0
+    lt_b2c, sigma_lt_b2c = 2.0, 0.5
+    
+    table["ss_b2b"] = table["Z"] * np.sqrt(lt_b2b * table["sigma_daily"]**2 + table["mu_daily"]**2 * sigma_lt_b2b**2)
+    table["rop_b2b"] = table["mu_daily"] * lt_b2b + table["ss_b2b"]
+    
+    table["ss_b2c"] = table["Z"] * np.sqrt(lt_b2c * table["sigma_daily"]**2 + table["mu_daily"]**2 * sigma_lt_b2c**2)
+    table["rop_b2c"] = table["mu_daily"] * lt_b2c + table["ss_b2c"]
+    
     table = table.merge(
-        abc_xyz[["sku_code", "product_name", "category", "abc_quantity", "xyz_frequency", "quantity"]],
+        abc_xyz[["sku_code", "product_name", "category", "abc_quantity", "xyz_frequency"]],
         on="sku_code",
         how="left",
+    ).fillna("")
+    
+    return table.sort_values("ss_b2b", ascending=False)
+
+
+def build_lead_time_sensitivity(safety_stock_table: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+    total_class_a_sigma_d = safety_stock_table["sigma_daily"].sum()
+    z = 1.645
+    for lt in range(2, 8):
+        total_ss = z * total_class_a_sigma_d * np.sqrt(lt)
+        rows.append({
+            "lead_time_days": lt,
+            "total_safety_stock": total_ss,
+            "delta_from_lt2": total_ss - (z * total_class_a_sigma_d * np.sqrt(2)),
+        })
+    return pd.DataFrame(rows)
+
+
+def build_inventory_pooling_summary(safety_stock_table: pd.DataFrame) -> pd.DataFrame:
+    z = 1.645
+    total_class_a_sigma_d = safety_stock_table["sigma_daily"].sum()
+    
+    # Separated SS
+    lt_b2b = 5.0
+    lt_b2c = 2.0
+    separated_ss = z * total_class_a_sigma_d * (np.sqrt(lt_b2b) + np.sqrt(lt_b2c))
+    
+    # Pooled SS
+    avg_lt = (lt_b2b + lt_b2c) / 2.0
+    pooled_ss = z * total_class_a_sigma_d * np.sqrt(avg_lt)
+    
+    savings = separated_ss - pooled_ss
+    savings_pct = savings / separated_ss if separated_ss else 0
+    
+    return pd.DataFrame([{
+        "scenario": "Separated B2B + B2C",
+        "formula": "Z * sigma * (sqrt(5) + sqrt(2))",
+        "total_ss": separated_ss,
+        "savings_pct": 0.0
+    }, {
+        "scenario": "Pooled (Shared)",
+        "formula": "Z * sigma * sqrt(3.5)",
+        "total_ss": pooled_ss,
+        "savings_pct": savings_pct
+    }])
+
+
+def build_hcm_district_summary(shipments: pd.DataFrame) -> pd.DataFrame:
+    hcm_ship = shipments[
+        shipments["province"].eq("Hồ Chí Minh") 
+        & shipments["created_date"].between("2025-06-01", "2025-12-31") 
+        & shipments["document_type"].eq("A/R INVOICE")
+    ]
+    districts_summary = hcm_ship.groupby("district").agg(
+        orders=("order_id", "nunique"),
+        quantity=("quantity", "sum"),
+        cbm=("cbm_total", "sum"),
+        avg_dist_my_phuoc=("distance_from_my_phuoc_km", "mean"),
+        avg_dist_vinh_loc=("distance_from_vinh_loc_km", "mean"),
+        avg_lat=("latitude", "mean"),
+        avg_lon=("longitude", "mean")
+    ).sort_values("orders", ascending=False).reset_index()
+    return districts_summary
+
+
+def build_network_model_evaluation(hcm_district_summary: pd.DataFrame) -> pd.DataFrame:
+    """Q2.1: Evaluate each HCM district's RDC distance and suitability for 2-4h B2C SLA.
+    
+    A district is flagged as 'needs_dark_store' when both warehouses are >25km away,
+    as that typically pushes last-mile delivery beyond the 2–4h SLA window assuming
+    average urban traffic speed ~25–30 km/h.
+    """
+    df = hcm_district_summary.copy()
+    df["best_rdc_km"] = df[["avg_dist_my_phuoc", "avg_dist_vinh_loc"]].min(axis=1)
+    df["best_rdc"] = np.where(
+        df["avg_dist_my_phuoc"] <= df["avg_dist_vinh_loc"],
+        "My Phuoc",
+        "Vinh Loc"
     )
-    return table.sort_values("safety_stock_units", ascending=False)
+    # Estimated delivery time in minutes at ~25 km/h average urban speed
+    df["est_delivery_min"] = (df["best_rdc_km"] / 25 * 60).round(0).astype(int)
+    # Flag: 90 min threshold → can comfortably fit within 2h SLA
+    SLA_THRESHOLD_MIN = 90
+    DARK_STORE_THRESHOLD_KM = 25
+    df["can_meet_2h_sla"] = df["best_rdc_km"] <= DARK_STORE_THRESHOLD_KM
+    df["sla_status"] = np.where(
+        df["can_meet_2h_sla"],
+        "Adequate",
+        "Needs Dark Store"
+    )
+    total_qty = df["quantity"].sum()
+    df["qty_share"] = df["quantity"] / total_qty if total_qty else 0.0
+    return df.sort_values("quantity", ascending=False).reset_index(drop=True)
+
+
+def build_slotting_plan(abc_xyz: pd.DataFrame) -> pd.DataFrame:
+    """Assign every SKU to a warehouse slotting zone based on ABC class and velocity.
+
+    Zone assignments follow the VILAS SNP framework:
+        Class A → Pick-Face Zone (Ground Level) — nearest to I/O dock, ergonomic height
+        Class B → Forward Reserve Zone — intermediate, replenishment-triggered
+        Class C → Reserve / Bulk Zone — upper racks, pallet-in/pallet-out
+
+    Within each zone, SKUs are ranked by descending order_frequency so the
+    highest-velocity items occupy the closest slots to the packing station.
+    """
+    df = abc_xyz.copy()
+
+    zone_map = {
+        "A": "Pick-Face Zone (Ground Level)",
+        "B": "Forward Reserve Zone",
+        "C": "Reserve / Bulk Zone",
+    }
+    df["zone_assignment"] = df["abc_quantity"].map(zone_map)
+    df["zone_order"] = df["abc_quantity"].map({"A": 1, "B": 2, "C": 3})
+
+    df = df.sort_values(
+        by=["zone_order", "order_frequency"], ascending=[True, False]
+    ).reset_index(drop=True)
+
+    df["rank_in_zone"] = (
+        df.groupby("zone_assignment")["order_frequency"]
+        .rank(method="first", ascending=False)
+        .astype(int)
+    )
+
+    df = df.sort_values(
+        by=["zone_order", "rank_in_zone"], ascending=[True, True]
+    ).reset_index(drop=True)
+
+    cols = [
+        "sku_code",
+        "abc_quantity",
+        "xyz_frequency",
+        "zone_assignment",
+        "order_frequency",
+        "rank_in_zone",
+    ]
+    return df[cols].rename(columns={"abc_quantity": "abc_class", "xyz_frequency": "xyz_class",
+                                     "order_frequency": "travel_contribution"})
+
+
+def compute_travel_time_metrics(abc_xyz: pd.DataFrame) -> dict:
+    """Compute expected picker travel distance for four slotting scenarios.
+
+    Model: warehouse has N slots numbered 1..N from the I/O dock.
+    Travel cost for a single pick = slot number of the target SKU.
+    Expected travel E = Σ pick_probability_i × slot_number_i.
+
+    Four scenarios compared:
+        1. Random baseline   — SKUs placed with no logic; E = (N+1)/2
+        2. ABC zoned (qty)   — A in slots 1..Na, B in Na+1..Na+Nb, C in rest
+        3. XYZ zoned (freq)  — X in 1..Nx, Y in Nx+1..Nx+Ny, Z in rest
+        4. Velocity-ranked   — continuous sort by order_frequency descending (theoretical optimum)
+
+    Returns a dict with absolute distances and % reductions vs random baseline.
+    """
+    df = abc_xyz.copy()
+    N = len(df)
+    total_freq = df["order_frequency"].sum()
+    df["prob_pick"] = df["order_frequency"] / total_freq if total_freq else 1.0 / N
+
+    # 1. Random baseline
+    e_random = (N + 1) / 2.0
+
+    # 2. ABC zoned (quantity-based)
+    qty_counts = df.groupby("abc_quantity").size().to_dict()
+    qty_probs = df.groupby("abc_quantity")["prob_pick"].sum().to_dict()
+    Na, Nb, Nc = qty_counts.get("A", 0), qty_counts.get("B", 0), qty_counts.get("C", 0)
+    Pa, Pb, Pc = qty_probs.get("A", 0.0), qty_probs.get("B", 0.0), qty_probs.get("C", 0.0)
+    e_zoned_qty = Pa * (1 + Na) / 2.0 + Pb * (Na + (1 + Nb) / 2.0) + Pc * (Na + Nb + (1 + Nc) / 2.0)
+
+    # 3. XYZ zoned (frequency-based)
+    freq_counts = df.groupby("xyz_frequency").size().to_dict()
+    freq_probs = df.groupby("xyz_frequency")["prob_pick"].sum().to_dict()
+    Nx, Ny, Nz = freq_counts.get("X", 0), freq_counts.get("Y", 0), freq_counts.get("Z", 0)
+    Px, Py, Pz = freq_probs.get("X", 0.0), freq_probs.get("Y", 0.0), freq_probs.get("Z", 0.0)
+    e_zoned_freq = Px * (1 + Nx) / 2.0 + Py * (Nx + (1 + Ny) / 2.0) + Pz * (Nx + Ny + (1 + Nz) / 2.0)
+
+    # 4. Velocity-ranked (continuous optimum)
+    df_s = df.sort_values("order_frequency", ascending=False).reset_index(drop=True)
+    df_s["rank"] = df_s.index + 1
+    e_optimal = (df_s["prob_pick"] * df_s["rank"]).sum()
+
+    def _red(e_opt: float) -> float:
+        return (e_random - e_opt) / e_random if e_random else 0.0
+
+    return {
+        "N": N,
+        "random_baseline": round(e_random, 2),
+        "zoned_qty": round(e_zoned_qty, 2),
+        "zoned_freq": round(e_zoned_freq, 2),
+        "continuous_optimal": round(e_optimal, 2),
+        "reduction_qty": round(_red(e_zoned_qty), 4),
+        "reduction_freq": round(_red(e_zoned_freq), 4),
+        "reduction_optimal": round(_red(e_optimal), 4),
+        "zone_counts": {"A": Na, "B": Nb, "C": Nc},
+        "zone_probs": {"A": round(Pa, 4), "B": round(Pb, 4), "C": round(Pc, 4)},
+    }
 
 
 if __name__ == "__main__":
+
     import sys
     from pathlib import Path
     

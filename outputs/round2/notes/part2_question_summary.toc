@@ -1,0 +1,10 @@
+\contentsline {section}{\numberline {1}PART 2: OMNI-CHANNEL FULFILLMENT STRATEGY DESIGN}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Question 2.1: Network Model Evaluation \& Design}{2}{subsection.1.1}%
+\contentsline {subsubsection}{\numberline {1.1.1}Current Two-RDC Model Assessment}{2}{subsubsection.1.1.1}%
+\contentsline {subsubsection}{\numberline {1.1.2}B2C E-Commerce SLA Assessment}{2}{subsubsection.1.1.2}%
+\contentsline {subsubsection}{\numberline {1.1.3}Dark Store Node Recommendation}{3}{subsubsection.1.1.3}%
+\contentsline {subsubsection}{\numberline {1.1.4}Order Split Logic Design (HCM)}{3}{subsubsection.1.1.4}%
+\contentsline {subsection}{\numberline {1.2}Question 2.2: Inventory Optimization}{4}{subsection.1.2}%
+\contentsline {subsubsection}{\numberline {1.2.1}Lead Time Assumptions \& Validation}{4}{subsubsection.1.2.1}%
+\contentsline {subsubsection}{\numberline {1.2.2}Safety Stock Formula \& Results}{5}{subsubsection.1.2.2}%
+\contentsline {subsubsection}{\numberline {1.2.3}Inventory Pooling Strategy}{6}{subsubsection.1.2.3}%

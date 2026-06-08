@@ -68,6 +68,10 @@ def write_summary_workbook(
     q13_segment_profile_summary: pd.DataFrame,
     q13_segment_packaging_summary: pd.DataFrame,
     q13_segment_geographic_spread_summary: pd.DataFrame,
+    safety_stock_class_a: pd.DataFrame,
+    lead_time_sensitivity: pd.DataFrame,
+    inventory_pooling_summary: pd.DataFrame,
+    hcm_district_summary: pd.DataFrame,
     output_path: Path,
 ) -> Path:
     workbook = Workbook()
@@ -85,6 +89,11 @@ def write_summary_workbook(
     _write_dataframe_sheet(workbook.create_sheet("Q1.3 Segment Profile"), "QUESTION 1.3 — ORDER PROFILE BY SEGMENT", q13_segment_profile_summary)
     _write_dataframe_sheet(workbook.create_sheet("Q1.3 Packaging"), "QUESTION 1.3 — PACKAGING SPREAD BY SEGMENT", q13_segment_packaging_summary)
     _write_dataframe_sheet(workbook.create_sheet("Q1.3 Geo Spread"), "QUESTION 1.3 — GEOGRAPHIC SPREAD BY SEGMENT", q13_segment_geographic_spread_summary)
+    
+    _write_dataframe_sheet(workbook.create_sheet("Q2.2 Safety Stock"), "QUESTION 2.2 — CLASS A SAFETY STOCK", safety_stock_class_a)
+    _write_dataframe_sheet(workbook.create_sheet("Q2.2 Lead Time Sensitivity"), "QUESTION 2.2 — LEAD TIME SENSITIVITY", lead_time_sensitivity)
+    _write_dataframe_sheet(workbook.create_sheet("Q2.2 Inventory Pooling"), "QUESTION 2.2 — INVENTORY POOLING SUMMARY", inventory_pooling_summary)
+    _write_dataframe_sheet(workbook.create_sheet("Q2.1 HCM Districts"), "QUESTION 2.1 — HCM DISTRICT SUMMARY", hcm_district_summary)
             
     workbook.save(output_path)
     return output_path
