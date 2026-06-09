@@ -1141,13 +1141,48 @@ def build_unresolved_customer_summary(shipments: pd.DataFrame, top_n: int = 20) 
     )
 
 
+# Mile-weighted average lead time constants (RDC in Đông Nam Bộ → 6 regions).
+# Source: GHN / VTP / GHTK standard transit benchmarks; weights = order counts
+# from the transaction log (Jun–Dec 2025, A/R INVOICE, both warehouses).
+_REGIONAL_LT_DATA: list[tuple[str, float, int]] = [
+    # (region_name, lead_time_days, order_count)
+    ("Đông Nam Bộ",                                    1.0, 2614),
+    ("Bắc Trung Bộ và Duyên hải miền Trung",           3.0, 1027),
+    ("Đồng bằng sông Cửu Long",                        2.0,  800),
+    ("Đồng bằng sông Hồng",                            4.0,  503),
+    ("Tây Nguyên",                                      2.0,  247),
+    ("Trung du và miền núi phía Bắc",                  4.0,  143),
+]
+
+
+def _compute_mile_weighted_lt() -> float:
+    """Return the order-count–weighted average lead time (days) across all regions."""
+    total_orders = sum(orders for _, _, orders in _REGIONAL_LT_DATA)
+    return sum(lt * orders for _, lt, orders in _REGIONAL_LT_DATA) / total_orders
+
+
 def build_safety_stock_class_a(shipments: pd.DataFrame, abc_xyz: pd.DataFrame) -> pd.DataFrame:
+    """Compute safety stock for all Class A SKUs using a mile-weighted average lead time.
+
+    Formula (mirrors LOGage2026_Part2_SafetyStock_MileAvg.xlsx, sheet 'Q2.2 Safety Stock'):
+        SS  = Z × σ_daily × √(LT_avg)
+        ROP = μ_daily × LT_avg + SS
+    where:
+        Z        = 1.645  (95 % service level, one-tailed)
+        LT_avg   = mile-weighted average replenishment lead time (days)
+        σ_daily  = σ_monthly / √30
+        μ_daily  = μ_monthly / 30
+        σ_monthly computed with ddof=1 over 7 months (Jun–Dec 2025)
+    """
+    lt_avg = _compute_mile_weighted_lt()  # ≈ 1.94 days
+    sqrt_lt = np.sqrt(lt_avg)
+
     class_a = set(abc_xyz.loc[abc_xyz["abc_quantity"].eq("A"), "sku_code"])
     class_a_shipments = shipments[
         shipments["sku_code"].isin(class_a)
         & shipments["created_date"].between("2025-06-01", "2025-12-31")
     ].copy()
-    
+
     monthly = (
         class_a_shipments
         .assign(month=class_a_shipments["created_date"].dt.to_period("M"))
@@ -1157,7 +1192,7 @@ def build_safety_stock_class_a(shipments: pd.DataFrame, abc_xyz: pd.DataFrame) -
     )
     months = pd.period_range(start="2025-06", end="2025-12", freq="M")
     monthly = monthly.reindex(columns=months, fill_value=0)
-    
+
     table = pd.DataFrame(
         {
             "sku_code": monthly.index,
@@ -1165,70 +1200,95 @@ def build_safety_stock_class_a(shipments: pd.DataFrame, abc_xyz: pd.DataFrame) -
             "sigma_monthly": monthly.std(axis=1, ddof=1).values,
         }
     )
-    
-    table["mu_daily"] = table["mu_monthly"] / 30
+
+    table["mu_daily"]    = table["mu_monthly"] / 30
     table["sigma_daily"] = table["sigma_monthly"] / np.sqrt(30)
-    table["Z"] = 1.645
-    
-    lt_b2b, sigma_lt_b2b = 5.0, 1.0
-    lt_b2c, sigma_lt_b2c = 2.0, 0.5
-    
-    table["ss_b2b"] = table["Z"] * np.sqrt(lt_b2b * table["sigma_daily"]**2 + table["mu_daily"]**2 * sigma_lt_b2b**2)
-    table["rop_b2b"] = table["mu_daily"] * lt_b2b + table["ss_b2b"]
-    
-    table["ss_b2c"] = table["Z"] * np.sqrt(lt_b2c * table["sigma_daily"]**2 + table["mu_daily"]**2 * sigma_lt_b2c**2)
-    table["rop_b2c"] = table["mu_daily"] * lt_b2c + table["ss_b2c"]
-    
+    table["Z"]           = 1.645
+    table["lt_avg"]      = lt_avg
+    table["sqrt_lt"]     = sqrt_lt
+
+    table["ss"]  = table["Z"] * table["sigma_daily"] * sqrt_lt
+    table["rop"] = table["mu_daily"] * lt_avg + table["ss"]
+
     table = table.merge(
         abc_xyz[["sku_code", "product_name", "category", "abc_quantity", "xyz_frequency"]],
         on="sku_code",
         how="left",
     ).fillna("")
-    
-    return table.sort_values("ss_b2b", ascending=False)
+
+    return table.sort_values("ss", ascending=False)
 
 
 def build_lead_time_sensitivity(safety_stock_table: pd.DataFrame) -> pd.DataFrame:
+    """Show how total Class A safety stock changes as LT_avg is varied from 1 to 7 days.
+
+    Uses the same simplified formula as build_safety_stock_class_a:
+        total_SS(LT) = Z × Σσ_daily × √LT
+    The actual LT_avg ≈ 1.94 is the reference point (first row).
+    """
     rows = []
     total_class_a_sigma_d = safety_stock_table["sigma_daily"].sum()
     z = 1.645
-    for lt in range(2, 8):
+    lt_actual = _compute_mile_weighted_lt()
+    ss_at_actual = z * total_class_a_sigma_d * np.sqrt(lt_actual)
+    for lt in range(1, 8):
         total_ss = z * total_class_a_sigma_d * np.sqrt(lt)
         rows.append({
             "lead_time_days": lt,
             "total_safety_stock": total_ss,
-            "delta_from_lt2": total_ss - (z * total_class_a_sigma_d * np.sqrt(2)),
+            "delta_from_actual": total_ss - ss_at_actual,
         })
     return pd.DataFrame(rows)
 
 
 def build_inventory_pooling_summary(safety_stock_table: pd.DataFrame) -> pd.DataFrame:
+    """Compare separated-channel SS vs virtual-pooling SS for reference.
+
+    The 'Pooled (Mile-Weighted)' row reflects the actual model used in
+    build_safety_stock_class_a (SS = Z × σ × √LT_avg, LT_avg ≈ 1.94 days).
+
+    The 'Separated B2B + B2C' reference scenario (B2B=5d, B2C=2d) is kept for
+    comparison, following the Excel Q2.2 Pooling sheet quantification:
+        Separated: SS = Z × σ × (√5 + √2) = Z × σ × 3.650
+        Pooled:    SS = Z × σ × √3.5      = Z × σ × 1.871
+        Reduction factor = √3.5 / (√5 + √2) ≈ 0.5125  → −48.7%
+    """
     z = 1.645
     total_class_a_sigma_d = safety_stock_table["sigma_daily"].sum()
-    
-    # Separated SS
-    lt_b2b = 5.0
-    lt_b2c = 2.0
+
+    # Reference: separated B2B (5d) + B2C (2d)
+    lt_b2b, lt_b2c = 5.0, 2.0
     separated_ss = z * total_class_a_sigma_d * (np.sqrt(lt_b2b) + np.sqrt(lt_b2c))
-    
-    # Pooled SS
-    avg_lt = (lt_b2b + lt_b2c) / 2.0
-    pooled_ss = z * total_class_a_sigma_d * np.sqrt(avg_lt)
-    
-    savings = separated_ss - pooled_ss
-    savings_pct = savings / separated_ss if separated_ss else 0
-    
-    return pd.DataFrame([{
-        "scenario": "Separated B2B + B2C",
-        "formula": "Z * sigma * (sqrt(5) + sqrt(2))",
-        "total_ss": separated_ss,
-        "savings_pct": 0.0
-    }, {
-        "scenario": "Pooled (Shared)",
-        "formula": "Z * sigma * sqrt(3.5)",
-        "total_ss": pooled_ss,
-        "savings_pct": savings_pct
-    }])
+
+    # Reference: classic pooled (avg of the two channels)
+    classic_pooled_ss = z * total_class_a_sigma_d * np.sqrt((lt_b2b + lt_b2c) / 2.0)
+    classic_savings_pct = (separated_ss - classic_pooled_ss) / separated_ss if separated_ss else 0
+
+    # Actual model: mile-weighted average LT
+    lt_avg = _compute_mile_weighted_lt()
+    mw_pooled_ss = z * total_class_a_sigma_d * np.sqrt(lt_avg)
+    mw_savings_pct = (separated_ss - mw_pooled_ss) / separated_ss if separated_ss else 0
+
+    return pd.DataFrame([
+        {
+            "scenario": "Separated B2B + B2C",
+            "formula": "Z * sigma * (sqrt(5) + sqrt(2))",
+            "total_ss": separated_ss,
+            "savings_pct": 0.0,
+        },
+        {
+            "scenario": "Pooled (Shared)",
+            "formula": "Z * sigma * sqrt(3.5)",
+            "total_ss": classic_pooled_ss,
+            "savings_pct": classic_savings_pct,
+        },
+        {
+            "scenario": "Pooled (Mile-Weighted)",
+            "formula": f"Z * sigma * sqrt({lt_avg:.4f})",
+            "total_ss": mw_pooled_ss,
+            "savings_pct": mw_savings_pct,
+        },
+    ])
 
 
 def build_hcm_district_summary(shipments: pd.DataFrame) -> pd.DataFrame:

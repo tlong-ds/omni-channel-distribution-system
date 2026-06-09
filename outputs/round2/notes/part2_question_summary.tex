@@ -112,53 +112,54 @@ The demand is highly concentrated: the top 5 districts alone command \textbf{56,
   \item If district is $>$25 km from both RDCs $\rightarrow$ \textbf{route via dark store} (pending network expansion).
 \end{enumerate}
 
+% ── Q2.2 ────────────────────────────────────────────────
 \subsection{Question 2.2: Inventory Optimization}
 
-\subsubsection{Lead Time Assumptions \& Validation}
+\subsubsection{Mile-Weighted Average Lead Time}
 
-\textbf{Definition:} Replenishment Lead Time is the duration from when the warehouse identifies a replenishment need until the goods are ready to pick again. This is distinct from the customer-facing delivery SLA.
+\textbf{Definition:} Replenishment Lead Time (LT) is the duration from when the warehouse identifies a replenishment need until the goods are ready to pick again. This is distinct from the customer-facing delivery SLA.
 
-\textbf{Data limitation:} The dataset only contains \texttt{created\_date} (outbound dispatch date). There is no PO creation date or Goods Receipt date, so lead time cannot be measured directly. The values below are \textit{justified assumptions} cross-validated against inter-shipment intervals in the transaction log.
+Because the RDC (\DJ\^ong Nam B\d{o}) serves six geographic regions with different transit standards, we derive a single \textbf{mile-weighted average lead time} by weighting each region's standard LT by its share of total orders:
+\[
+LT_{avg} = \frac{\sum_{r} LT_r \times n_r}{\sum_{r} n_r}
+\]
+Transit benchmarks follow published standards of GHN, Viettel Post, and GHTK for standard road-freight B2B delivery.
 
 \begin{table}[H]
 \centering
-\caption{Lead Time Component Breakdown by Channel}
-\begin{tabular}{lccl}
+\caption{Mile-Weighted Average Lead Time (RDC $\rightarrow$ 6 Regions)}
+\begin{tabular}{lcrrc}
 \toprule
-\textbf{Component} & \textbf{B2B (Factory→RDC)} & \textbf{B2C (RDC→Dark Store)} & \textbf{Rationale} \\
+\textbf{Region} & \textbf{Route type} & \textbf{LT (d)} & \textbf{Orders} & \textbf{LT$\times$Orders} \\
 \midrule
-T\_review (stock check) & 1.0 day & 0.5 day & B2B daily review; B2C twice-daily auto-trigger \\
-T\_PO (create \& approve PO) & 0.5 day & 0 day & B2C uses auto-replenishment, no manual PO \\
-T\_supplier (preparation) & 1.5 days & 0 day & Factory batch lead time; B2C pulls from RDC stock \\
-T\_transport & 1.0 day & 0.5 day & Intra-ĐNB region; B2C last-mile $<$15 km same-day \\
-T\_receiving (QC check-in) & 0.5 day & 0.5 day & Physical count \& inspection \\
-T\_putaway (shelf-ready) & 0.5 day & 0.5 day & Ready to pick \\
+\DJ\^ong Nam B\d{o} & Intra-province / near RDC & 1 & 2\,614 & 2\,614 \\
+B\`ac Trung B\d{o} \& Duy\^en h\d{a}i mi\`en Trung & Inter-Central & 3 & 1\,027 & 3\,081 \\
+\DJ\`ong b\`ang s\^ong C\`uu Long & Intra-South & 2 & 800 & 1\,600 \\
+\DJ\`ong b\`ang s\^ong H\`ong & Inter-North & 4 & 503 & 2\,012 \\
+T\^ay Nguy\^en & Near-region & 2 & 247 & 494 \\
+Trung du v\`a mi\`en n\`ui ph\'{i}a B\`ac & Inter-North + remote & 4 & 143 & 572 \\
 \midrule
-\textbf{Total Lead Time} & \textbf{5 days} & \textbf{2 days} & \\
+\textbf{Total} & & & \textbf{5\,334} & \textbf{10\,373} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Empirical cross-validation from data:}
-\begin{itemize}
-  \item Median inter-shipment gap for Class A SKUs = \textbf{2.0 days} $\rightarrow$ matches LT\textsubscript{B2C} = 2 days
-  \item Mean inter-shipment gap = \textbf{7.7 days} (long tail from bulk lot orders) $\rightarrow$ consistent with LT\textsubscript{B2B} $\approx$ 5 days
-  \item \textit{Conclusion: Assumptions are well-calibrated to observable shipment rhythms.}
-\end{itemize}
+\textbf{Result: } $LT_{avg} = 10{,}373 \div 5{,}334 \approx \mathbf{1.94}$ \textbf{days}. Because 49\% of orders are in \DJ\^ong Nam B\d{o} (1-day delivery), the weighted average is pulled close to 2\,days even though highland/northern regions require 4\,days.
 
 \subsubsection{Safety Stock Formula \& Results}
 
-Safety stock for each Class A SKU is calculated using the full lead-time uncertainty formula:
+Safety stock for each Class A SKU is calculated using the simplified demand-uncertainty formula (lead time is treated as a fixed constant under the virtual-pooling single-pool model, so $\sigma_{LT}=0$):
 \[
-SS = Z \cdot \sqrt{LT \cdot \sigma_d^2 + \mu_d^2 \cdot \sigma_{LT}^2}
+SS = Z \cdot \sigma_{daily} \cdot \sqrt{LT_{avg}}
 \]
-where $Z = 1.645$ (95\% service level), $\mu_d$ = mean daily demand, $\sigma_d$ = std of daily demand, $LT$ = mean lead time, and $\sigma_{LT}$ = lead time std dev (B2B: 1.0 day, B2C: 0.5 day).
+\[
+ROP = \mu_{daily} \cdot LT_{avg} + SS
+\]
+where $Z = 1.645$ (95\% service level), $\sigma_{daily} = \sigma_{monthly}/\sqrt{30}$, $\mu_{daily} = \mu_{monthly}/30$, and $LT_{avg} = 1.94$ days ($\sqrt{LT_{avg}} \approx 1.393$). Monthly $\sigma$ is computed with $\text{ddof}=1$ over 7 months (Jun--Dec 2025).
 
-\textbf{Key result:} This section details the required safety stock for Class A SKUs to support omni-channel fulfillment under different lead time configurations.
+The total required safety stock across all 28 Class A SKUs under the mile-weighted pool model is \textbf{12,168 units} (sorted by SS descending).
 
-Under the \textbf{separated channel} setup (B2B: 5-day LT, B2C: 2-day LT), the total required safety stock for Class A SKUs is \textbf{31,852 units}.
-
-We then evaluated the impact of varying the replenishment lead time on total safety stock requirements. As illustrated in Figure \ref{fig:q22-lead-time-sensitivity}, safety stock exhibits a sub-linear (square root) growth relative to lead time.
+Varying the assumed LT shows the sub-linear (square-root) growth of safety stock, as illustrated in Figure \ref{fig:q22-lead-time-sensitivity}.
 
 \begin{figure}[H]
 \centering
@@ -167,16 +168,33 @@ We then evaluated the impact of varying the replenishment lead time on total saf
 \label{fig:q22-lead-time-sensitivity}
 \end{figure}
 
-\subsubsection{Inventory Pooling Strategy}
+\subsubsection{Inventory Pooling Strategy — Virtual Pool Model}
 
-\textbf{Principle — Why pooling reduces safety stock:}
+\textbf{Model: Virtual Inventory Pooling (no hard physical split per channel).} All stock of a given SKU forms a single pool managed jointly in OMS\,+\,WMS. Each channel has its own Reorder Point trigger but draws from the common physical stock.
+
+\textbf{Channel grouping (by account size \& SLA):}
 \begin{itemize}
-  \item Separated: $SS = Z\sigma(\sqrt{LT_{B2B}} + \sqrt{LT_{B2C}}) = Z\sigma(\sqrt{5}+\sqrt{2}) = Z\sigma \times 3.650$
-  \item Pooled: $SS = Z\sigma\sqrt{\frac{LT_{B2B}+LT_{B2C}}{2}} = Z\sigma\sqrt{3.5} = Z\sigma \times 1.871$
-  \item \textbf{Reduction factor} = $\frac{\sqrt{3.5}}{\sqrt{5}+\sqrt{2}} = 0.5125$ $\rightarrow$ pooling reduces safety stock by $\approx$48.7\%
+  \item \textbf{Modern Trade (MT):} Supermarkets (Co-op, Lotte, AEON, \DJ{}MX, TGD\DJ{}) — large confirmed POs, strict booking-window SLA.
+  \item \textbf{Ecommerce} (Shopee, Lazada, Tiki, TikTok Shop) — classified as MT-scale accounts; high-volume, 2--4\,h SLA.
+  \item \textbf{Traditional Trade (TT):} Distributors / small dealers — small fragmented orders, flexible 2--4 day SLA.
 \end{itemize}
 
-By centralizing inventory into a shared pool with an effective average lead time of 3.5 days, the required safety stock drops from \textbf{31,852} to \textbf{16,325 units}, saving \textbf{48.7\%} as shown in Figure \ref{fig:q22-inventory-pooling}.
+\textbf{Allocation priority when pool is constrained (largest account \& tightest SLA first):}
+\begin{enumerate}
+  \item MT large accounts (supermarket chains with confirmed contractual POs).
+  \item MT Ecommerce (large accounts, 2--4\,h SLA, platform rating at risk).
+  \item TT large distributors (high-volume, long-term relationship).
+  \item TT small / walk-in customers (flexible SLA, served last).
+\end{enumerate}
+
+\textbf{Quantification — Why virtual pooling reduces safety stock:}
+\begin{itemize}
+  \item Separated channels (B2B=5d, B2C=2d): $SS = Z\sigma(\sqrt{5}+\sqrt{2}) = Z\sigma \times 3.650$
+  \item Classic pooled avg LT=3.5d: $SS = Z\sigma\sqrt{3.5} = Z\sigma \times 1.871$ $\rightarrow$ reduction factor $= \sqrt{3.5}/(\sqrt{5}+\sqrt{2}) = 0.5125$ ($\approx$48.7\%)
+  \item \textbf{Mile-weighted pool} LT=1.94d: $SS = Z\sigma\sqrt{1.94} = Z\sigma \times 1.393$
+\end{itemize}
+
+With the mile-weighted virtual pool (LT\textsubscript{avg} = 1.94 days), the total safety stock is \textbf{12,168 units}, vs. \textbf{31,852 units} under a separated-channel model --- a saving of \textbf{61.8\%} as shown in Figure \ref{fig:q22-inventory-pooling}.
 
 \begin{figure}[H]
 \centering
@@ -185,14 +203,14 @@ By centralizing inventory into a shared pool with an effective average lead time
 \label{fig:q22-inventory-pooling}
 \end{figure}
 
-\textbf{Dynamic Allocation Rules (to prevent simultaneous stockout):}
+\textbf{Operational controls to prevent simultaneous stockout:}
 \begin{enumerate}
-  \item \textbf{R1 — Common Pool:} Merge B2B and B2C inventory per SKU into a single real-time pool tracked in WMS.
-  \item \textbf{R2 — Reserved Floor per channel:} Each channel maintains a floor reserve = its own ROP. Neither channel can dip below the other's floor.
-  \item \textbf{R3 — Amber Alert:} When total pool $<$ (SS\textsubscript{B2B} + SS\textsubscript{B2C}): system raises alert and prioritizes confirmed B2B purchase orders (contractual commitments).
-  \item \textbf{R4 — Red Conflict:} If same SKU is simultaneously short for both channels: B2B receives its full contracted PO quantity (penalty risk); B2C receives remainder + escalated to next pick wave + customer notified.
-  \item \textbf{R5 — AZ Spike Freeze:} For AZ-class SKUs showing demand spikes: temporarily freeze B2C allocations, concentrate stock for B2B, trigger emergency replenishment.
-  \item \textbf{R6 — End-of-Day Rebalance:} Rebalance channel inventory ratios to target ROP proportions based on rolling 7-day demand forecast.
+  \item \textbf{R1 — Common Pool:} All SKU stock merged into a single WMS pool; OMS tracks virtual availability per channel.
+  \item \textbf{R2 — Per-Channel ROP Floor:} Each channel has its own ROP threshold; replenishment triggers when any channel hits its floor.
+  \item \textbf{R3 — Amber Alert:} Pool $<$ sum of all channel ROPs $\rightarrow$ raise alert, prioritize confirmed MT POs.
+  \item \textbf{R4 — Red Conflict:} Pool $<$ total SS $\rightarrow$ activate priority allocation order (MT first, TT last) + emergency replenishment PO.
+  \item \textbf{R5 — AZ Spike Freeze:} Demand-spike AZ SKUs: temporarily reserve stock for MT, freeze TT allocation, trigger emergency PO.
+  \item \textbf{R6 — End-of-Day Rebalance:} Reset channel virtual allocations to ROP-proportional targets using rolling 7-day demand forecast.
 \end{enumerate}
 
 \end{document}

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  9 JUN 2026 00:12
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  9 JUN 2026 16:43
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -410,23 +410,34 @@ File: ../charts/q21_hcm_district_volume.png Graphic file (type bmp)
 
 
 [4]
-Overfull \hbox (235.50764pt too wide) in paragraph at lines 126--140
+Overfull \hbox (46.37575pt too wide) in paragraph at lines 131--145
  [][] 
  []
 
 
 
 [5]
+! Undefined control sequence.
+<recently read> \text 
+                      
+l.158 ... Monthly $\sigma$ is computed with $\text
+                                                  {ddof}=1$ over 7 months (J...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
 File: ../charts/q22_lead_time_sensitivity.png Graphic file (type bmp)
 <../charts/q22_lead_time_sensitivity.png>
 
 
 [6]
+
+[7]
 File: ../charts/q22_inventory_pooling.png Graphic file (type bmp)
 <../charts/q22_inventory_pooling.png>
 
-
-[7]
 
 [8] (./part2_question_summary.aux)
  ***********
@@ -435,14 +446,14 @@ L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `part2_question_summary.out' has not changed.
 
-(rerunfilecheck)             Checksum: EEEA650163DB16C391FFA8172640F3E0;2463.
+(rerunfilecheck)             Checksum: 111FA1E0705904B14CFA34751FFEB047;2562.
  ) 
 Here is how much of TeX's memory you used:
- 11120 strings out of 473832
- 179881 string characters out of 5729482
- 591571 words of memory out of 5000000
- 34063 multiletter control sequences out of 15000+600000
- 562937 words of font info for 60 fonts, out of 8000000 for 9000
+ 11122 strings out of 473832
+ 179879 string characters out of 5729482
+ 590571 words of memory out of 5000000
+ 34064 multiletter control sequences out of 15000+600000
+ 563858 words of font info for 62 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  72i,9n,79p,421b,349s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
