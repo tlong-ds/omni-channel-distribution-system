@@ -29,6 +29,7 @@ from src.logage2026.analysis import (
     build_q13_segment_profile_summary,
     build_q13_segment_province_spread_summary,
     build_safety_stock_class_a,
+    build_sku_pick_profile,
     build_slotting_plan,
     build_unresolved_candidate_region_summary,
     build_unresolved_customer_summary,
@@ -395,16 +396,18 @@ def main() -> None:
     # ── Part 3 ────────────────────────────────────────────────────────────────
     print("Building Part 3: Slotting Optimization ...")
     from src.logage2026.analysis import compute_travel_time_metrics
-    slotting_plan = build_slotting_plan(abc_xyz)
+    sku_pick_profile = build_sku_pick_profile(shipments, sku_master, abc_xyz)
+    slotting_plan = build_slotting_plan(shipments, sku_master, abc_xyz)
+    sku_pick_profile.to_csv(TABLES_DIR / "q31_sku_pick_profile.csv", index=False)
     slotting_plan.to_csv(TABLES_DIR / "slotting_plan.csv", index=False)
     travel_metrics = compute_travel_time_metrics(abc_xyz)
 
     print("Rendering Part 3 charts ...")
-    save_q31_slotting_chart(abc_xyz, travel_metrics)
+    save_q31_slotting_chart(abc_xyz, travel_metrics, slotting_plan=slotting_plan)
     save_q32_flowchart_image()
 
     print("Writing Part 3 LaTeX report ...")
-    write_part3_notes(abc_xyz)
+    write_part3_notes(shipments, sku_master, abc_xyz)
     print("Part 3 complete.")
 
 

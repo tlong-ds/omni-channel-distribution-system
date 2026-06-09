@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 JUN 2026 16:43
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 JUN 2026 17:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -486,52 +486,64 @@ e
 
 Package hyperref Info: Link coloring OFF on input line 33.
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 4
-6.
+8.
 (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 6
-1.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 5
+8.
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 6
-1.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 5
+8.
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-61.
+58.
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-61.
+58.
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 61.
+(Font)              <10.95> on input line 58.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 61.
+(Font)              <8> on input line 58.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 61.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 61.
+(Font)              <6> on input line 58.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 58.
 
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 61.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 58.
 
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
+Underfull \hbox (badness 3746) in paragraph at lines 107--107
+[]|\T1/lmr/m/n/10.95 pallet_share $\OML/lmm/m/it/10.95 <$ \T1/lmr/m/n/10.95 40%
+ AND car-
+ []
+
+
+
+[1
+
+{/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/loc
+al/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/local/texlive/202
+5/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
 
 ! LaTeX Error: Unicode character ạ (U+1EA1)
                not set up for use with LaTeX.
@@ -540,8 +552,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.89         1 & 4200008229 & Quạ
-                                   t treo ASIAvina - VY377990 - Xám & A-X &...
+l.142         1 & 4200008229 & Quạ
+                                    t treo ASIAvina - VY377990 - Xám & A-X ...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
@@ -554,8 +566,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.90         2 & 4200008371 & QUẠ
-                                   T ĐỨNG VY619990 & A-X & 682 & 3,355 \\
+l.143         2 & 4200008371 & QUẠ
+                                    T ĐỨNG VY619990 & A-X & 682 & 3,355 \\
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
@@ -567,8 +579,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.90         2 & 4200008371 & QUẠT ĐỨ
-                                          NG VY619990 & A-X & 682 & 3,355 \\
+l.143         2 & 4200008371 & QUẠT ĐỨ
+                                           NG VY619990 & A-X & 682 & 3,355 \\
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
@@ -580,8 +592,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.91         3 & 4200008366 & QUẠ
-                                   T SÀN TURB0 VY616790 & A-X & 680 & 2,838 \\
+l.144         3 & 4200008366 & QUẠ
+                                    T SÀN TURB0 VY616790 & A-X & 680 & 2,83...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
@@ -594,8 +606,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.92         4 & 4200008117 & Quạ
-                                   t treo ASIAvina - VY357690 - trắng & A-...
+l.145         4 & 4200008117 & Quạ
+                                    t treo ASIAvina - VY357690 - trắng & A...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
@@ -608,7 +620,7 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.92 ... & Quạt treo ASIAvina - VY357690 - trắ
+l.145 ...& Quạt treo ASIAvina - VY357690 - trắ
                                                   ng & A-X & 666 & 4,033 \\
 You may provide a definition with
 \DeclareUnicodeCharacter 
@@ -621,8 +633,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.93         5 & 4200008102 & Quạ
-                                   t lửng ASIAvina - VY538790 - Xám & A-X...
+l.146         5 & 4200008102 & Quạ
+                                    t lửng ASIAvina - VY538790 - Xám & A-...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
@@ -635,61 +647,69 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.93         5 & 4200008102 & Quạt lử
-                                         ng ASIAvina - VY538790 - Xám & A-X...
+l.146         5 & 4200008102 & Quạt lử
+                                          ng ASIAvina - VY538790 - Xám & A-...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
 
-Overfull \hbox (33.58104pt too wide) in paragraph at lines 85--96
+Overfull \hbox (33.58104pt too wide) in paragraph at lines 138--149
+ [][] 
+ []
+
+
+Overfull \hbox (104.98334pt too wide) in paragraph at lines 166--177
  [][] 
  []
 
 
 
-[1
-
-{/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/loc
-al/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/local/texlive/202
-5/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2025/texmf-dist/
-fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2025/texmf-dist/fonts/enc/
-dvips/lm/lm-rm.enc}]
-<../charts/q31_slotting_analysis.png, id=25, 1003.5894pt x 427.3566pt>
+[2{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/lo
+cal/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/20
+25/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2025/texmf-d
+ist/fonts/enc/dvips/lm/lm-mathex.enc}]
+<../charts/q31_slotting_analysis.png, id=38, 1364.9394pt x 427.3566pt>
 File: ../charts/q31_slotting_analysis.png Graphic file (type png)
 <use ../charts/q31_slotting_analysis.png>
 Package pdftex.def Info: ../charts/q31_slotting_analysis.png  used on input lin
-e 134.
-(pdftex.def)             Requested size: 430.31812pt x 183.2446pt.
+e 195.
+(pdftex.def)             Requested size: 439.37941pt x 137.56549pt.
+
+Overfull \hbox (9.7751pt too wide) in paragraph at lines 202--204
+[]\T1/lmr/bx/n/10.95 U-flow con-fig-u-ra-tion\T1/lmr/m/n/10.95 : Re-ceiv-ing an
+d ship-ping docks on the same wall; highest-convenience
+ []
 
 
-[2{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}{/usr/lo
-cal/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc} <../charts/q31_sl
-otting_analysis.png>]
 
-[3]
-<../charts/q32_pick_pack_flowchart.png, id=61, 1149.093pt x 1582.2312pt>
+[3 <../charts/q31_slotting_analysis.png>]
+
+[4]
+<../charts/q32_pick_pack_flowchart.png, id=70, 1149.093pt x 1582.2312pt>
 File: ../charts/q32_pick_pack_flowchart.png Graphic file (type png)
 <use ../charts/q32_pick_pack_flowchart.png>
 Package pdftex.def Info: ../charts/q32_pick_pack_flowchart.png  used on input l
-ine 212.
+ine 278.
 (pdftex.def)             Requested size: 398.61395pt x 548.86407pt.
 
 
-[4 <../charts/q32_pick_pack_flowchart.png>] (./part3_question_summary.aux)
+[5]
+
+[6 <../charts/q32_pick_pack_flowchart.png>] (./part3_question_summary.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 11583 strings out of 473190
- 176771 string characters out of 5715801
- 592187 words of memory out of 5000000
- 34629 multiletter control sequences out of 15000+600000
+ 11593 strings out of 473190
+ 176880 string characters out of 5715801
+ 592255 words of memory out of 5000000
+ 34631 multiletter control sequences out of 15000+600000
  600749 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 89i,8n,93p,767b,442s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 89i,11n,93p,822b,512s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
 cal/texlive/2025/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
 e/2025/texmf-dist/fonts/type1/public/lm/lmex10.pfb></usr/local/texlive/2025/tex
@@ -698,10 +718,10 @@ nts/type1/public/lm/lmmi8.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/p
 ublic/lm/lmr10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lm
 r8.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmri10.pfb></u
 sr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsy10.pfb>
-Output written on part3_question_summary.pdf (4 pages, 490692 bytes).
+Output written on part3_question_summary.pdf (6 pages, 554485 bytes).
 PDF statistics:
- 159 PDF objects out of 1000 (max. 8388607)
- 127 compressed objects within 2 object streams
- 35 named destinations out of 1000 (max. 500000)
+ 177 PDF objects out of 1000 (max. 8388607)
+ 143 compressed objects within 2 object streams
+ 43 named destinations out of 1000 (max. 500000)
  99 words of extra memory for PDF output out of 10000 (max. 10000000)
 
