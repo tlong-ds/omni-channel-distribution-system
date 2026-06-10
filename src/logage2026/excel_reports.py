@@ -89,8 +89,6 @@ def write_summary_workbook(
     q11_ws.title = "Q1.1 ABC-XYZ"
     _write_q11_abc_xyz_sheet(q11_ws, abc_xyz, abc_xyz_matrix, q11_shipments)
     _write_full_sku_ranking(workbook.create_sheet("Q1.1 Full SKU Ranking"), abc_xyz)
-    _write_monthly_demand_sheet(workbook.create_sheet("Q1.1 Monthly Demand"), monthly_demand)
-    _write_class_a_deep_dive(workbook.create_sheet("Q1.1 Class A Deep Dive"), monthly_demand)
 
     # ── Part 1 — Q1.2 ────────────────────────────────────────────────────────
     _write_q12_heatmap_summary_sheet(
@@ -99,9 +97,6 @@ def write_summary_workbook(
         q12_top_demand_provinces_summary,
         warehouse_imbalance_summary,
     )
-    _write_dataframe_sheet(workbook.create_sheet("Q1.2 Warehouse by Region"), "QUESTION 1.2 — WAREHOUSE REGION SUMMARY", warehouse_region_summary)
-    _write_dataframe_sheet(workbook.create_sheet("Q1.2 Top Provinces"), "QUESTION 1.2 — TOP DEMAND PROVINCES", q12_top_demand_provinces_summary)
-    _write_dataframe_sheet(workbook.create_sheet("Q1.2 Warehouse Imbalance"), "QUESTION 1.2 — WAREHOUSE IMBALANCE", warehouse_imbalance_summary)
 
     # ── Part 1 — Q1.3 ────────────────────────────────────────────────────────
     _write_q13_order_profile_summary_sheet(
@@ -109,27 +104,18 @@ def write_summary_workbook(
         q13_segment_profile_summary,
         q13_segment_packaging_summary,
     )
-    _write_dataframe_sheet(workbook.create_sheet("Q1.3 Segment Profile"), "QUESTION 1.3 — ORDER PROFILE BY SEGMENT", q13_segment_profile_summary)
-    _write_dataframe_sheet(workbook.create_sheet("Q1.3 Packaging"), "QUESTION 1.3 — PACKAGING SPREAD BY SEGMENT", q13_segment_packaging_summary)
-    _write_dataframe_sheet(workbook.create_sheet("Q1.3 Geo Spread"), "QUESTION 1.3 — GEOGRAPHIC SPREAD BY SEGMENT", q13_segment_geographic_spread_summary)
 
     # ── Part 2 — Q2.1 ────────────────────────────────────────────────────────
-    _write_dataframe_sheet(workbook.create_sheet("Q2.1 HCM Districts"), "QUESTION 2.1 — HCM DISTRICT SUMMARY", hcm_district_summary)
-    _write_q21_dark_store_sla_sheet(workbook.create_sheet("Q2.1 Dark Store SLA"), network_model_evaluation, shipments)
+    _write_q21_dark_store_sla_sheet(workbook.create_sheet("Q2.1 Dark Store SLA & Districts"), network_model_evaluation, shipments)
 
     # ── Part 2 — Q2.2 ────────────────────────────────────────────────────────
     _write_q22_lead_time_sheet(workbook.create_sheet("Q2.2 Lead Time"), lead_time_table)
-    _write_q22_safety_stock_sheet(workbook.create_sheet("Q2.2 Safety Stock"), safety_stock_class_a)
-    _write_q22_inventory_pooling_sheet(workbook.create_sheet("Q2.2 Inventory Pooling"), inventory_pooling_summary)
-    _write_dataframe_sheet(workbook.create_sheet("Q2.2 Lead Time Sensitivity"), "QUESTION 2.2 — LEAD TIME SENSITIVITY (SCENARIO TABLE)", lead_time_sensitivity)
+    _write_q22_inventory_pooling_sheet(workbook.create_sheet("Q2.2 Safety Stock & Pooling"), inventory_pooling_summary, safety_stock_class_a)
 
     # ── Part 3 — Q3.1 ────────────────────────────────────────────────────────
-    _write_q31_slotting_design_sheet(workbook.create_sheet("Q3.1 Slotting Design"), travel_metrics)
-    _write_q31_travel_proof_sheet(workbook.create_sheet("Q3.1 Travel Proof"), travel_metrics)
+    _write_q31_slotting_summary_sheet(workbook.create_sheet("Q3.1 Slotting Summary"), travel_metrics)
     _write_q31_slot_assignment_sheet(workbook.create_sheet("Q3.1 Slot Assignment"), slotting_plan)
     _write_q31_u_shape_sheet(workbook.create_sheet("Q3.1 Heatmap (U-shape)"))
-    _write_dataframe_sheet(workbook.create_sheet("Q3.1 Slotting Plan"), "QUESTION 3.1 — FULL SLOTTING PLAN (MODEL 2)", slotting_plan)
-    _write_dataframe_sheet(workbook.create_sheet("Q3.1 SKU Pick Profile"), "QUESTION 3.1 — SKU PICK PROFILE AND UNIT MIXES", sku_pick_profile)
 
     # ── Part 3 — Q3.2 ────────────────────────────────────────────────────────
     _write_q32_pick_pack_sheet(workbook.create_sheet("Q3.2 Pick & Pack"))
@@ -1202,7 +1188,7 @@ def _write_q22_lead_time_sheet(ws, lead_time_table: pd.DataFrame) -> None:
         ws.cell(r, 2).font = BOLD_FONT
         ws.cell(r, 3, bench)
         ws.cell(r, 3).font = BOLD_FONT
-        ws.merge_cells(f"B{r}:C{r}")
+        ws.merge_cells(f"C{r}:D{r}")
         _style_range(ws, r, 2, 10, fill=TITLE_FILL, font=Font(bold=True, color="FFFFFF"), alignment=LEFT)
 
     ws.freeze_panes = "B3"
@@ -1259,10 +1245,11 @@ def _write_q22_safety_stock_sheet(ws, safety_stock_class_a: pd.DataFrame) -> Non
     ws.freeze_panes = "B3"
 
 
-def _write_q22_inventory_pooling_sheet(ws, inventory_pooling_summary: pd.DataFrame) -> None:
-    for idx, width in enumerate([3, 30, 28, 16, 16, 20, 20, 16], start=1):
+def _write_q22_inventory_pooling_sheet(ws, inventory_pooling_summary: pd.DataFrame, safety_stock_class_a: pd.DataFrame) -> None:
+    widths = [3, 22, 32, 14, 14, 16, 16, 14, 14, 12, 12, 16, 16]
+    for idx, width in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(idx)].width = width
-    _apply_title(ws, "B1", 8, "LOGage 2026 — QUESTION 2.2 | INVENTORY POOLING STRATEGY")
+    _apply_title(ws, "B1", 12, "LOGage 2026 — QUESTION 2.2 | INVENTORY POOLING & SAFETY STOCK")
 
     r = 3
     ws.merge_cells(f"B{r}:H{r}")
@@ -1365,13 +1352,64 @@ def _write_q22_inventory_pooling_sheet(ws, inventory_pooling_summary: pd.DataFra
         ws.merge_cells(f"C{r}:H{r}")
         _style_range(ws, r, 2, 8, fill=TITLE_FILL, font=Font(bold=True, color="FFFFFF"), alignment=LEFT)
 
+    r += 3
+    ws.merge_cells(f"B{r}:L{r}")
+    ws[f"B{r}"] = "E. SAFETY STOCK PER CLASS A SKU"
+    _style_range(ws, r, 2, 12, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    
+    r += 1
+    ws.merge_cells(f"B{r}:L{r}")
+    ws[f"B{r}"] = "FORMULAS:  SS = Z x sigma_daily x sqrt(LT_avg)    |    ROP = mu_daily x LT_avg + SS"
+    _style_range(ws, r, 2, 12, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=LEFT)
+    
+    r += 1
+    ws.merge_cells(f"B{r}:L{r}")
+    ws[f"B{r}"] = "Parameters: Z = 1.645 (95% service level), LT_avg = 1.94 days, sqrt(LT) = 1.393, ddof=1 over 7 months (Jun Dec 2025)"
+    _style_range(ws, r, 2, 12, fill=SUBHEADER_FILL, alignment=LEFT)
+    
+    r += 1
+    headers_ss = [
+        "SKU", "Product", "ABC-XYZ", "mu_monthly", "sigma_monthly",
+        "mu_daily", "sigma_daily", "Z", "sqrt(LT)", "Safety Stock", "ROP", ""
+    ]
+    for col, value in enumerate(headers_ss, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 12, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+
+    for _, row_data in safety_stock_class_a.iterrows():
+        abc_xyz_code = f"{row_data.get('abc_quantity', '')}{row_data.get('abc_frequency', '')}"
+        values = [
+            row_data["sku_code"],
+            row_data.get("product_name", ""),
+            abc_xyz_code,
+            row_data["mu_monthly"] if pd.notna(row_data["mu_monthly"]) else 0,
+            row_data["sigma_monthly"] if pd.notna(row_data["sigma_monthly"]) else 0,
+            row_data["mu_daily"] if pd.notna(row_data["mu_daily"]) else 0,
+            row_data["sigma_daily"] if pd.notna(row_data["sigma_daily"]) else 0,
+            1.645,
+            row_data["sqrt_lt"] if pd.notna(row_data["sqrt_lt"]) else 0,
+            row_data["ss"] if pd.notna(row_data["ss"]) else 0,
+            row_data["rop"] if pd.notna(row_data["rop"]) else 0,
+        ]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col in {2, 3, 4} else CENTER
+            if col in {5, 6, 7, 8, 10, 11, 12} and isinstance(value, (int, float)):
+                cell.number_format = "0.0"
+            elif col == 11:
+                cell.number_format = "0"
+        r += 1
+
     ws.freeze_panes = "B3"
 
 
-def _write_q31_slotting_design_sheet(ws, travel_metrics: dict) -> None:
-    for idx, width in enumerate([3, 28, 18, 12, 14, 18, 16, 16], start=1):
+def _write_q31_slotting_summary_sheet(ws, travel_metrics: dict) -> None:
+    widths = [3, 30, 20, 14, 16, 20, 20, 16, 16]
+    for idx, width in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(idx)].width = width
-    _apply_title(ws, "B1", 8, "LOGage 2026 — QUESTION 3.1 | SLOTTING DESIGN")
+    _apply_title(ws, "B1", 8, "LOGage 2026 — QUESTION 3.1 | SLOTTING OPTIMIZATION & TRAVEL PROOF")
 
     r = 3
     ws.merge_cells(f"B{r}:H{r}")
@@ -1401,13 +1439,13 @@ def _write_q31_slotting_design_sheet(ws, travel_metrics: dict) -> None:
             cell.alignment = LEFT if col in {2, 5} else CENTER
         r += 1
 
-    r += 1
+    r += 2
     ws.merge_cells(f"B{r}:H{r}")
     ws[f"B{r}"] = "B. ZONE DESIGN"
     _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
     r += 1
-    headers = ["Zone", "Class", "# SKUs", "Total Picks", "Pick Mode", "Slot Rule", "Dist to Packing (m)", ""]
-    for col, value in enumerate(headers, start=2):
+    headers_zone = ["Zone", "Class", "# SKUs", "Total Picks", "Pick Mode", "Slot Rule", "Dist to Packing (m)", ""]
+    for col, value in enumerate(headers_zone, start=2):
         ws.cell(r, col, value)
     _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
     r += 1
@@ -1427,23 +1465,15 @@ def _write_q31_slotting_design_sheet(ws, travel_metrics: dict) -> None:
             cell.alignment = LEFT if col in {2, 6, 7} else CENTER
         r += 1
 
-    ws.freeze_panes = "B3"
-
-
-def _write_q31_travel_proof_sheet(ws, travel_metrics: dict) -> None:
-    for idx, width in enumerate([3, 36, 20, 20, 20, 20, 20], start=1):
-        ws.column_dimensions[get_column_letter(idx)].width = width
-    _apply_title(ws, "B1", 7, "LOGage 2026 — QUESTION 3.1 | TRAVEL-TIME PROOF")
-
-    r = 3
-    ws.merge_cells(f"B{r}:G{r}")
-    ws[f"B{r}"] = "A. ZONE DISTANCE TABLE"
-    _style_range(ws, r, 2, 7, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 2
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "C. ZONE DISTANCE TABLE"
+    _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
     r += 1
-    headers = ["Zone", "Picks (T_ij)", "Dist D_ij (m)", "Round-Trip Dist (m)", "Pick Rate (pcs/min)", "Travel Time (min)", ""]
-    for col, value in enumerate(headers, start=2):
+    headers_dist = ["Zone", "Picks (T_ij)", "Dist D_ij (m)", "Round-Trip Dist (m)", "Pick Rate (pcs/min)", "Travel Time (min)", "", ""]
+    for col, value in enumerate(headers_dist, start=2):
         ws.cell(r, col, value)
-    _style_range(ws, r, 2, 7, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
     r += 1
     walk_speed = travel_metrics.get("walk_speed_m_min", 72)
     for zone_detail in travel_metrics.get("zone_detail", []):
@@ -1465,8 +1495,8 @@ def _write_q31_travel_proof_sheet(ws, travel_metrics: dict) -> None:
     total_picks = travel_metrics.get("total_picks", 0)
     total_rt = travel_metrics.get("opt_total_round_trip_m", 0)
     total_time = travel_metrics.get("opt_travel_time_min", 0)
-    values = ["TOTAL", total_picks, "", round(total_rt, 0), "", round(total_time, 1)]
-    for col, value in enumerate(values, start=2):
+    values_tot = ["TOTAL", total_picks, "", round(total_rt, 0), "", round(total_time, 1)]
+    for col, value in enumerate(values_tot, start=2):
         cell = ws.cell(r, col, value)
         cell.border = THIN_BORDER
         cell.font = BOLD_FONT
@@ -1474,14 +1504,14 @@ def _write_q31_travel_proof_sheet(ws, travel_metrics: dict) -> None:
     _style_range(ws, r, 2, 7, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=CENTER)
     r += 2
 
-    ws.merge_cells(f"B{r}:G{r}")
-    ws[f"B{r}"] = "B. RESULTS OPTIMIZED vs BASELINE"
-    _style_range(ws, r, 2, 7, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "D. RESULTS OPTIMIZED vs BASELINE"
+    _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
     r += 1
-    headers = ["Metric", "Baseline (Random)", "Optimized (ABC-Zoned)", "Improvement", "Status", "", ""]
-    for col, value in enumerate(headers, start=2):
+    headers_res = ["Metric", "Baseline (Random)", "Optimized (ABC-Zoned)", "Improvement", "Status", "", "", ""]
+    for col, value in enumerate(headers_res, start=2):
         ws.cell(r, col, value)
-    _style_range(ws, r, 2, 7, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
     r += 1
     meets_target = travel_metrics.get("meets_target", False)
     reduction = travel_metrics.get("travel_reduction", 0)
@@ -1600,6 +1630,17 @@ def _write_q31_u_shape_sheet(ws) -> None:
         ws.cell(r, 2).font = Font(name="Courier New", size=9)
         r += 1
 
+    img_path = CHARTS_DIR / "q31_u_shape_heatmap.png"
+    if img_path.exists():
+        try:
+            img = XLImage(str(img_path))
+            orig_w, orig_h = img.width, img.height
+            img.width = 650
+            img.height = int(650 * orig_h / orig_w)
+            ws.add_image(img, f"B{r + 4}")
+        except Exception as e:
+            print(f"Warning: could not embed Q3.1 heatmap image: {e}")
+
     ws.freeze_panes = "B3"
 
 
@@ -1669,5 +1710,16 @@ def _write_q32_pick_pack_sheet(ws) -> None:
             cell.alignment = LEFT
             cell.font = Font(size=10)
         r += 1
+
+    img_path = CHARTS_DIR / "q32_pick_pack_flowchart.png"
+    if img_path.exists():
+        try:
+            img = XLImage(str(img_path))
+            orig_w, orig_h = img.width, img.height
+            img.width = 550
+            img.height = int(550 * orig_h / orig_w)
+            ws.add_image(img, f"B{r + 5}")
+        except Exception as e:
+            print(f"Warning: could not embed Q3.2 flowchart image: {e}")
 
     ws.freeze_panes = "B3"
