@@ -144,6 +144,11 @@ def main() -> None:
     network_model_evaluation = build_network_model_evaluation(hcm_district_summary)
     q21_channel_flow_summary = build_q21_channel_flow_summary(shipments)
 
+    # Part 3 metrics needed early for summary workbook
+    sku_pick_profile = build_sku_pick_profile(shipments, sku_master, abc_xyz)
+    slotting_plan = build_slotting_plan(shipments, sku_master, abc_xyz)
+    travel_metrics = compute_travel_time_metrics(abc_xyz)
+
     sku_master.to_csv(CLEANED_DIR / "sku_master_cleaned.csv", index=False)
     distributors.to_csv(CLEANED_DIR / "distributors_cleaned.csv", index=False)
     shipments.to_csv(CLEANED_DIR / "shipments_cleaned.csv", index=False)
@@ -322,6 +327,9 @@ def main() -> None:
         hcm_district_summary=hcm_district_summary,
         network_model_evaluation=network_model_evaluation,
         shipments=shipments,
+        slotting_plan=slotting_plan,
+        sku_pick_profile=sku_pick_profile,
+        travel_metrics=travel_metrics,
         output_path=OUTPUT_DIR / "summary_table.xlsx",
     )
 
@@ -397,12 +405,8 @@ def main() -> None:
 
     # ── Part 3 ────────────────────────────────────────────────────────────────
     print("Building Part 3: Slotting Optimization ...")
-    from src.logage2026.analysis import compute_travel_time_metrics
-    sku_pick_profile = build_sku_pick_profile(shipments, sku_master, abc_xyz)
-    slotting_plan = build_slotting_plan(shipments, sku_master, abc_xyz)
     sku_pick_profile.to_csv(TABLES_DIR / "q31_sku_pick_profile.csv", index=False)
     slotting_plan.to_csv(TABLES_DIR / "slotting_plan.csv", index=False)
-    travel_metrics = compute_travel_time_metrics(abc_xyz)
 
     print("Rendering Part 3 charts ...")
     save_q31_slotting_chart(abc_xyz, travel_metrics, slotting_plan=slotting_plan)

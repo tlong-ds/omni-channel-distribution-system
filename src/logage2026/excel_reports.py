@@ -47,10 +47,11 @@ def _write_dataframe_sheet(ws, title_text: str, df: pd.DataFrame) -> None:
     
     for row_idx, row in enumerate(df.itertuples(index=False), start=3):
         for col_idx, value in enumerate(row, start=2):
-            cell = ws.cell(row_idx, col_idx, value)
+            val_to_write = None if pd.isna(value) else value
+            cell = ws.cell(row_idx, col_idx, val_to_write)
             cell.border = THIN_BORDER
-            cell.alignment = LEFT if isinstance(value, str) else CENTER
-            if isinstance(value, float):
+            cell.alignment = LEFT if isinstance(val_to_write, str) else CENTER
+            if isinstance(val_to_write, float):
                 cell.number_format = "0.00"
     
     ws.freeze_panes = "B3"
@@ -74,6 +75,9 @@ def write_summary_workbook(
     hcm_district_summary: pd.DataFrame,
     network_model_evaluation: pd.DataFrame,
     shipments: pd.DataFrame,
+    slotting_plan: pd.DataFrame,
+    sku_pick_profile: pd.DataFrame,
+    travel_metrics: dict,
     output_path: Path,
 ) -> Path:
     workbook = Workbook()
@@ -97,6 +101,10 @@ def write_summary_workbook(
     _write_dataframe_sheet(workbook.create_sheet("Q2.2 Inventory Pooling"), "QUESTION 2.2 — INVENTORY POOLING SUMMARY", inventory_pooling_summary)
     _write_dataframe_sheet(workbook.create_sheet("Q2.1 HCM Districts"), "QUESTION 2.1 — HCM DISTRICT SUMMARY", hcm_district_summary)
     _write_q21_dark_store_sla_sheet(workbook.create_sheet("Q2.1 Dark Store SLA"), network_model_evaluation, shipments)
+    
+    _write_dataframe_sheet(workbook.create_sheet("Q3.1 Slotting Plan"), "QUESTION 3.1 — MODEL 2 SLOTTING PLAN AND SKU ASSIGNMENTS", slotting_plan)
+    _write_dataframe_sheet(workbook.create_sheet("Q3.1 SKU Pick Profile"), "QUESTION 3.1 — SKU PICK PROFILE AND UNIT MIXES", sku_pick_profile)
+    _write_q31_travel_time_summary_sheet(workbook.create_sheet("Q3.1 Travel-Time Summary"), travel_metrics, sku_pick_profile, slotting_plan, abc_xyz)
             
     workbook.save(output_path)
     return output_path
@@ -750,4 +758,164 @@ def _write_q21_dark_store_sla_sheet(ws, network_model_evaluation: pd.DataFrame, 
             cell.number_format = "#,##0"
         ws.cell(r, 2).font = BOLD_FONT
         ws.cell(r, 3).font = BOLD_FONT
+        r += 1
+
+
+def _write_q31_travel_time_summary_sheet(
+    ws,
+    travel_metrics: dict,
+    sku_pick_profile: pd.DataFrame,
+    slotting_plan: pd.DataFrame,
+    abc_xyz: pd.DataFrame,
+) -> None:
+    from src.logage2026.analysis import (
+        DIST_A_M,
+        DIST_B_M,
+        DIST_C_M,
+        PICK_RATE_A_PCS_MIN,
+        PICK_RATE_B_PCS_MIN,
+        PICK_RATE_C_PCS_MIN,
+        REDUCTION_TARGET,
+        ROUND_TRIP_FACTOR,
+    )
+
+    ws.column_dimensions[get_column_letter(1)].width = 3
+    for col in range(2, 9):
+        ws.column_dimensions[get_column_letter(col)].width = 18
+    ws.column_dimensions[get_column_letter(9)].width = 30
+
+    _apply_title(ws, "B1", 9, "LOGage 2026 — QUESTION 3.1 | SLOT PLANNING & TRAVEL-TIME PROOF")
+
+    r = 3
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "A. ZONE SUMMARY (MODEL 1) — PHYSICAL ASSIGNMENTS"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+
+    headers = ["Zone", "Class", "# SKUs", "Total Picks", "One-way Dist (m)", "Round-trip factor", "Pick Rate", "Zone Description", ""]
+    for col, val in enumerate(headers, start=2):
+        ws.cell(r, col, val)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+
+    zone_data = [
+        ("Pick-Face Zone", "A", travel_metrics["zone_counts"]["A"], travel_metrics["zone_picks"]["A"], DIST_A_M, ROUND_TRIP_FACTOR, f"{PICK_RATE_A_PCS_MIN:.0f} pcs/min", "Golden zone (ground racks)"),
+        ("Forward Reserve Zone", "B", travel_metrics["zone_counts"]["B"], travel_metrics["zone_picks"]["B"], DIST_B_M, ROUND_TRIP_FACTOR, f"{PICK_RATE_B_PCS_MIN:.1f} pcs/min", "Replenished from bulk (mid racks)"),
+        ("Reserve / Bulk Zone", "C", travel_metrics["zone_counts"]["C"], travel_metrics["zone_picks"]["C"], DIST_C_M, ROUND_TRIP_FACTOR, f"{PICK_RATE_C_PCS_MIN:.1f} pcs/min", "Upper racks & block-stack")
+    ]
+
+    for name, cls, count, picks, dist, rtf, rate, desc in zone_data:
+        values = [name, cls, count, picks, dist, rtf, rate, desc, ""]
+        for col_idx, value in enumerate(values, start=2):
+            cell = ws.cell(r, col_idx, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col_idx in {2, 9} else CENTER
+            if col_idx == 5:
+                cell.number_format = "#,##0"
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS.get(cls), alignment=None)
+        r += 1
+
+    r += 1
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "B. PICK-UNIT MIX BY ZONE (Avg. order-line share)"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+
+    headers = ["Zone", "Pallet Pick Share", "Carton Pick Share", "Loose Pick Share", "", "", "", "", ""]
+    for col, val in enumerate(headers, start=2):
+        ws.cell(r, col, val)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+
+    zone_mix = sku_pick_profile.groupby("abc_quantity")[["pallet_share", "carton_share", "loose_share"]].mean()
+    for cls in ["A", "B", "C"]:
+        p_share = zone_mix.loc[cls, "pallet_share"] if cls in zone_mix.index else 0.0
+        c_share = zone_mix.loc[cls, "carton_share"] if cls in zone_mix.index else 0.0
+        l_share = zone_mix.loc[cls, "loose_share"] if cls in zone_mix.index else 0.0
+
+        values = [f"Zone {cls}", p_share, c_share, l_share, "", "", "", "", ""]
+        for col_idx, value in enumerate(values, start=2):
+            cell = ws.cell(r, col_idx, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col_idx == 2 else CENTER
+            if col_idx in {3, 4, 5} and isinstance(value, float):
+                cell.number_format = "0.0%"
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS.get(cls), alignment=None)
+        r += 1
+
+    r += 1
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "C. MODEL 2 SUB-TIER ASSIGNMENTS"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+
+    headers = ["Sub-Tier", "Name", "Assignment Rule", "SKUs", "", "", "", "", ""]
+    for col, val in enumerate(headers, start=2):
+        ws.cell(r, col, val)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+
+    tier_counts = slotting_plan["sub_tier"].value_counts().to_dict()
+    sub_tiers = [
+        ("A1", "Pallet Lane", "pallet_share >= 40% AND CBM >= 0.07 m3 (ground level)", tier_counts.get("A1", 0)),
+        ("A2", "Big-Face Shelf", "pallet_share < 40% AND carton_share >= 80% (waist height)", tier_counts.get("A2", 0)),
+        ("A3", "Mixed-Pick", "Remaining Class A (ground pick-face racks)", tier_counts.get("A3", 0)),
+        ("B1", "Bulk-Replen", "pallet_share >= 30% OR CBM >= 0.07 m3 (mid-aisle ground)", tier_counts.get("B1", 0)),
+        ("B2", "Two-Bin", "Remaining Class B (forward pick-face bin)", tier_counts.get("B2", 0)),
+        ("C1", "Upper Rack", "CBM < 0.05 m3 (small/light slow-movers)", tier_counts.get("C1", 0)),
+        ("C2", "Pallet Block", "CBM >= 0.05 m3 (floor block-stack behind Zone B)", tier_counts.get("C2", 0)),
+    ]
+
+    for code, name, rule, count in sub_tiers:
+        cls = code[0]
+        values = [code, name, rule, count, "", "", "", "", ""]
+        for col_idx, value in enumerate(values, start=2):
+            cell = ws.cell(r, col_idx, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col_idx in {3, 4} else CENTER
+            if col_idx == 5:
+                cell.number_format = "#,##0"
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS.get(cls), alignment=None)
+        r += 1
+
+    r += 1
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "D. TRAVEL-TIME PROOF SUMMARY (Baseline vs. Optimized)"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+
+    headers = ["Metric", "Baseline (Random Placement)", "Optimized (ABC-Zoned)", "Improvement / Status", "", "", "", "", ""]
+    for col, val in enumerate(headers, start=2):
+        ws.cell(r, col, val)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+
+    status_text = "MEETS TARGET" if travel_metrics["meets_target"] else "BELOW TARGET"
+    reduction_pct = travel_metrics["travel_reduction"]
+
+    rows = [
+        ("Avg One-way Distance per Pick", travel_metrics["baseline_avg_dist_m"], travel_metrics["opt_avg_oneway_m_per_pick"], "meters"),
+        ("Total Round-trip Distance", travel_metrics["baseline_total_round_trip_m"], travel_metrics["opt_total_round_trip_m"], "meters"),
+        ("Travel Time (walk speed 72m/min)", travel_metrics["baseline_travel_time_min"], travel_metrics["opt_travel_time_min"], "minutes"),
+        ("Travel Time Reduction %", "", reduction_pct, f"{reduction_pct:.1%} (Target: >= {REDUCTION_TARGET:.0%})"),
+        ("SLA Performance Status", "", status_text, "PASSED" if travel_metrics["meets_target"] else "FAILED")
+    ]
+
+    for metric, base, opt, note in rows:
+        values = [metric, base, opt, note, "", "", "", "", ""]
+        for col_idx, value in enumerate(values, start=2):
+            cell = ws.cell(r, col_idx, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col_idx in {2, 5} else CENTER
+            if col_idx in {3, 4} and isinstance(value, float):
+                if "Reduction" in metric:
+                    cell.number_format = "0.0%"
+                else:
+                    cell.number_format = "#,##0.0"
+
+        if metric == "SLA Performance Status":
+            fill_color = "D9EAD3" if travel_metrics["meets_target"] else "F4CCCC"
+            _style_range(ws, r, 2, 9, fill=PatternFill("solid", fgColor=fill_color), font=BOLD_FONT, alignment=None)
+        else:
+            _style_range(ws, r, 2, 9, fill=SUBHEADER_FILL if r % 2 == 0 else None, font=BOLD_FONT if col_idx == 2 else None, alignment=None)
         r += 1
