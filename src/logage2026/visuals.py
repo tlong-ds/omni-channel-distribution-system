@@ -66,7 +66,7 @@ def save_charts(
     province_layer = _prepare_vietnam_province_layer()
 
     _abc_bar(abc_xyz)
-    _xyz_frequency_bar(abc_xyz)
+    _abc_frequency_bar(abc_xyz)
     _abc_xyz_matrix_chart(abc_xyz_matrix_frequency, title_suffix="Frequency", save_suffix="frequency")
     _abc_xyz_matrix_chart(abc_xyz_matrix_volatility, title_suffix="Volatility", save_suffix="volatility")
     _region_bar(q12_region_orders_quantity_summary)
@@ -271,12 +271,12 @@ def _abc_bar(abc_xyz: pd.DataFrame) -> None:
     plt.close(fig)
 
 
-def _xyz_frequency_bar(abc_xyz: pd.DataFrame) -> None:
-    chart = abc_xyz.groupby("xyz_frequency")["order_frequency"].sum().reindex(["X", "Y", "Z"])
+def _abc_frequency_bar(abc_xyz: pd.DataFrame) -> None:
+    chart = abc_xyz.groupby("abc_frequency")["order_frequency"].sum().reindex(["A", "B", "C"])
     fig, ax = plt.subplots(figsize=(8, 4))
     chart.plot(kind="bar", color="#fb8500", ax=ax, edgecolor="black")
-    ax.set_title(f"Order Frequency Distribution by XYZ Class\n{_window_label()}")
-    ax.set_xlabel("XYZ Class")
+    ax.set_title(f"Order Frequency Distribution by ABC Frequency Class\n{_window_label()}")
+    ax.set_xlabel("ABC Frequency Class")
     ax.set_ylabel("Total Order Frequency")
     ax.set_xticklabels(chart.index, rotation=0)
     for p in ax.patches:
@@ -287,20 +287,29 @@ def _xyz_frequency_bar(abc_xyz: pd.DataFrame) -> None:
             va="bottom",
         )
     fig.tight_layout()
-    fig.savefig(CHARTS_DIR / "q11_xyz_frequency_distribution.png", dpi=160)
+    fig.savefig(CHARTS_DIR / "q11_abc_frequency_distribution.png", dpi=160)
     plt.close(fig)
 
 
 def _abc_xyz_matrix_chart(abc_xyz_matrix: pd.DataFrame, title_suffix="Frequency", save_suffix="frequency") -> None:
+    if save_suffix == "frequency":
+        cols = ["A", "B", "C"]
+        title = "ABC-Frequency SKU Count Matrix"
+        xlabel = "ABC frequency class"
+    else:
+        cols = ["X", "Y", "Z"]
+        title = "ABC-Volatility SKU Count Matrix"
+        xlabel = "XYZ volatility class"
+        
     pivot = (
         abc_xyz_matrix.pivot(index="abc_quantity", columns=abc_xyz_matrix.columns[1], values="sku_count")
-        .reindex(index=["A", "B", "C"], columns=["X", "Y", "Z"])
+        .reindex(index=["A", "B", "C"], columns=cols)
         .fillna(0)
     )
     fig, ax = plt.subplots(figsize=(6, 4.5))
     image = ax.imshow(pivot.values, cmap="YlGnBu")
-    ax.set_title(f"ABC-XYZ SKU count matrix ({title_suffix})\n{_window_label()}")
-    ax.set_xlabel("XYZ class")
+    ax.set_title(f"{title}\n{_window_label()}")
+    ax.set_xlabel(xlabel)
     ax.set_ylabel("ABC quantity class")
     ax.set_xticks(range(len(pivot.columns)), labels=pivot.columns)
     ax.set_yticks(range(len(pivot.index)), labels=pivot.index)
@@ -528,12 +537,12 @@ def _order_profile_chart(summary: pd.DataFrame) -> None:
     metrics = [
         ("avg_order_quantity", "Avg order size (pcs)", "#2f6f73"),
         ("avg_order_cbm", "Avg order size (m³)", "#d29d3d"),
-        ("avg_orders_per_customer_month", "Order frequency", "#6366f1"),
+        ("normalized_frequency_7m", "7-Month Normalized Freq", "#6366f1"),
+        ("active_month_frequency", "Active Month Avg Freq", "#8b5cf6"),
         ("avg_sku_breadth", "SKU breadth / order", "#b45f3c"),
         ("province_count", "Province count", "#4f7cac"),
         ("top_province_quantity_share", "Top-province quantity share", "#0f766e"),
         ("avg_distance_km", "Avg distance to warehouse (km proxy)", "#ec4899"),
-        ("orders", "Order count", "#64748b"),
     ]
     for ax, (column, title, color) in zip(axes.flatten(), metrics, strict=False):
         summary[column].plot(kind="bar", ax=ax, color=color)
@@ -864,45 +873,26 @@ def save_q31_slotting_chart(
     ax2.grid(axis="y", alpha=0.3)
     ax2.set_axisbelow(True)
 
-    # ── Panel 3: 5-scenario travel-time comparison ────────────────────────────
-    has_m2 = "model2_time_equiv" in metrics
-    if has_m2:
-        scenarios = ["Random\nBaseline", "ABC Zoned\n(Qty)", "XYZ Zoned\n(Freq)",
-                     "Velocity\nRanked", "Model 2\nABC+Ergon"]
-        distances = [
-            metrics["random_baseline"],
-            metrics["zoned_qty"],
-            metrics["zoned_freq"],
-            metrics["continuous_optimal"],
-            metrics["model2_time_equiv"],
-        ]
-        reductions = [
-            0.0,
-            metrics["reduction_qty"],
-            metrics["reduction_freq"],
-            metrics["reduction_optimal"],
-            metrics["reduction_model2_time"],
-        ]
-        bar_colors = ["#e74c3c", "#27ae60", "#3498db", "#9b59b6", "#e67e22"]
-    else:
-        scenarios = ["Random\nBaseline", "ABC Zoned\n(Qty)", "XYZ Zoned\n(Freq)", "Velocity\nRanked"]
-        distances = [metrics["random_baseline"], metrics["zoned_qty"], metrics["zoned_freq"], metrics["continuous_optimal"]]
-        reductions = [0.0, metrics["reduction_qty"], metrics["reduction_freq"], metrics["reduction_optimal"]]
-        bar_colors = ["#e74c3c", "#27ae60", "#3498db", "#9b59b6"]
+    # ── Panel 3: Physical Travel Time Comparison ──────────────────────────────
+    scenarios = ["Random Baseline", "Optimized"]
+    times = [metrics["baseline_travel_time_min"], metrics["opt_travel_time_min"]]
+    reductions = [0.0, metrics["travel_reduction"]]
+    bar_colors = ["#e74c3c", "#27ae60"]
 
-    bars3 = ax3.bar(scenarios, distances, color=bar_colors, edgecolor="white", linewidth=1.5)
-    ax3.set_title("Expected Picker Time-Distance\n(lower = faster throughput)", fontsize=11, fontweight="bold")
-    ax3.set_ylabel("Expected Slot Distance (rack units)")
-    for bar, dist, red in zip(bars3, distances, reductions):
-        label = f"{dist:.1f}" if red == 0 else f"{dist:.1f}\n(−{red * 100:.0f}%)"
-        ax3.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height() + 1.5,
+    bars3 = ax3.bar(scenarios, times, color=bar_colors, edgecolor="white", linewidth=1.5, width=0.5)
+    ax3.set_title("Expected Picker Travel Time\n(lower = faster throughput)", fontsize=11, fontweight="bold")
+    ax3.set_ylabel("Travel Time (minutes)")
+    for bar, val, red in zip(bars3, times, reductions):
+        label = f"{val:,.0f} min" if red == 0 else f"{val:,.0f} min\n(−{red * 100:.1f}%)"
+        ax3.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height() + (metrics["baseline_travel_time_min"] * 0.02),
                  label, ha="center", va="bottom", fontsize=8.5, fontweight="bold")
+    
     # Baseline and 30% target reference lines
-    ax3.axhline(y=metrics["random_baseline"], color="#e74c3c", linestyle="--", alpha=0.35, linewidth=1)
-    target = metrics["random_baseline"] * 0.70
+    ax3.axhline(y=metrics["baseline_travel_time_min"], color="#e74c3c", linestyle="--", alpha=0.35, linewidth=1)
+    target = metrics["baseline_travel_time_min"] * 0.70
     ax3.axhline(y=target, color="#27ae60", linestyle=":", linewidth=1.5, alpha=0.7)
-    ax3.text(len(scenarios) - 0.55, target + 2, "−30% target", color="#27ae60", fontsize=8.5, ha="right", va="bottom")
-    ax3.set_ylim(0, metrics["random_baseline"] * 1.35)
+    ax3.text(len(scenarios) - 0.55, target + (metrics["baseline_travel_time_min"] * 0.02), "−30% target", color="#27ae60", fontsize=8.5, ha="right", va="bottom")
+    ax3.set_ylim(0, metrics["baseline_travel_time_min"] * 1.25)
     ax3.grid(axis="y", alpha=0.3)
     ax3.set_axisbelow(True)
 

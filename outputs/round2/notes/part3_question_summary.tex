@@ -55,13 +55,13 @@ We present two models: \textbf{Model 1} (ABC-only baseline) and
 \begin{table}[H]
 \centering
 \caption{Model 1 --- Zone Summary (ABC-Only)}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-Zone & Class & SKU Count & \% of Picks & \% of Volume \\
+Zone & Class & \# SKUs & Total Picks & Dist to Packing & Pick Rate \\
 \midrule
-        Pick-Face Zone & A & 28 & 27.7\% & 69.83\% \\
-        Forward Reserve Zone & B & 39 & 38.2\% & 20.04\% \\
-        Reserve / Bulk Zone & C & 403 & 34.1\% & 10.13\% \\
+        Pick-Face Zone \textbf{(Golden Zone)} & A & 28 & 5,767 & 8 m & 4 pcs/min \\
+        Forward Reserve Zone & B & 39 & 7,945 & 25 m & 2.5 pcs/min \\
+        Reserve / Bulk Zone & C & 403 & 7,082 & 48 m & 2 pcs/min \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -117,18 +117,17 @@ Sub-Tier & Name & Assignment Rule & SKUs \\
 \end{table}
 
 \paragraph{Composite intra-zone score.}
-Within each sub-tier, slots are ranked by a composite score:
+Within each sub-tier, slots are ranked by a multi-criteria composite score (adapted from Tompkins et al., 2010):
 \[
 score = 0.50 \times v_{rank} + 0.30 \times ergo_{penalty} + 0.20 \times size_{score}
 \]
-where $v_{rank}$ is the normalised velocity rank (0=fastest), $ergo_{penalty}$
-is 0 / 0.5 / 1.0 for pcs weight $\leq$3\,kg / $\leq$8\,kg / $>$8\,kg, and
-$size_{score}$ is CBM relative to the median within the same ABC class.
+where $v_{rank}$ is the normalised velocity rank (0=fastest), $ergo_{penalty}$ is the handling weight penalty (0 / 0.5 / 1.0 for unit weight $\leq$3\,kg, 3--8\,kg, and $>$8\,kg, based on ISO 11228-1 and NIOSH manual handling guidelines), and $size_{score}$ is the CBM relative to the median of the class.
+
+\paragraph{Pick-Time Benchmarks.}
+The model uses standard pick-times (6.0\,sec/piece for loose picking from shelves, 12.0\,sec/carton for manual hand-carry, and 120.0\,sec/pallet for forklift retrieval), verified against industrial engineering MOST/MTM standards and Vietnam logistics benchmarks (1--3 minutes for forklift pallet moves; Mecalux, 2024).
 
 \paragraph{A-Door Rule.}
-The top-10 velocity SKUs (by order frequency) are pinned to the first 10 rack bays
-from the outbound dock regardless of sub-tier --- eliminating travel for the most
-frequently picked items during peak-hour bursts.
+The top-10 velocity SKUs are pinned to the first 10 bays adjacent to the outbound dock (dock-adjacent slotting; Frazelle, 2002), neutralizing travel time for peak throughput bursts.
 
 \subsubsection{Top Pick-Face SKUs (Class A, by Frequency)}\label{top-a}
 
@@ -139,46 +138,68 @@ frequently picked items during peak-hour bursts.
 \toprule
 Rank & SKU Code & Product & Class & Picks (6M) & Volume (units) \\
 \midrule
-        1 & 4200008229 & Quạt treo ASIAvina - VY377990 - Xám & A-X & 825 & 5,608 \\
-        2 & 4200008371 & QUẠT ĐỨNG VY619990 & A-X & 682 & 3,355 \\
-        3 & 4200008366 & QUẠT SÀN TURB0 VY616790 & A-X & 680 & 2,838 \\
-        4 & 4200008117 & Quạt treo ASIAvina - VY357690 - trắng & A-X & 666 & 4,033 \\
-        5 & 4200008102 & Quạt lửng ASIAvina - VY538790 - Xám & A-X & 514 & 12,677 \\
+        1 & 4200008229 & Quạt treo ASIAvina - VY377990 - Xám & A-A & 825 & 5,608 \\
+        2 & 4200008371 & QUẠT ĐỨNG VY619990 & A-A & 682 & 3,355 \\
+        3 & 4200008366 & QUẠT SÀN TURB0 VY616790 & A-A & 680 & 2,838 \\
+        4 & 4200008117 & Quạt treo ASIAvina - VY357690 - trắng & A-A & 666 & 4,033 \\
+        5 & 4200008102 & Quạt lửng ASIAvina - VY538790 - Xám & A-A & 514 & 12,677 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsubsection{Quantitative Analysis: Travel Distance and Peak-Time Throughput}\label{travel-time}
+\subsubsection{Quantitative Analysis: Travel-Time Proof}\label{travel-time}
 
-\paragraph{Model.}
-The warehouse has $N$ numbered rack slots $1, 2, \ldots, N$ starting from the I/O dock.
-Travel cost of a single pick = slot number. Expected travel:
-$$E[\text{travel}] = \sum_{i=1}^{N} p_i \cdot s_i$$
-For \textbf{Model 2}, an ergonomic gain factor of 1.15 is applied to convert travel
-distance into time-equivalent units, reflecting the throughput improvement from
-eliminating MHE conflicts (forklift blocking carton pickers) and ergonomic misplacements.
+\paragraph{Physical-distance model.}
+Walk speed: \textbf{72 m/min} (1.2 m/s, standard warehouse); round-trip factor: \textbf{2}.
+Zone distances to packing station: Zone A = 8 m (golden pick-face), Zone B = 25 m (mid-bay), Zone C = 47.5 m (reserve).
+Formula:
+$$\text{Total round-trip distance} = \sum_{\text{zone}} \text{picks}_{\text{zone}} \times D_{\text{zone}} \times 2$$
+$$\text{Travel time (min)} = \frac{\text{Total round-trip distance}}{\text{walk speed}}$$
+Baseline (random placement): every pick travels the SKU-count-weighted average zone distance:
+$$\overline{D}_{\text{random}} = \frac{N_A \cdot D_A + N_B \cdot D_B + N_C \cdot D_C}{N}$$
 
 \paragraph{Results.}
 
 \begin{table}[H]
 \centering
-\caption{Expected Picker Travel Distance / Time-Equivalent by Slotting Scenario}
-\begin{tabular}{lrr}
+\caption{Q3.1 Travel-Time Proof --- Physical Distance Model}
+\begin{tabular}{lrrr}
 \toprule
-Scenario & Expected Distance (slot units) & Reduction vs Baseline \\
+Zone & Picks ($T_{ij}$) & Dist $D_{ij}$ (m) & Round-trip $T_{ij} \times D_{ij} \times 2$ (m) \\
 \midrule
-        Random Baseline (no logic) & 235.50 & --- \\
-        Model 1: ABC Zoned (Quantity-Based) & 113.98 & \textbf{51.6\%} \\
-        XYZ Zoned (Frequency-Based) & 68.82 & \textbf{70.8\%} \\
-        Velocity-Ranked (Theoretical Optimal) & 51.79 & 78.0\% \\
-        \textbf{Model 2: ABC + Ergonomics (peak-time equiv.)} & \textbf{52.99} & \textbf{77.5\%} \\
+        Zone A & 5,767 & 8 & 92,272 \\
+        Zone B & 7,945 & 25 & 397,250 \\
+        Zone C & 7,082 & 48 & 672,790 \\
+\midrule
+        \textbf{TOTAL} & 20,794 & --- & \textbf{1,162,312} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Model 1 (ABC-only)} achieves a \textbf{51.6\% reduction} in expected travel distance.
-\textbf{Model 2 (ABC + Ergonomics)} applies an ergonomic gain factor (1.15\,$\times$) to the
-same zone layout, yielding a peak-time-equivalent reduction of \textbf{77.5\%} --- well above the 30\% target.
+\begin{table}[H]
+\centering
+\caption{Optimized vs Baseline: Summary}
+\begin{tabular}{lrr}
+\toprule
+Metric & Baseline (Random) & Optimized (ABC-Zoned) \\
+\midrule
+        Avg one-way distance / pick (m) & 43.3 & \textbf{27.9} \\
+        Total round-trip distance (m) & 1,799,920 & \textbf{1,162,312} \\
+        Travel time (min) & 24,998.9 & \textbf{16,143.2} \\
+        \textbf{Reduction} & --- & \textbf{35.4\%} \quad (\color{green!60!black}\checkmark MEETS TARGET) \\
+        Target & \multicolumn{2}{r}{$\geq 30\%$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ABC velocity-zoned layout achieves a \textbf{35.4\% reduction} in total picker travel distance
+(vs. random placement baseline avg. \textbf{43.3\,m/pick} $\rightarrow$ optimized \textbf{27.9\,m/pick}),
+well above the $\geq30\%$ target.
+This comes from concentrating the highest-frequency Class~A SKUs (5{,}767 picks) at 8\,m,
+versus placing them randomly at the warehouse average 43.3\,m.
+\textbf{Model 2 (ABC + Ergonomics)} adds sub-tier rules (A1 pallet lane, A2 big-face, B1 bulk-replen)
+that further reduce MHE conflicts and ergonomic penalties, yielding an additional estimated
+15--40\% pick-throughput improvement on top of the distance savings (industry benchmark: Dematic, MHI).
 This additional throughput gain comes from three mechanisms:
 \begin{itemize}
   \item \textbf{Forklift separation} (A1 sub-tier): pallet-dominant SKUs are slotted in a

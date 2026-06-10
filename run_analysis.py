@@ -107,7 +107,7 @@ def main() -> None:
     assignment_shipments = filter_assignment_shipments(shipments)
 
     abc_xyz = build_abc_xyz(q11_shipments, sku_master)
-    abc_xyz_matrix_frequency = build_abc_xyz_matrix_summary(abc_xyz, "xyz_frequency")
+    abc_xyz_matrix_frequency = build_abc_xyz_matrix_summary(abc_xyz, "abc_frequency")
     abc_xyz_matrix_volatility = build_abc_xyz_matrix_summary(abc_xyz, "xyz_volatility")
 
     fast_moving_summary = build_fast_moving_summary(abc_xyz)
@@ -320,6 +320,8 @@ def main() -> None:
         lead_time_sensitivity=lead_time_sensitivity,
         inventory_pooling_summary=inventory_pooling_summary,
         hcm_district_summary=hcm_district_summary,
+        network_model_evaluation=network_model_evaluation,
+        shipments=shipments,
         output_path=OUTPUT_DIR / "summary_tables.xlsx",
     )
 

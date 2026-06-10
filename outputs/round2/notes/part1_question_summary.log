@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  9 JUN 2026 17:19
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.8)  10 JUN 2026 13:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -756,6 +756,10 @@ t line 33.
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 Package hyperref Info: Link coloring OFF on input line 33.
+
+LaTeX Warning: Reference `fig:q11-xyz-freq-dist' on page 1 undefined on input l
+ine 60.
+
 File: ../charts/q11_abc_quantity_distribution.png Graphic file (type bmp)
 <../charts/q11_abc_quantity_distribution.png>
 
@@ -763,46 +767,46 @@ File: ../charts/q11_abc_quantity_distribution.png Graphic file (type bmp)
 [1
 
 ]
-File: ../charts/q11_xyz_frequency_distribution.png Graphic file (type bmp)
-<../charts/q11_xyz_frequency_distribution.png>
+File: ../charts/q11_abc_frequency_distribution.png Graphic file (type bmp)
+<../charts/q11_abc_frequency_distribution.png>
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
+(Font)              scaled to size 7.665pt on input line 77.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
+(Font)              scaled to size 5.475pt on input line 77.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 7
+7.
+ (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omllmm.fd
+File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 10.95099pt on input line 77.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 7.66568pt on input line 77.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 5.4755pt on input line 77.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 10.94882pt on input line 77.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 7.66417pt on input line 77.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 5.47441pt on input line 77.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 77.
+
+
+(/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 77.
+
+
+(/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
 File: ../charts/q11_abc_xyz_matrix_frequency.png Graphic file (type bmp)
 <../charts/q11_abc_xyz_matrix_frequency.png>
 
 
 [2]
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.665pt on input line 102.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.475pt on input line 102.
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-02.
- (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omllmm.fd
-File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 10.95099pt on input line 102.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.66568pt on input line 102.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.4755pt on input line 102.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 10.94882pt on input line 102.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.66417pt on input line 102.
-LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.47441pt on input line 102.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 102
-.
-
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 102
-.
-
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
 File: ../charts/q11_abc_xyz_matrix_volatility.png Graphic file (type bmp)
 <../charts/q11_abc_xyz_matrix_volatility.png>
 
@@ -890,7 +894,7 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.336 \end{document}
+l.339 \end{document}
                     
 Your command was ignored.
 Type  I <command> <return>  to replace it with another command,
@@ -903,17 +907,21 @@ or  <return>  to continue without it.
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
+
+
+LaTeX Warning: There were undefined references.
+
  )
 (\end occurred inside a group at level 1)
 
 ### semi simple group (level 1) entered at line 93 (\begingroup)
 ### bottom level 
 Here is how much of TeX's memory you used:
- 16982 strings out of 473832
- 314278 string characters out of 5729482
- 861478 words of memory out of 5000000
- 39846 multiletter control sequences out of 15000+600000
- 562364 words of font info for 67 fonts, out of 8000000 for 9000
+ 16986 strings out of 473832
+ 314373 string characters out of 5729482
+ 861473 words of memory out of 5000000
+ 39848 multiletter control sequences out of 15000+600000
+ 562372 words of font info for 68 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  90i,10n,114p,595b,582s stack positions out of 10000i,1000n,20000p,200000b,200000s
 

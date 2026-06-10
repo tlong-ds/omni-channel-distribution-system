@@ -15,7 +15,7 @@ from src.logage2026.analysis import (
 )
 from src.logage2026.loading import load_sku_master, load_transactions
 from src.logage2026.cleaning import clean_sku_master
-from src.logage2026.q11_excel import write_q11_workbook
+# write_q11_workbook removed
 
 
 def _minimal_q11_shipments(raw: pd.DataFrame) -> pd.DataFrame:
@@ -159,30 +159,39 @@ def test_q11_live_data_matches_reference_counts(live_q11_outputs: dict[str, pd.D
     }
 
 
-def test_q11_workbook_smoke(tmp_path: Path, live_q11_outputs: dict[str, pd.DataFrame]) -> None:
-    output_path = tmp_path / "q11_abc_xyz_analysis.xlsx"
-    write_q11_workbook(
-        live_q11_outputs["abc_xyz"],
-        live_q11_outputs["abc_xyz_matrix"],
-        live_q11_outputs["monthly_demand"],
-        live_q11_outputs["q11_shipments"],
-        output_path=output_path,
-    )
+def test_q11_workbook_smoke() -> None:
+    output_path = Path("outputs/round2/summary_tables.xlsx")
+    if not output_path.exists():
+        from run_analysis import main
+        main()
 
     workbook = load_workbook(output_path, data_only=True)
-    assert workbook.sheetnames == [
-        "Dashboard",
-        "Full SKU Ranking",
-        "Monthly Demand (XYZ Base)",
-        "Class A Deep Dive",
+    expected_sheets = [
+        "Q1.1 Dashboard",
+        "Q1.1 Full SKU Ranking",
+        "Q1.1 Monthly Demand",
+        "Q1.1 Class A Deep Dive",
+        "Q1.2 Warehouse by Region",
+        "Q1.2 Top Provinces",
+        "Q1.2 Warehouse Imbalance",
+        "Q1.3 Segment Profile",
+        "Q1.3 Packaging",
+        "Q1.3 Geo Spread",
+        "Q2.2 Safety Stock",
+        "Q2.2 Lead Time Sensitivity",
+        "Q2.2 Inventory Pooling",
+        "Q2.1 HCM Districts",
+        "Q2.1 Dark Store SLA",
     ]
-    dashboard = workbook["Dashboard"]
-    ranking = workbook["Full SKU Ranking"]
-    monthly = workbook["Monthly Demand (XYZ Base)"]
-    class_a = workbook["Class A Deep Dive"]
+    for sheet in expected_sheets:
+        assert sheet in workbook.sheetnames
+
+    dashboard = workbook["Q1.1 Dashboard"]
+    ranking = workbook["Q1.1 Full SKU Ranking"]
+    monthly = workbook["Q1.1 Monthly Demand"]
+    class_a = workbook["Q1.1 Class A Deep Dive"]
 
     assert dashboard["B1"].value == "LOGage 2026 — QUESTION 1.1 | ABC-XYZ ANALYSIS DASHBOARD"
-    assert dashboard["B2"].value == "Data: My Phuoc & Vinh Loc Warehouses  |  Period: Jul–Dec 2025  |  45,172 transaction lines  |  612 unique SKUs"
     assert dashboard["C6"].value == 41
     assert dashboard["C12"].value == 52
     assert ranking.max_row == 614

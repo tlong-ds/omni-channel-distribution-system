@@ -1,0 +1,343 @@
+
+--- Slide 1 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Title Text' (1.09, 4.16)
+  Paragraph 0: 'Omni-Channel Logistics & Supply Chain Strategy...'
+    Run 0: 'Omni-Channel Logistics & Supply Chain Strategy' | Font: Signika Bold | Size: 48.0pt | Color: FFFFFF | Bold: True
+  Paragraph 1: 'Data-Driven Optimization for Multi-Channel Operations, Inven...'
+    Run 0: 'Data-Driven Optimization for Multi-Channel Operations, Inventory Control, and Warehouse Slotting' | Font: Signika | Size: 22.0pt | Color: CADCFC | Bold: None
+
+--- Slide 2 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'Executive Summary: Key Operational Insights...'
+    Run 0: 'Executive Summary: Key Operational Insights' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'Extreme SKU Concentration: A tiny core of 19 "Fast-Moving" A...'
+    Run 0: 'Extreme SKU Concentration' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': A tiny core of 19 "Fast-Moving" A-X SKUs (4.04% of assortment) drives 57.87% of outbound quantity and 25.88% of pick transactions.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Centralized Invoicing Distortion: Resolved data initially sh...'
+    Run 0: 'Centralized Invoicing Distortion' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Resolved data initially showed a 92.59% My Phuoc bias. Statistical scaling restored the true operational split: 93.02% My Phuoc vs. 6.98% Vinh Loc.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+Shape: 'Text Column 1' (11.48, 3.28)
+  Paragraph 0: 'Distinct Segment Profiles: Modern Trade orders are large, co...'
+    Run 0: 'Distinct Segment Profiles' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Modern Trade orders are large, consolidated, and pallet-centric (75.25% pallet share). Traditional Trade orders are small, fragmented (48.54% carton, 9.77% loose), and spread across 60 provinces.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Virtual Inventory Pooling: Merging channel safety stocks und...'
+    Run 0: 'Virtual Inventory Pooling' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Merging channel safety stocks under a mile-weighted lead time of 1.94 days yields a **61.8% inventory reduction** (12,168 units vs. 31,852 units).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Ergonomic Slotting: Model 2 (ABC + Ergonomics) achieves a **...'
+    Run 0: 'Ergonomic Slotting' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Model 2 (ABC + Ergonomics) achieves a **77.5% expected travel time reduction**, exceeding the 30% peak improvement target.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 3 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika Bold | Size: 20.0pt | Color: FFFFFF | Bold: True
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'SKU Demand Pattern Classification (ABC-XYZ Analysis)...'
+    Run 0: 'SKU Demand Pattern Classification (ABC-XYZ Analysis)' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'Assortment Classification: 470 unique SKUs evaluated across ...'
+    Run 0: 'Assortment Classification' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': 470 unique SKUs evaluated across volume (ABC) and transaction frequency (XYZ) over 7 months.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'ABC Volume Concentration: Class A (Top 70% quantity) include...'
+    Run 0: 'ABC Volume Concentration' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Class A (Top 70% quantity) includes 28 SKUs; Class B (Next 20%) includes 39 SKUs; Class C (Bottom 10%) includes 403 SKUs.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'XYZ Frequency Concentration: Class X (Top 70% orders) includ...'
+    Run 0: 'XYZ Frequency Concentration' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Class X (Top 70% orders) includes 53 SKUs; Class Y (Next 20%) includes 88 SKUs; Class Z (Bottom 10%) includes 329 SKUs.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'The Fast-Moving Group (A-X): 19 SKUs (4.04%) drive **57.87% ...'
+    Run 0: 'The Fast-Moving Group (A-X)' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': 19 SKUs (4.04%) drive **57.87% of outbound quantity** (163,014 units) and **25.88% of pick transactions** (5,381 orders).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'Operational Recommendations: Dedicated replenishment and low...'
+    Run 0: 'Operational Recommendations' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Dedicated replenishment and lower pick-face positioning (levels 1 and 2) must be reserved for the 19 A-X SKUs to minimize travel time.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 5: 'Rationalize or store in deep reserve the 329 C-Z slow-moving...'
+    Run 0: 'Rationalize or store in deep reserve the 329 C-Z slow-moving SKUs (70.0% of assortment).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 4 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika Bold | Size: 20.0pt | Color: FFFFFF | Bold: True
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'Warehouse Throughput Analysis & Data Quality...'
+    Run 0: 'Warehouse Throughput Analysis & Data Quality' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'High Geocoding Resolution: The data cleansing pipeline succe...'
+    Run 0: 'High Geocoding Resolution' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': The data cleansing pipeline successfully resolved 97.12% of transaction rows and 94.15% of outbound quantities to specific coordinates.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Database Gaps: 617 rows were left unresolved due to 'unknown...'
+    Run 0: 'Database Gaps' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': 617 rows were left unresolved due to 'unknown' Ship-to Customers in the source logs.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Centralized Invoicing Distortion: ERP invoicing initially at...'
+    Run 0: 'Centralized Invoicing Distortion' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': ERP invoicing initially attributes 92.59% of resolved volume to My Phuoc. Utilizing Statistical Scaling (Approach A), we restore the true 93.02% vs. 6.98% operational split.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'Throughput Realities: My Phuoc processes 262,053 units (93.0...'
+    Run 0: 'Throughput Realities' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': My Phuoc processes 262,053 units (93.02% of quantity and 93.22% of CBM) over 16,142 rows. Vinh Loc processes 19,652 units (6.98% of quantity and 6.78% of CBM) over 5,258 rows.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'Operational Focus: Planning and resource allocation must rem...'
+    Run 0: 'Operational Focus' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Planning and resource allocation must remain focused on My Phuoc as the high-volume core.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 5 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika Bold | Size: 20.0pt | Color: FFFFFF | Bold: True
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'Geographic Demand Mapping & Regional Concentration...'
+    Run 0: 'Geographic Demand Mapping & Regional Concentration' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'Southeast Focus: Đông Nam Bộ is the dominant demand region, ...'
+    Run 0: 'Southeast Focus' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Đông Nam Bộ is the dominant demand region, accounting for **47.36% of resolved quantity** (125,617 units) and 49% of orders.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Central & Mekong Hubs: Bắc Trung Bộ & Duyên hải miền Trung r...'
+    Run 0: 'Central & Mekong Hubs' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Bắc Trung Bộ & Duyên hải miền Trung represents **25.49% of volume** (67,606 units), and Đồng bằng sông Cửu Long drives **15.16%** (40,204 units).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Top Provinces: Hồ Chí Minh City leads with 32.95% of orders ...'
+    Run 0: 'Top Provinces' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Hồ Chí Minh City leads with 32.95% of orders and 27.47% of quantity (65,527 units). Bình Dương follows with 15.53% of orders and 18.03% of quantity (43,012 units).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'Distance vs. Volume Correlation: Delivery distance is negati...'
+    Run 0: 'Distance vs. Volume Correlation' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Delivery distance is negatively correlated with order size. Close-by urban centers (HCMC and surrounding areas) order in high density and frequency.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'Regional Logistics: Transportation routes must be optimized ...'
+    Run 0: 'Regional Logistics' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Transportation routes must be optimized for HCMC-Binh Duong milk runs to handle the dense local demand.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 6 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika Bold | Size: 20.0pt | Color: FFFFFF | Bold: True
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'Customer Segment Profiling: MT vs. TT...'
+    Run 0: 'Customer Segment Profiling: MT vs. TT' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'Modern Trade (MT) Profile:...'
+    Run 0: 'Modern Trade (MT) Profile' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ':' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: '132 active customers, 1,564 orders....'
+    Run 0: '132 active customers, 1,564 orders.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Orders are highly consolidated, averaging **80.19 pcs** and ...'
+    Run 0: 'Orders are highly consolidated, averaging **80.19 pcs** and **5.16 m³**.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'Narrow SKU breadth (2.84 SKUs/order) and concentrated in 34 ...'
+    Run 0: 'Narrow SKU breadth (2.84 SKUs/order) and concentrated in 34 provinces.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'Highly pallet-centric (**75.25% of quantity** is shipped as ...'
+    Run 0: 'Highly pallet-centric (**75.25% of quantity** is shipped as full pallets). Carton picking is 22.52%, and loose picking is only 2.23%.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+Shape: 'Text Column 1' (5.91, 3.28)
+  Paragraph 0: 'Traditional Trade (TT) Profile:...'
+    Run 0: 'Traditional Trade (TT) Profile' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ':' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: '270 active customers, 3,782 orders....'
+    Run 0: '270 active customers, 3,782 orders.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Orders are small and fragmented, averaging **41.33 pcs** and...'
+    Run 0: 'Orders are small and fragmented, averaging **41.33 pcs** and **2.13 m³**.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'Broad SKU breadth (4.33 SKUs/order) and dispersed across 60 ...'
+    Run 0: 'Broad SKU breadth (4.33 SKUs/order) and dispersed across 60 provinces.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'Highly carton-centric (**48.54%**) and loose-picking reliant...'
+    Run 0: 'Highly carton-centric (**48.54%**) and loose-picking reliant (**9.77%**).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 5: 'Synthesis: MT requires high-volume pallet-loading bays; TT d...'
+    Run 0: 'Synthesis' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': MT requires high-volume pallet-loading bays; TT demands intensive piece-picking and carton-sorting zones.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 7 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika Bold | Size: 20.0pt | Color: FFFFFF | Bold: True
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'Network Model Assessment & Channel Flow Profile...'
+    Run 0: 'Network Model Assessment & Channel Flow Profile' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'Two-RDC Footprint: My Phuoc (Binh Duong) and Vinh Loc (HCMC)...'
+    Run 0: 'Two-RDC Footprint' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': My Phuoc (Binh Duong) and Vinh Loc (HCMC). Both warehouses handle mixed B2B and B2C flows.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Timeline Discrepancy: My Phuoc operates over the full 6 mont...'
+    Run 0: 'Timeline Discrepancy' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': My Phuoc operates over the full 6 months (Jun–Nov). Vinh Loc is a new facility, operational in December only (1 month).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'B2B Flow Dominance: B2B represents **99.2% of CBM** at My Ph...'
+    Run 0: 'B2B Flow Dominance' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': B2B represents **99.2% of CBM** at My Phuoc and **99.7% of CBM** at Vinh Loc.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'Year-End Surge: On a normalized daily basis, Vinh Loc proces...'
+    Run 0: 'Year-End Surge' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': On a normalized daily basis, Vinh Loc processed B2B orders at a daily rate of 48.7 orders/active day, exceeding My Phuoc's 25.5 orders/active day, indicating strong December peak demands.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'SLA Failure Modes: Standard RDC locations are too far (>10 k...'
+    Run 0: 'SLA Failure Modes' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Standard RDC locations are too far (>10 km) from central districts to support HCMC B2C e-commerce same-day 2–4 hour delivery SLAs.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 8 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika Bold | Size: 20.0pt | Color: FFFFFF | Bold: True
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'HCMC SLA Feasibility & Dark Store Nodes...'
+    Run 0: 'HCMC SLA Feasibility & Dark Store Nodes' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'SLA Threshold: Set at a 25 km radius from existing RDCs to s...'
+    Run 0: 'SLA Threshold' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Set at a 25 km radius from existing RDCs to secure a 2–4 hour delivery SLA across HCMC (assuming 25 km/h urban transit).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Current Coverage: All 21 districts of HCMC lie within 25 km ...'
+    Run 0: 'Current Coverage' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': All 21 districts of HCMC lie within 25 km of Vinh Loc or My Phuoc. However, heavy traffic makes inner-city SLA fulfillment from RDCs highly volatile.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Node 1 (Bình Tân/Tân Phú Corridor): High-volume cluster (>50...'
+    Run 0: 'Node 1 (Bình Tân/Tân Phú Corridor)' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': High-volume cluster (>50,000 units). Vinh Loc is situated 5–7 km away. Recommended to upgrade Vinh Loc's satellite capabilities.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'Node 2 (District 1/3/Phú Nhuận CBD): Distance to RDCs is 14+...'
+    Run 0: 'Node 2 (District 1/3/Phú Nhuận CBD)' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Distance to RDCs is 14+ km. Establish a small urban dark store (200–300 m²) stocked with top A-X SKUs.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'Order Split Logic: If HCMC address is < 25 km from Vinh Loc,...'
+    Run 0: 'Order Split Logic' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': If HCMC address is < 25 km from Vinh Loc, route to Vinh Loc. If < 35 km from My Phuoc, route to My Phuoc. Otherwise, route via urban dark store.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 9 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika Bold | Size: 20.0pt | Color: FFFFFF | Bold: True
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'Lead Time and Class A Safety Stock Optimization...'
+    Run 0: 'Lead Time and Class A Safety Stock Optimization' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'Mile-Weighted Lead Time: RDC serves 6 regions. Weighting reg...'
+    Run 0: 'Mile-Weighted Lead Time' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': RDC serves 6 regions. Weighting regional standard lead times by order shares results in a **weighted average lead time of 1.94 days**.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Regional Standards: Southeast is 1 day (49% of orders); Cent...'
+    Run 0: 'Regional Standards' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Southeast is 1 day (49% of orders); Central is 3 days (19.2% of orders); Mekong Delta is 2 days (15.0% of orders); North is 4 days (9.4% of orders).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Safety Stock Model: Demand-uncertainty formula over 7 months...'
+    Run 0: 'Safety Stock Model' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Demand-uncertainty formula over 7 months (Jun–Dec 2025) at a 95% service level (Z = 1.645):' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'SS = Z * std_dev * sqrt(LT)...'
+    Run 0: 'SS = Z * std_dev * sqrt(LT)' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'Class A Results: Total safety stock across all 28 Class A SK...'
+    Run 0: 'Class A Results' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Total safety stock across all 28 Class A SKUs is **12,168 units** under a pooled model.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 5: 'Lead Time Sensitivity: Safety stock grows sub-linearly (sqrt...'
+    Run 0: 'Lead Time Sensitivity' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Safety stock grows sub-linearly (sqrt(LT)). Lowering average lead time from 1.94 days to 1.0 day yields a 28.2% safety stock reduction (to 8,736 units).' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 10 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika Bold | Size: 20.0pt | Color: FFFFFF | Bold: True
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'Inventory Pooling & Operational Control...'
+    Run 0: 'Inventory Pooling & Operational Control' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'Virtual Pooling Model: Merging B2B and B2C inventories into ...'
+    Run 0: 'Virtual Pooling Model' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Merging B2B and B2C inventories into a single physical pool in WMS/OMS, rather than physically dedicating stock.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Financial Impact: Reduces total required safety stock by **6...'
+    Run 0: 'Financial Impact' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Reduces total required safety stock by **61.8%** (12,168 units vs. 31,852 units), saving **19,684 units** of inventory.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Operational Rules: Enforce 6 controls: (R1) Common Pool; (R2...'
+    Run 0: 'Operational Rules' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Enforce 6 controls: (R1) Common Pool; (R2) Per-channel ROP floors; (R3) Amber alert thresholds; (R4) Red conflict priority routing (MT first, TT last); (R5) SKU spike freezes; (R6) EOD rebalancing.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'Model 2 Ergonomic Slotting: Sub-tiers Class A into A1 Pallet...'
+    Run 0: 'Model 2 Ergonomic Slotting' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Sub-tiers Class A into A1 Pallet (pallet share > 40%), A2 Big-Face (carton share > 80% at waist-height), and A3 Mixed.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 4: 'Expected Travel Distance Reduction: Model 2 yields a **77.5%...'
+    Run 0: 'Expected Travel Distance Reduction' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Model 2 yields a **77.5% expected travel-time reduction** (vs 51.6% for Model 1), driven by forklift aisle separation and waist-height picking for fast-movers.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 5: 'Pick-and-Pack Processes: B2B utilizes total pallet picking a...'
+    Run 0: 'Pick-and-Pack Processes' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': B2B utilizes total pallet picking and direct dock staging. B2C utilizes batch wave picking, trolley carts, and sort-consolidate QC.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+
+--- Slide 11 ---
+Shape: 'Freeform 8' (18.62, 0.48)
+Shape: 'TextBox 9' (0.00, 0.08)
+  Paragraph 0: 'Part 1...'
+    Run 0: 'Part 1' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 10' (2.23, 0.07)
+  Paragraph 0: 'Part 2...'
+    Run 0: 'Part 2' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'TextBox 11' (6.95, 0.07)
+  Paragraph 0: 'Part 3...'
+    Run 0: 'Part 3' | Font: Signika | Size: 20.0pt | Color: FFFFFF | Bold: None
+Shape: 'Slide Title' (1.09, 1.97)
+  Paragraph 0: 'Strategic Recommendations & Execution Roadmap...'
+    Run 0: 'Strategic Recommendations & Execution Roadmap' | Font: Signika Bold | Size: 36.0pt | Color: FFFFFF | Bold: True
+Shape: 'Text Column 0' (1.09, 3.28)
+  Paragraph 0: 'Deploy Virtual Inventory Pooling: Transition to a single phy...'
+    Run 0: 'Deploy Virtual Inventory Pooling' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Transition to a single physical WMS pool and implement the 6 conflict control rules (R1-R6) to capture the 61.8% safety stock savings.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 1: 'Implement Model 2 Ergonomic Slotting: Reconfigure My Phuoc's...'
+    Run 0: 'Implement Model 2 Ergonomic Slotting' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Reconfigure My Phuoc's layout to separate forklift pallet lanes (A1) from manual carton pick-faces (A2) to secure the 77.5% travel time reduction.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 2: 'Establish HCMC Urban Fulfillment Network: Upgrade Vinh Loc's...'
+    Run 0: 'Establish HCMC Urban Fulfillment Network' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Upgrade Vinh Loc's satellite capabilities to launch a pilot dark store in the Bình Tân/Tân Phú corridor, securing same-day B2C SLAs.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None
+  Paragraph 3: 'Resolve ERP Invoicing Bias: Correct invoicing-location logic...'
+    Run 0: 'Resolve ERP Invoicing Bias' | Font: Signika Bold | Size: 15.0pt | Color: FFFFFF | Bold: True
+    Run 1: ': Correct invoicing-location logic in the ERP to ensure physical dispatches from Vinh Loc are not mistakenly attributed to My Phuoc.' | Font: Signika | Size: 14.0pt | Color: E0E0E0 | Bold: None

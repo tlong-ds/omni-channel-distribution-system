@@ -1,0 +1,197 @@
+Slide width: 20.00 inches
+Slide height: 11.25 inches
+--------------------------------------------------
+
+--- Slide 1 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Title Text' | Type: AUTO_SHAPE (1) | Box: (1.094, 4.156, 19.685, 2.187)
+  Text: Omni-Channel Logistics & Supply Chain Strategy | Data-Driven Optimization for Multi-Channel Operatio...
+
+--- Slide 2 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: Executive Summary: Key Operational Insights
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 9.296, 7.108)
+  Text: Extreme SKU Concentration: A tiny core of 19 "Fast-Moving" A-X SKUs (4.04% of assortment) drives 57....
+Shape: 'Text Column 1' | Type: AUTO_SHAPE (1) | Box: (11.483, 3.281, 9.296, 7.108)
+  Text: Distinct Segment Profiles: Modern Trade orders are large, consolidated, and pallet-centric (75.25% p...
+
+--- Slide 3 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Group 5' | Type: GROUP (6) | Box: (0.000, 0.007, 2.821, 0.562)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: SKU Demand Pattern Classification (ABC-XYZ Analysis)
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 8.749, 7.108)
+  Text: Assortment Classification: 470 unique SKUs evaluated across volume (ABC) and transaction frequency (...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.389, 3.281, 8.202, 3.281)
+  Picture filename: image.png
+Shape: 'Chart 1' | Type: PICTURE (13) | Box: (10.389, 7.108, 8.202, 3.281)
+  Picture filename: image.png
+
+--- Slide 4 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Group 5' | Type: GROUP (6) | Box: (0.000, 0.007, 2.821, 0.562)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: Warehouse Throughput Analysis & Data Quality
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 8.749, 7.108)
+  Text: High Geocoding Resolution: The data cleansing pipeline successfully resolved 97.12% of transaction r...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.389, 3.281, 8.202, 3.281)
+  Picture filename: image.png
+Shape: 'Chart 1' | Type: PICTURE (13) | Box: (10.389, 7.108, 8.202, 3.281)
+  Picture filename: image.png
+
+--- Slide 5 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Group 5' | Type: GROUP (6) | Box: (0.000, 0.007, 2.821, 0.562)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: Geographic Demand Mapping & Regional Concentration
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 8.749, 7.108)
+  Text: Southeast Focus: Đông Nam Bộ is the dominant demand region, accounting for **47.36% of resolved quan...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.389, 3.281, 8.202, 3.281)
+  Picture filename: image.png
+Shape: 'Chart 1' | Type: PICTURE (13) | Box: (10.389, 7.108, 8.202, 3.281)
+  Picture filename: image.png
+
+--- Slide 6 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Group 5' | Type: GROUP (6) | Box: (0.000, 0.007, 2.821, 0.562)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: Customer Segment Profiling: MT vs. TT
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 4.593, 7.108)
+  Text: Modern Trade (MT) Profile: | 132 active customers, 1,564 orders. | Orders are highly consolidated, a...
+Shape: 'Text Column 1' | Type: AUTO_SHAPE (1) | Box: (5.906, 3.281, 4.593, 7.108)
+  Text: Traditional Trade (TT) Profile: | 270 active customers, 3,782 orders. | Orders are small and fragmen...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.717, 3.281, 7.874, 3.281)
+  Picture filename: image.png
+Shape: 'Chart 1' | Type: PICTURE (13) | Box: (10.717, 7.108, 7.874, 3.281)
+  Picture filename: image.png
+
+--- Slide 7 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Group 5' | Type: GROUP (6) | Box: (2.227, 0.007, 5.453, 0.562)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: Network Model Assessment & Channel Flow Profile
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 8.749, 7.108)
+  Text: Two-RDC Footprint: My Phuoc (Binh Duong) and Vinh Loc (HCMC). Both warehouses handle mixed B2B and B...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.389, 3.281, 8.202, 7.108)
+  Picture filename: image.png
+
+--- Slide 8 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Group 5' | Type: GROUP (6) | Box: (2.227, 0.007, 5.453, 0.562)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: HCMC SLA Feasibility & Dark Store Nodes
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 8.749, 7.108)
+  Text: SLA Threshold: Set at a 25 km radius from existing RDCs to secure a 2–4 hour delivery SLA across HCM...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.389, 3.281, 8.202, 3.281)
+  Picture filename: image.png
+Shape: 'Chart 1' | Type: PICTURE (13) | Box: (10.389, 7.108, 8.202, 3.281)
+  Picture filename: image.png
+
+--- Slide 9 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Group 5' | Type: GROUP (6) | Box: (2.227, 0.007, 5.453, 0.562)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: Lead Time and Class A Safety Stock Optimization
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 8.749, 7.108)
+  Text: Mile-Weighted Lead Time: RDC serves 6 regions. Weighting regional standard lead times by order share...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.389, 3.281, 8.202, 7.108)
+  Picture filename: image.png
+
+--- Slide 10 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Group 5' | Type: GROUP (6) | Box: (6.947, 0.007, 2.623, 0.562)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: Inventory Pooling & Operational Control
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 8.749, 7.108)
+  Text: Virtual Pooling Model: Merging B2B and B2C inventories into a single physical pool in WMS/OMS, rathe...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.389, 3.281, 8.202, 3.281)
+  Picture filename: image.png
+Shape: 'Chart 1' | Type: PICTURE (13) | Box: (10.389, 7.108, 8.202, 3.281)
+  Picture filename: image.png
+
+--- Slide 11 ---
+Shape: 'Group 2' | Type: GROUP (6) | Box: (0.000, -0.826, 20.000, 1.396)
+Shape: 'Freeform 8' | Type: FREEFORM (5) | Box: (18.623, 0.484, 1.377, 1.167)
+Shape: 'TextBox 9' | Type: TEXT_BOX (17) | Box: (0.000, 0.081, 2.821, 0.382)
+  Text: Part 1
+Shape: 'TextBox 10' | Type: TEXT_BOX (17) | Box: (2.227, 0.072, 5.453, 0.382)
+  Text: Part 2
+Shape: 'TextBox 11' | Type: TEXT_BOX (17) | Box: (6.947, 0.072, 2.623, 0.382)
+  Text: Part 3
+Shape: 'Slide Title' | Type: AUTO_SHAPE (1) | Box: (1.094, 1.969, 16.404, 1.094)
+  Text: Strategic Recommendations & Execution Roadmap
+Shape: 'Text Column 0' | Type: AUTO_SHAPE (1) | Box: (1.094, 3.281, 8.749, 7.108)
+  Text: Deploy Virtual Inventory Pooling: Transition to a single physical WMS pool and implement the 6 confl...
+Shape: 'Chart 0' | Type: PICTURE (13) | Box: (10.389, 3.281, 8.202, 7.108)
+  Picture filename: image.png

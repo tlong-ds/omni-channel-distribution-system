@@ -52,7 +52,7 @@ The product assortment was analyzed across two dimensions using a joint ABC-XYZ 
 \subsubsection{Classification Thresholds}\label{classification-thresholds}
 \begin{itemize}
 \item \textbf{ABC Quantity Thresholds}: Class A (Top 70\%), Class B (Next 20\%), Class C (Bottom 10\%)
-\item \textbf{XYZ Frequency Thresholds}: Class X (Top 70\%), Class Y (Next 20\%), Class Z (Bottom 10\%)
+\item \textbf{ABC Frequency Thresholds}: Class A (Top 70\%), Class B (Next 20\%), Class C (Bottom 10\%)
 \item \textbf{Q1.1 Variability Basis}: Monthly demand buckets from 2025-06-01 to 2025-12-31 with document types A/R INVOICE,INVENTORY TRANSFERS,GOODS ISSUE,STOCK COUNT,A/P CREDIT MEMO.
 \end{itemize}
 
@@ -68,36 +68,36 @@ The distribution of outbound quantities and order frequencies across the SKUs sh
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\linewidth]{../charts/q11_xyz_frequency_distribution.png}
-\caption{Order Frequency Distribution by XYZ Class}
-\label{fig:q11-xyz-freq-dist}
+\includegraphics[width=0.85\linewidth]{../charts/q11_abc_frequency_distribution.png}
+\caption{Order Frequency Distribution by ABC Frequency Class}
+\label{fig:q11-abc-freq-dist}
 \end{figure}
 
-\subsubsection{Joint ABC-XYZ Matrix Summary}\label{joint-abc-xyz-matrix-summary}
-A total of \textbf{470 unique SKUs} were classified. The product distribution across the ABC-XYZ matrix (using ABC by Quantity) is shown in Figure \ref{fig:q11-abc-xyz-matrix}:
+\subsubsection{ABC-Frequency Matrix}\label{abc-frequency-matrix}
+A total of \textbf{470 unique SKUs} were classified. The product distribution across the \textbf{ABC-Frequency Matrix} (Quantity $\times$ Order Frequency) is shown in Figure \ref{fig:q11-abc-frequency-matrix}:
 In this matrix:
 \begin{itemize}
 \item \textbf{ABC Quantity Class (Y-axis)}: Classifies SKUs based on their contribution to total outbound quantity (Class A: top 70\%, Class B: next 20\%, Class C: bottom 10\%).
-\item \textbf{XYZ Frequency Class (X-axis)}: Classifies SKUs based on their contribution to total order frequency (Class X: top 70\%, Class Y: next 20\%, Class Z: bottom 10\%).
+\item \textbf{ABC Frequency Class (X-axis)}: Classifies SKUs based on their contribution to total order frequency (Class A: top 70\%, Class B: next 20\%, Class C: bottom 10\%).
 \item \textbf{Cell Labels (Numbers)}: The integer value inside each cell represents the count of unique SKUs that fall into that specific intersection of volume and frequency.
 \end{itemize}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.75\linewidth]{../charts/q11_abc_xyz_matrix_frequency.png}
-\caption{Q1.1 ABC-XYZ SKU count matrix}
-\label{fig:q11-abc-xyz-matrix}
+\caption{Q1.1 ABC-Frequency Matrix (SKU Count)}
+\label{fig:q11-abc-frequency-matrix}
 \end{figure}
 
 This cross-tabulation reveals four key SKU profiles:
 \begin{itemize}
-\item \textbf{A-X (Fast-Moving)}: 19 SKUs (4.04\%) that drive both high volume and high picking frequency, representing the operational core.
-\item \textbf{A-Y / A-Z (Bulk/Spiky Movers)}: 9 SKUs (1.91\%) that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.
-\item \textbf{B-X / C-X (Frequent but Low Volume)}: 34 SKUs (7.23\%) that are picked often but contribute little to total volume, creating disproportionate labor pressure relative to their volume contribution.
-\item \textbf{C-Z (Slow and Infrequent)}: 329 SKUs (70.00\%) that are prime candidates for deep reserve storage or rationalization.
+\item \textbf{Class AA (Fast-Moving)}: 19 SKUs (4.04\%) that drive both high volume and high picking frequency, representing the operational core.
+\item \textbf{Class AB / AC (Bulk/Spiky Movers)}: 9 SKUs (1.91\%) that move large volumes but are ordered infrequently, indicating bulk orders or promotional campaigns.
+\item \textbf{Class BA / CA (Frequent but Low Volume)}: 34 SKUs (7.23\%) that are picked often but contribute little to total volume, creating disproportionate labor pressure relative to their volume contribution.
+\item \textbf{Class CC (Slow and Infrequent)}: 329 SKUs (70.00\%) that are prime candidates for deep reserve storage or rationalization.
 
-\subsubsection{Quantity-Volatility ABC-XYZ Analysis}\label{quantity-volatility-abc-xyz-analysis}
-In addition to order frequency, we also evaluated demand variability. Volatility is measured using the Coefficient of Variation (CV) over monthly demand.
+\subsubsection{ABC-Volatility Matrix}\label{abc-volatility-matrix}
+In addition to order frequency, we also evaluated demand variability using the \textbf{ABC-Volatility Matrix}, which crosses ABC Quantity against demand Coefficient of Variation (CV). This two-matrix approach — ABC-Frequency for slotting and replenishment trigger decisions, and ABC-Volatility for safety stock policy and forecasting model selection — provides a more complete operational picture than a single combined matrix.
 \begin{itemize}
 \item \textbf{Class X (Stable)}: $\text{CV} \le 0.50$
 \item \textbf{Class Y (Seasonal/Trend)}: $0.50 < \text{CV} \le 1.00$
@@ -114,7 +114,7 @@ The joint Quantity-Volatility ABC-XYZ matrix is shown in Figure \ref{fig:q11-abc
 \end{figure}
 
 \subsubsection{Identification of the ``Fast-Moving'' SKU Group}\label{identification-of-the-fast-moving-sku-group}
-The \textbf{Fast-Moving} SKU group is defined as the intersection of Class A by Quantity and Class X by Order Frequency (Class A-X). This group is the primary driver of warehouse operational workload and inventory velocity.
+The \textbf{Fast-Moving} SKU group is defined as \textbf{Class AA}: the intersection of Class A by Quantity and Class A by Order Frequency (the top cumulative 80\% in both quantity and frequency contribution). This group is the primary driver of warehouse operational workload and inventory velocity. Note that Class AA in the ABC-Frequency Matrix corresponds to the high-frequency / high-volume quadrant, not to the volatility dimension (which is captured separately in the ABC-Volatility Matrix).
 
 \begin{itemize}
 \item \textbf{SKU Count}: \textbf{19 SKUs} (representing \textbf{4.04\%} of the total assortment).
@@ -279,7 +279,8 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 \textbf{Avg. Order Quantity} & 80.19 pcs & 41.33 pcs \\
 \textbf{Avg. Order Volume (m³)} & 5.16 m³ & 2.13 m³ \\
 \textbf{Avg. SKU Breadth / Order} & 2.84 SKUs & 4.33 SKUs \\
-\textbf{Order Frequency (per customer/month)} & 2.24 & 2.45 \\
+\textbf{Order Frequency (7-Month Normalised, per customer/month)} & 1.92 & 2.10 \\
+\textbf{Order Frequency (Active Months Avg, per customer/month)} & 7.10 & 4.49 \\
 \textbf{Geographic Footprint} & 34 provinces / 6 regions & 60 provinces / 6 regions \\
 \textbf{Avg. Delivery Distance} & 277.70 km & 287.72 km \\
 \textbf{Pallet Share (\%)} & \textbf{75.25\%} & \textbf{41.70\%} \\
@@ -294,6 +295,8 @@ Dimension & Modern Trade (MT) & Traditional Trade / Distributor (TT) \\
 
 \subsubsection{Key Profile Insights}\label{key-profile-insights}
 \begin{enumerate}
+\item \textbf{Order Frequency Note}: The \textit{7-Month Normalised} frequency divides each customer's total distinct orders by 7.0 (the full assignment window), providing a conservative per-month figure that includes inactive months. The \textit{Active Months Average} divides by only the months in which the customer placed at least one order, capturing the true ordering cadence during active periods.
+
 \item \textbf{Order Size \& Consolidation}: Modern Trade orders are highly consolidated and large, averaging \textbf{80.19 pcs} and \textbf{5.16 m³} per order. Traditional Trade orders are much smaller and fragmented, averaging \textbf{41.33 pcs} and \textbf{2.13 m³}. This comparison of order metrics is visualised in Figure \ref{fig:q13-order-profile}.
 
 \begin{figure}[H]

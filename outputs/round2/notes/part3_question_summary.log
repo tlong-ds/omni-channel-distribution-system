@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  9 JUN 2026 17:19
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.8)  10 JUN 2026 13:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -532,6 +532,11 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 58.
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
+Overfull \hbox (26.12958pt too wide) in paragraph at lines 58--67
+ [][] 
+ []
+
+
 Underfull \hbox (badness 3746) in paragraph at lines 107--107
 []|\T1/lmr/m/n/10.95 pallet_share $\OML/lmm/m/it/10.95 <$ \T1/lmr/m/n/10.95 40%
  AND car-
@@ -552,8 +557,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.142         1 & 4200008229 & Quạ
-                                    t treo ASIAvina - VY377990 - Xám & A-X ...
+l.141         1 & 4200008229 & Quạ
+                                    t treo ASIAvina - VY377990 - Xám & A-A ...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
@@ -566,8 +571,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.143         2 & 4200008371 & QUẠ
-                                    T ĐỨNG VY619990 & A-X & 682 & 3,355 \\
+l.142         2 & 4200008371 & QUẠ
+                                    T ĐỨNG VY619990 & A-A & 682 & 3,355 \\
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
@@ -579,8 +584,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.143         2 & 4200008371 & QUẠT ĐỨ
-                                           NG VY619990 & A-X & 682 & 3,355 \\
+l.142         2 & 4200008371 & QUẠT ĐỨ
+                                           NG VY619990 & A-A & 682 & 3,355 \\
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
@@ -592,8 +597,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.144         3 & 4200008366 & QUẠ
-                                    T SÀN TURB0 VY616790 & A-X & 680 & 2,83...
+l.143         3 & 4200008366 & QUẠ
+                                    T SÀN TURB0 VY616790 & A-A & 680 & 2,83...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
@@ -606,7 +611,7 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.145         4 & 4200008117 & Quạ
+l.144         4 & 4200008117 & Quạ
                                     t treo ASIAvina - VY357690 - trắng & A...
 
 You may provide a definition with
@@ -620,8 +625,8 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.145 ...& Quạt treo ASIAvina - VY357690 - trắ
-                                                  ng & A-X & 666 & 4,033 \\
+l.144 ...& Quạt treo ASIAvina - VY357690 - trắ
+                                                  ng & A-A & 666 & 4,033 \\
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
@@ -633,7 +638,7 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.146         5 & 4200008102 & Quạ
+l.145         5 & 4200008102 & Quạ
                                     t lửng ASIAvina - VY538790 - Xám & A-...
 
 You may provide a definition with
@@ -647,19 +652,14 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.146         5 & 4200008102 & Quạt lử
+l.145         5 & 4200008102 & Quạt lử
                                           ng ASIAvina - VY538790 - Xám & A-...
 
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
 
-Overfull \hbox (33.58104pt too wide) in paragraph at lines 138--149
- [][] 
- []
-
-
-Overfull \hbox (104.98334pt too wide) in paragraph at lines 166--177
+Overfull \hbox (33.58104pt too wide) in paragraph at lines 137--148
  [][] 
  []
 
@@ -667,30 +667,29 @@ Overfull \hbox (104.98334pt too wide) in paragraph at lines 166--177
 
 [2{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/lo
 cal/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/20
-25/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2025/texmf-d
-ist/fonts/enc/dvips/lm/lm-mathex.enc}]
-<../charts/q31_slotting_analysis.png, id=38, 1364.9394pt x 427.3566pt>
+25/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}]
+<../charts/q31_slotting_analysis.png, id=36, 1370.721pt x 427.3566pt>
 File: ../charts/q31_slotting_analysis.png Graphic file (type png)
 <use ../charts/q31_slotting_analysis.png>
 Package pdftex.def Info: ../charts/q31_slotting_analysis.png  used on input lin
-e 195.
-(pdftex.def)             Requested size: 439.37941pt x 137.56549pt.
+e 216.
+(pdftex.def)             Requested size: 439.37941pt x 136.98512pt.
 
-Overfull \hbox (9.7751pt too wide) in paragraph at lines 202--204
+
+[3{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}]
+Overfull \hbox (9.7751pt too wide) in paragraph at lines 223--225
 []\T1/lmr/bx/n/10.95 U-flow con-fig-u-ra-tion\T1/lmr/m/n/10.95 : Re-ceiv-ing an
 d ship-ping docks on the same wall; highest-convenience
  []
 
 
 
-[3 <../charts/q31_slotting_analysis.png>]
-
-[4]
-<../charts/q32_pick_pack_flowchart.png, id=70, 1149.093pt x 1582.2312pt>
+[4 <../charts/q31_slotting_analysis.png>]
+<../charts/q32_pick_pack_flowchart.png, id=65, 1149.093pt x 1582.2312pt>
 File: ../charts/q32_pick_pack_flowchart.png Graphic file (type png)
 <use ../charts/q32_pick_pack_flowchart.png>
 Package pdftex.def Info: ../charts/q32_pick_pack_flowchart.png  used on input l
-ine 278.
+ine 299.
 (pdftex.def)             Requested size: 398.61395pt x 548.86407pt.
 
 
@@ -703,13 +702,13 @@ L3 programming layer <2025-01-18>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 11593 strings out of 473190
- 176880 string characters out of 5715801
- 592255 words of memory out of 5000000
- 34631 multiletter control sequences out of 15000+600000
+ 11597 strings out of 473190
+ 176934 string characters out of 5715801
+ 592232 words of memory out of 5000000
+ 34633 multiletter control sequences out of 15000+600000
  600749 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 89i,11n,93p,822b,512s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 89i,11n,93p,767b,529s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
 cal/texlive/2025/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
 e/2025/texmf-dist/fonts/type1/public/lm/lmex10.pfb></usr/local/texlive/2025/tex
@@ -717,11 +716,12 @@ mf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texlive/2025/texmf-dist/fo
 nts/type1/public/lm/lmmi8.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/p
 ublic/lm/lmr10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lm
 r8.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmri10.pfb></u
-sr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsy10.pfb>
-Output written on part3_question_summary.pdf (6 pages, 554485 bytes).
+sr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/t
+exlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+Output written on part3_question_summary.pdf (6 pages, 559135 bytes).
 PDF statistics:
- 177 PDF objects out of 1000 (max. 8388607)
- 143 compressed objects within 2 object streams
- 43 named destinations out of 1000 (max. 500000)
+ 187 PDF objects out of 1000 (max. 8388607)
+ 150 compressed objects within 2 object streams
+ 45 named destinations out of 1000 (max. 500000)
  99 words of extra memory for PDF output out of 10000 (max. 10000000)
 

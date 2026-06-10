@@ -38,6 +38,7 @@ def _sample_shipments() -> pd.DataFrame:
                 "region": "Đông Nam Bộ",
                 "distance_from_my_phuoc_km": 12.0,
                 "distance_from_vinh_loc_km": 999.0,
+                "created_date": pd.Timestamp("2025-06-15"),
             },
             {
                 "order_id": "MT-1",
@@ -53,6 +54,7 @@ def _sample_shipments() -> pd.DataFrame:
                 "region": "Đông Nam Bộ",
                 "distance_from_my_phuoc_km": 12.0,
                 "distance_from_vinh_loc_km": 999.0,
+                "created_date": pd.Timestamp("2025-06-15"),
             },
             {
                 "order_id": "MT-2",
@@ -68,6 +70,7 @@ def _sample_shipments() -> pd.DataFrame:
                 "region": "Bắc Trung Bộ và Duyên hải miền Trung",
                 "distance_from_my_phuoc_km": 777.0,
                 "distance_from_vinh_loc_km": 34.0,
+                "created_date": pd.Timestamp("2025-06-15"),
             },
             {
                 "order_id": "TT-1",
@@ -83,6 +86,7 @@ def _sample_shipments() -> pd.DataFrame:
                 "region": "Đông Nam Bộ",
                 "distance_from_my_phuoc_km": 400.0,
                 "distance_from_vinh_loc_km": 21.0,
+                "created_date": pd.Timestamp("2025-06-15"),
             },
             {
                 "order_id": "TT-2",
@@ -98,6 +102,7 @@ def _sample_shipments() -> pd.DataFrame:
                 "region": "Đồng bằng sông Cửu Long",
                 "distance_from_my_phuoc_km": 55.0,
                 "distance_from_vinh_loc_km": 888.0,
+                "created_date": pd.Timestamp("2025-06-15"),
             },
             {
                 "order_id": "UNK-1",
@@ -113,6 +118,7 @@ def _sample_shipments() -> pd.DataFrame:
                 "region": "Đồng bằng sông Hồng",
                 "distance_from_my_phuoc_km": 80.0,
                 "distance_from_vinh_loc_km": 90.0,
+                "created_date": pd.Timestamp("2025-06-15"),
             },
         ]
     )
