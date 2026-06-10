@@ -12,6 +12,7 @@ from src.logage2026.analysis import (
     build_missing_data_summary,
     build_hcm_district_summary,
     build_inventory_pooling_summary,
+    build_lead_time_region_table,
     build_lead_time_sensitivity,
     build_network_model_evaluation,
     build_q21_channel_flow_summary,
@@ -49,7 +50,7 @@ from src.logage2026.loading import (
 )
 from src.logage2026.notes import write_notes, write_part3_notes
 from src.logage2026.excel_reports import write_summary_workbook
-from src.logage2026.visuals import boundary_province_names, save_charts, save_q31_slotting_chart, save_q31_u_shape_heatmap, save_q32_flowchart_image
+from src.logage2026.visuals import boundary_province_names, save_charts, save_q31_u_shape_heatmap, save_q32_flowchart_image
 
 
 EXPECTED_ASSIGNMENT_ROWS = 43_894
@@ -140,6 +141,7 @@ def main() -> None:
     safety_stock_class_a = build_safety_stock_class_a(shipments, abc_xyz)
     lead_time_sensitivity = build_lead_time_sensitivity(safety_stock_class_a)
     inventory_pooling_summary = build_inventory_pooling_summary(safety_stock_class_a)
+    lead_time_table = build_lead_time_region_table()
     hcm_district_summary = build_hcm_district_summary(shipments)
     network_model_evaluation = build_network_model_evaluation(hcm_district_summary)
     q21_channel_flow_summary = build_q21_channel_flow_summary(shipments)
@@ -330,6 +332,7 @@ def main() -> None:
         slotting_plan=slotting_plan,
         sku_pick_profile=sku_pick_profile,
         travel_metrics=travel_metrics,
+        lead_time_table=lead_time_table,
         output_path=OUTPUT_DIR / "summary_table.xlsx",
     )
 
@@ -409,7 +412,6 @@ def main() -> None:
     slotting_plan.to_csv(TABLES_DIR / "slotting_plan.csv", index=False)
 
     print("Rendering Part 3 charts ...")
-    save_q31_slotting_chart(abc_xyz, travel_metrics, slotting_plan=slotting_plan)
     save_q31_u_shape_heatmap()
     save_q32_flowchart_image()
 

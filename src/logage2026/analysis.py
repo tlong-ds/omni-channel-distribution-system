@@ -1244,6 +1244,58 @@ def _compute_mile_weighted_lt() -> float:
     return sum(lt * orders for _, lt, orders in _REGIONAL_LT_DATA) / total_orders
 
 
+_REGION_ROUTE_TYPE: dict[str, str] = {
+    "Đông Nam Bộ": "Nội tỉnh / cận RDC",
+    "Bắc Trung Bộ và Duyên hải miền Trung": "Liên miền Trung",
+    "Đồng bằng sông Cửu Long": "Nội miền Nam",
+    "Đồng bằng sông Hồng": "Liên miền Bắc",
+    "Tây Nguyên": "Cận miền",
+    "Trung du và miền núi phía Bắc": "Liên miền Bắc + vùng sâu",
+}
+
+_REGION_BENCHMARK_SOURCE: dict[str, str] = {
+    "Đông Nam Bộ": "GHN ≤24h nội tỉnh",
+    "Bắc Trung Bộ và Duyên hải miền Trung": "VTP liên miền, ĐN 1.5–4d",
+    "Đồng bằng sông Cửu Long": "GHTK nội miền 1–3d",
+    "Đồng bằng sông Hồng": "GHTK liên miền 3–5d",
+    "Tây Nguyên": "VTP nội miền 2–3d",
+    "Trung du và miền núi phía Bắc": "GHTK liên miền 3–5d",
+}
+
+
+def build_lead_time_region_table() -> pd.DataFrame:
+    """Return the 6-region mile-weighted LT table as a DataFrame.
+
+    Columns: region, route_type, lt_days, orders, weight, lt_x_orders, benchmark_source.
+    A 'TOTAL' summary row is appended, followed by the weighted-average result row.
+    This mirrors the reference sheet 'Lead Time theo Vùng'.
+    """
+    total_orders = sum(orders for _, _, orders in _REGIONAL_LT_DATA)
+    rows = []
+    for region, lt, orders in _REGIONAL_LT_DATA:
+        rows.append({
+            "region": region,
+            "route_type": _REGION_ROUTE_TYPE.get(region, ""),
+            "lt_days": lt,
+            "orders": orders,
+            "weight": orders / total_orders if total_orders else 0.0,
+            "lt_x_orders": lt * orders,
+            "benchmark_source": _REGION_BENCHMARK_SOURCE.get(region, ""),
+        })
+    lt_avg = _compute_mile_weighted_lt()
+    total_lt_x_orders = sum(r["lt_x_orders"] for r in rows)
+    rows.append({
+        "region": "TOTAL",
+        "route_type": "",
+        "lt_days": None,
+        "orders": total_orders,
+        "weight": 1.0,
+        "lt_x_orders": total_lt_x_orders,
+        "benchmark_source": f"LT_avg = {lt_avg:.4f} days",
+    })
+    return pd.DataFrame(rows)
+
+
 def build_safety_stock_class_a(shipments: pd.DataFrame, abc_xyz: pd.DataFrame) -> pd.DataFrame:
     """Compute safety stock for all Class A SKUs using a mile-weighted average lead time.
 

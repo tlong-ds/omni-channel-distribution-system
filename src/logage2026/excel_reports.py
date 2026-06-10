@@ -3,10 +3,11 @@ from pathlib import Path
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.drawing.image import Image as XLImage
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-from src.logage2026.config import Q11_WORKBOOK_OUTPUT
+from src.logage2026.config import CHARTS_DIR, Q11_WORKBOOK_OUTPUT
 
 
 THIN_BORDER = Border(
@@ -78,34 +79,61 @@ def write_summary_workbook(
     slotting_plan: pd.DataFrame,
     sku_pick_profile: pd.DataFrame,
     travel_metrics: dict,
+    lead_time_table: pd.DataFrame,
     output_path: Path,
 ) -> Path:
     workbook = Workbook()
-    dashboard = workbook.active
-    dashboard.title = "Q1.1 Dashboard"
-    _write_dashboard(dashboard, abc_xyz, abc_xyz_matrix, q11_shipments)
+
+    # ── Part 1 — Q1.1 ────────────────────────────────────────────────────────
+    q11_ws = workbook.active
+    q11_ws.title = "Q1.1 ABC-XYZ"
+    _write_q11_abc_xyz_sheet(q11_ws, abc_xyz, abc_xyz_matrix, q11_shipments)
     _write_full_sku_ranking(workbook.create_sheet("Q1.1 Full SKU Ranking"), abc_xyz)
     _write_monthly_demand_sheet(workbook.create_sheet("Q1.1 Monthly Demand"), monthly_demand)
     _write_class_a_deep_dive(workbook.create_sheet("Q1.1 Class A Deep Dive"), monthly_demand)
-    
+
+    # ── Part 1 — Q1.2 ────────────────────────────────────────────────────────
+    _write_q12_heatmap_summary_sheet(
+        workbook.create_sheet("Q1.2 Heatmap Summary"),
+        warehouse_region_summary,
+        q12_top_demand_provinces_summary,
+        warehouse_imbalance_summary,
+    )
     _write_dataframe_sheet(workbook.create_sheet("Q1.2 Warehouse by Region"), "QUESTION 1.2 — WAREHOUSE REGION SUMMARY", warehouse_region_summary)
     _write_dataframe_sheet(workbook.create_sheet("Q1.2 Top Provinces"), "QUESTION 1.2 — TOP DEMAND PROVINCES", q12_top_demand_provinces_summary)
     _write_dataframe_sheet(workbook.create_sheet("Q1.2 Warehouse Imbalance"), "QUESTION 1.2 — WAREHOUSE IMBALANCE", warehouse_imbalance_summary)
-    
+
+    # ── Part 1 — Q1.3 ────────────────────────────────────────────────────────
+    _write_q13_order_profile_summary_sheet(
+        workbook.create_sheet("Q1.3 Order Profile Summary"),
+        q13_segment_profile_summary,
+        q13_segment_packaging_summary,
+    )
     _write_dataframe_sheet(workbook.create_sheet("Q1.3 Segment Profile"), "QUESTION 1.3 — ORDER PROFILE BY SEGMENT", q13_segment_profile_summary)
     _write_dataframe_sheet(workbook.create_sheet("Q1.3 Packaging"), "QUESTION 1.3 — PACKAGING SPREAD BY SEGMENT", q13_segment_packaging_summary)
     _write_dataframe_sheet(workbook.create_sheet("Q1.3 Geo Spread"), "QUESTION 1.3 — GEOGRAPHIC SPREAD BY SEGMENT", q13_segment_geographic_spread_summary)
-    
-    _write_dataframe_sheet(workbook.create_sheet("Q2.2 Safety Stock"), "QUESTION 2.2 — CLASS A SAFETY STOCK", safety_stock_class_a)
-    _write_dataframe_sheet(workbook.create_sheet("Q2.2 Lead Time Sensitivity"), "QUESTION 2.2 — LEAD TIME SENSITIVITY", lead_time_sensitivity)
-    _write_dataframe_sheet(workbook.create_sheet("Q2.2 Inventory Pooling"), "QUESTION 2.2 — INVENTORY POOLING SUMMARY", inventory_pooling_summary)
+
+    # ── Part 2 — Q2.1 ────────────────────────────────────────────────────────
     _write_dataframe_sheet(workbook.create_sheet("Q2.1 HCM Districts"), "QUESTION 2.1 — HCM DISTRICT SUMMARY", hcm_district_summary)
     _write_q21_dark_store_sla_sheet(workbook.create_sheet("Q2.1 Dark Store SLA"), network_model_evaluation, shipments)
-    
-    _write_dataframe_sheet(workbook.create_sheet("Q3.1 Slotting Plan"), "QUESTION 3.1 — MODEL 2 SLOTTING PLAN AND SKU ASSIGNMENTS", slotting_plan)
+
+    # ── Part 2 — Q2.2 ────────────────────────────────────────────────────────
+    _write_q22_lead_time_sheet(workbook.create_sheet("Q2.2 Lead Time"), lead_time_table)
+    _write_q22_safety_stock_sheet(workbook.create_sheet("Q2.2 Safety Stock"), safety_stock_class_a)
+    _write_q22_inventory_pooling_sheet(workbook.create_sheet("Q2.2 Inventory Pooling"), inventory_pooling_summary)
+    _write_dataframe_sheet(workbook.create_sheet("Q2.2 Lead Time Sensitivity"), "QUESTION 2.2 — LEAD TIME SENSITIVITY (SCENARIO TABLE)", lead_time_sensitivity)
+
+    # ── Part 3 — Q3.1 ────────────────────────────────────────────────────────
+    _write_q31_slotting_design_sheet(workbook.create_sheet("Q3.1 Slotting Design"), travel_metrics)
+    _write_q31_travel_proof_sheet(workbook.create_sheet("Q3.1 Travel Proof"), travel_metrics)
+    _write_q31_slot_assignment_sheet(workbook.create_sheet("Q3.1 Slot Assignment"), slotting_plan)
+    _write_q31_u_shape_sheet(workbook.create_sheet("Q3.1 Heatmap (U-shape)"))
+    _write_dataframe_sheet(workbook.create_sheet("Q3.1 Slotting Plan"), "QUESTION 3.1 — FULL SLOTTING PLAN (MODEL 2)", slotting_plan)
     _write_dataframe_sheet(workbook.create_sheet("Q3.1 SKU Pick Profile"), "QUESTION 3.1 — SKU PICK PROFILE AND UNIT MIXES", sku_pick_profile)
-    _write_q31_travel_time_summary_sheet(workbook.create_sheet("Q3.1 Travel-Time Summary"), travel_metrics, sku_pick_profile, slotting_plan, abc_xyz)
-            
+
+    # ── Part 3 — Q3.2 ────────────────────────────────────────────────────────
+    _write_q32_pick_pack_sheet(workbook.create_sheet("Q3.2 Pick & Pack"))
+
     workbook.save(output_path)
     return output_path
 
@@ -229,21 +257,29 @@ def _dashboard_xyz_volatility_summary(abc_xyz: pd.DataFrame) -> pd.DataFrame:
     return summary.set_index("xyz_volatility").reindex(["X", "Y", "Z"]).reset_index()
 
 
-def _write_dashboard(
+def _write_q11_abc_xyz_sheet(
     ws,
     abc_xyz: pd.DataFrame,
     abc_xyz_matrix: pd.DataFrame,
     q11_shipments: pd.DataFrame,
 ) -> None:
+    """Write the Q1.1 ABC-XYZ sheet matching the reference 6-section layout.
+
+    Sections: A = ABC Quantity, B = ABC Frequency, C = XYZ Volatility,
+              D = ABC-XYZ (Qty × Vol) matrix, E = ABC Qty × Freq matrix,
+              F = Fast-Moving group (AA class).
+    Charts are embedded below the data.
+    """
     period_start = q11_shipments["created_date"].min()
     period_end = q11_shipments["created_date"].max()
     month_count = q11_shipments["created_date"].dt.to_period("M").nunique()
     for idx, width in enumerate([3, 18, 14, 12, 16, 14, 12, 24, 40], start=1):
         ws.column_dimensions[get_column_letter(idx)].width = width
-    _apply_title(ws, "B1", 9, "LOGage 2026 — QUESTION 1.1 | ABC-XYZ ANALYSIS DASHBOARD")
+    _apply_title(ws, "B1", 9, "LOGage 2026 — QUESTION 1.1 | ABC-XYZ ANALYSIS")
     period_text = (
         f"Data: My Phuoc & Vinh Loc Warehouses  |  Period: {_period_label(period_start, period_end)}  |  "
-        f"{len(q11_shipments):,} transaction lines  |  {abc_xyz['sku_code'].nunique():,} unique SKUs"
+        f"{len(q11_shipments):,} transaction lines  |  {abc_xyz['sku_code'].nunique():,} unique SKUs  |  "
+        f"Formula: ABC Qty/Freq (cum. 70/20/10%), XYZ Variability (CV ≤0.5/≤1.0/>1.0)"
     )
     ws.merge_cells("B2:I2")
     ws["B2"] = period_text
@@ -251,6 +287,7 @@ def _write_dashboard(
     ws["B2"].font = Font(italic=True, color="5B5B5B")
 
     r = 4
+    # ── A. ABC CLASSIFICATION — QUANTITY ──────────────────────────────────
     abc_summary = _dashboard_abc_summary(abc_xyz)
     ws.merge_cells(f"B{r}:I{r}")
     ws[f"B{r}"] = "A.  ABC CLASSIFICATION — OUTBOUND QUANTITY (threshold: A=70%, B=90%, C=100%)"
@@ -261,7 +298,7 @@ def _write_dashboard(
         ws.cell(r, col, value)
     _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
     r += 1
-    thresholds = {"A": "Cum. top 70% volume", "B": "70-90% cum. volume", "C": "Bottom 10% volume"}
+    thresholds = {"A": "Cum. top 70% volume", "B": "70–90% cum. volume", "C": "Bottom 10% volume"}
     actions = {
         "A": "Pick-face zone | Daily cycle count | Min lead time",
         "B": "Intermediate zone | Weekly review",
@@ -275,41 +312,66 @@ def _write_dashboard(
         r += 1
 
     r += 1
+    # ── B. ABC CLASSIFICATION — ORDER FREQUENCY ───────────────────────────
     xyz_freq_summary = _dashboard_xyz_frequency_summary(abc_xyz)
     ws.merge_cells(f"B{r}:I{r}")
-    ws[f"B{r}"] = "B.  ABC-FREQUENCY CLASSIFICATION — ORDER FREQUENCY"
+    ws[f"B{r}"] = "B.  ABC CLASSIFICATION — ORDER FREQUENCY (threshold: A=70%, B=90%, C=100%)"
     _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
     r += 1
-    xyz_headers = ["Class", "SKU Count", "% of SKUs", "Order Frequency", "Demand Pattern", "Replenishment Logic", "Safety Stock", ""]
-    for col, value in enumerate(xyz_headers, start=2):
+    freq_headers = ["Class", "SKU Count", "% of SKUs", "Total Freq", "Freq/SKU", "Demand Pattern", "Replenishment Logic", "Safety Stock"]
+    for col, value in enumerate(freq_headers, start=2):
         ws.cell(r, col, value)
     _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
     r += 1
     demand = {"A": "High Frequency", "B": "Medium Frequency", "C": "Low Frequency"}
-    repl = {"A": "Fixed reorder point (ROP)", "B": "Dynamic MRP/forecast-based", "C": "Demand-driven + buffer stock"}
-    safety = {"A": "Low — 1-2 weeks cover", "B": "Medium — 2-4 weeks cover", "C": "High — 4-8 weeks cover"}
+    repl = {"A": "Fixed ROP", "B": "Dynamic MRP/forecast", "C": "Demand-driven + buffer"}
+    safety = {"A": "Low — 1–2 weeks cover", "B": "Medium — 2–4 weeks cover", "C": "High — 4–8 weeks cover"}
+    meaning = {"A": "Pick nhiều nhất → slot gần đóng gói", "B": "Tần suất vừa → zone trung gian", "C": "Hiếm pick → zone dự trữ"}
     for row in xyz_freq_summary.itertuples(index=False):
         cls = getattr(row, "abc_frequency")
-        values = [cls, int(row.sku_count), _format_share(row.sku_share), round(_safe_float(row.total_freq)), demand[cls], repl[cls], safety[cls], ""]
+        freq_per_sku = _safe_float(row.total_freq) / int(row.sku_count) if int(row.sku_count) else 0.0
+        values = [cls, int(row.sku_count), _format_share(row.sku_share), round(_safe_float(row.total_freq)), round(freq_per_sku, 1), demand[cls], repl[cls], safety[cls]]
         for col, value in enumerate(values, start=2):
             ws.cell(r, col, value)
         _style_range(ws, r, 2, 9, fill=CLASS_FILLS[cls], alignment=LEFT)
         r += 1
 
     r += 1
+    # ── C. XYZ VOLATILITY CLASSIFICATION ─────────────────────────────────
+    xyz_vol_summary = _dashboard_xyz_volatility_summary(abc_xyz)
     ws.merge_cells(f"B{r}:I{r}")
-    ws[f"B{r}"] = "C.  ABC-FREQUENCY MATRIX"
+    ws[f"B{r}"] = f"C.  XYZ CLASSIFICATION — DEMAND VARIABILITY (CV over {month_count} months; X≤0.50, Y≤1.00, Z>1.00)"
     _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
     r += 1
-    
-    # We need to compute matrix for frequency
-    matrix_freq = (
-        abc_xyz.groupby(["abc_quantity", "abc_frequency"]).size().unstack(fill_value=0)
-        .reindex(index=["A", "B", "C"], columns=["A", "B", "C"])
-        .fillna(0)
-        .astype(int)
+    xyz_headers = ["Class", "CV Range", "SKU Count", "% of SKUs", "Demand Pattern", "Safety Stock", "Replenishment Logic", "Avg CV"]
+    for col, value in enumerate(xyz_headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    cv_ranges = {"X": "CV ≤ 0.50", "Y": "0.50 < CV ≤ 1.00", "Z": "CV > 1.00"}
+    demand_vol = {"X": "Stable / consistent", "Y": "Seasonal / trend", "Z": "Erratic / unpredictable"}
+    repl_vol = {"X": "Fixed ROP + EOQ", "Y": "Dynamic MRP / forecast", "Z": "Buffer stock + safety stock"}
+    safety_vol = {"X": "Thấp — 1–2 tuần", "Y": "TB — 2–4 tuần", "Z": "Cao — 4–8 tuần"}
+    for row in xyz_vol_summary.itertuples(index=False):
+        cls = getattr(row, "xyz_volatility")
+        values = [cls, cv_ranges[cls], int(row.sku_count), _format_share(row.sku_share), demand_vol[cls], safety_vol[cls], repl_vol[cls], round(_safe_float(row.avg_cv), 2)]
+        for col, value in enumerate(values, start=2):
+            ws.cell(r, col, value)
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[cls], alignment=LEFT)
+        r += 1
+
+    r += 1
+    # ── D. ABC-XYZ (Qty × Volatility) MATRIX ─────────────────────────────
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "D.  ABC-XYZ MATRIX (Qty × Volatility)"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    matrix_vol = (
+        abc_xyz.groupby(["abc_quantity", "xyz_volatility"]).size().unstack(fill_value=0)
+        .reindex(index=["A", "B", "C"], columns=["X", "Y", "Z"])
+        .fillna(0).astype(int)
     )
-    headers = ["", "A (High Freq)", "B (Med Freq)", "C (Low Freq)", "Row Total", "% Volume", "% Freq", "Key Implication"]
+    headers = ["", "X (Stable)", "Y (Seasonal)", "Z (Erratic)", "Row Total", "% Volume", "% Freq", "Key Implication"]
     for col, value in enumerate(headers, start=2):
         ws.cell(r, col, value)
     _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
@@ -321,58 +383,6 @@ def _write_dashboard(
         "B": "MODERATE — Standard fulfillment, replenishment planning",
         "C": "LOW PRIORITY — Bulk storage, periodic review",
     }
-    for abc_class in ["A", "B", "C"]:
-        values = [abc_class, int(matrix_freq.loc[abc_class, "A"]), int(matrix_freq.loc[abc_class, "B"]), int(matrix_freq.loc[abc_class, "C"]), int(matrix_freq.loc[abc_class].sum()), _format_share(_safe_float(volume_share.get(abc_class))), _format_share(_safe_float(freq_share.get(abc_class))), implications[abc_class]]
-        for col, value in enumerate(values, start=2):
-            ws.cell(r, col, value)
-        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[abc_class], alignment=LEFT)
-        r += 1
-    total_values = ["TOTAL", int(matrix_freq["A"].sum()), int(matrix_freq["B"].sum()), int(matrix_freq["C"].sum()), int(matrix_freq.values.sum()), "", "", ""]
-    for col, value in enumerate(total_values, start=2):
-        ws.cell(r, col, value)
-    _style_range(ws, r, 2, 9, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=CENTER)
-    r += 1
-
-    r += 1
-    xyz_vol_summary = _dashboard_xyz_volatility_summary(abc_xyz)
-    ws.merge_cells(f"B{r}:I{r}")
-    ws[f"B{r}"] = f"D.  XYZ CLASSIFICATION — DEMAND VARIABILITY (Coefficient of Variation over {month_count} months)"
-    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
-    r += 1
-    xyz_headers = ["Class", "SKU Count", "% of SKUs", "CV Range", "Avg CV", "Demand Pattern", "Replenishment Logic", "Safety Stock"]
-    for col, value in enumerate(xyz_headers, start=2):
-        ws.cell(r, col, value)
-    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
-    r += 1
-    cv_ranges = {"X": "CV <= 0.50", "Y": "0.50 < CV <= 1.00", "Z": "CV > 1.00"}
-    demand_vol = {"X": "Stable / consistent", "Y": "Seasonal or trend", "Z": "Erratic / unpredictable"}
-    repl_vol = {"X": "Fixed reorder point (ROP)", "Y": "Dynamic MRP/forecast-based", "Z": "Demand-driven + buffer stock"}
-    safety_vol = {"X": "Low — 1-2 weeks cover", "Y": "Medium — 2-4 weeks cover", "Z": "High — 4-8 weeks cover"}
-    for row in xyz_vol_summary.itertuples(index=False):
-        cls = getattr(row, "xyz_volatility")
-        values = [cls, int(row.sku_count), _format_share(row.sku_share), cv_ranges[cls], round(_safe_float(row.avg_cv), 2), demand_vol[cls], repl_vol[cls], safety_vol[cls]]
-        for col, value in enumerate(values, start=2):
-            ws.cell(r, col, value)
-        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[cls], alignment=LEFT)
-        r += 1
-
-    r += 1
-    ws.merge_cells(f"B{r}:I{r}")
-    ws[f"B{r}"] = "E.  ABC-VOLATILITY MATRIX"
-    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
-    r += 1
-    
-    matrix_vol = (
-        abc_xyz.groupby(["abc_quantity", "xyz_volatility"]).size().unstack(fill_value=0)
-        .reindex(index=["A", "B", "C"], columns=["X", "Y", "Z"])
-        .fillna(0)
-        .astype(int)
-    )
-    headers = ["", "X (Stable)", "Y (Seasonal)", "Z (Erratic)", "Row Total", "% Volume", "% Freq", "Key Implication"]
-    for col, value in enumerate(headers, start=2):
-        ws.cell(r, col, value)
-    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
-    r += 1
     for abc_class in ["A", "B", "C"]:
         values = [abc_class, int(matrix_vol.loc[abc_class, "X"]), int(matrix_vol.loc[abc_class, "Y"]), int(matrix_vol.loc[abc_class, "Z"]), int(matrix_vol.loc[abc_class].sum()), _format_share(_safe_float(volume_share.get(abc_class))), _format_share(_safe_float(freq_share.get(abc_class))), implications[abc_class]]
         for col, value in enumerate(values, start=2):
@@ -386,78 +396,81 @@ def _write_dashboard(
     r += 1
 
     r += 1
-    class_a = abc_xyz[abc_xyz["abc_quantity"].eq("A")].copy()
+    # ── E. ABC Qty × Freq (Fast-Moving) MATRIX ───────────────────────────
     ws.merge_cells(f"B{r}:I{r}")
-    ws[f"B{r}"] = "F.  FAST-MOVING SKU GROUP (Class A) — Primary Source of Warehouse Operational Pressure"
+    ws[f"B{r}"] = "E.  ABC Qty × Freq MATRIX (Fast-Moving identification)"
     _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
     r += 1
-    headers = ["Metric", "AX — Stable Fast", "AY — Seasonal Fast", "AZ — Volatile Fast", "ALL Class A Total", "% of Grand Total", "Operational Priority"]
+    matrix_freq = (
+        abc_xyz.groupby(["abc_quantity", "abc_frequency"]).size().unstack(fill_value=0)
+        .reindex(index=["A", "B", "C"], columns=["A", "B", "C"])
+        .fillna(0).astype(int)
+    )
+    headers = ["", "Freq A (High)", "Freq B (Med)", "Freq C (Low)", "Row Total", "% Volume", "% Freq", "Key Implication"]
     for col, value in enumerate(headers, start=2):
         ws.cell(r, col, value)
-    _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
     r += 1
-    subgroup_values = {}
-    for subgroup in ["AX", "AY", "AZ"]:
-        subset = class_a[class_a["abc_xyz_volatility"].eq(subgroup)]
-        subgroup_values[subgroup] = {
-            "sku_count": int(subset["sku_code"].nunique()),
-            "quantity": subset["quantity"].sum(),
-            "order_frequency": subset["order_frequency"].sum(),
-            "avg_cv": subset["demand_cv"].mean(),
-            "cbm_total": subset["cbm_total"].sum(),
-        }
-    metrics = [
-        ("SKU Count", "sku_count", f"{_format_share(class_a['sku_code'].nunique() / abc_xyz['sku_code'].nunique())} of all SKUs", "Fast-moving concentration remains high"),
-        ("Total Qty (pcs)", "quantity", f"{_format_share(class_a['quantity'].sum() / abc_xyz['quantity'].sum())} of total volume", "Prioritize in pick-face zone"),
-        ("Order Frequency", "order_frequency", f"{_format_share(class_a['order_frequency'].sum() / abc_xyz['order_frequency'].sum())} of orders", "High pick frequency -> batch picking"),
-        ("Avg Monthly Demand", None, "-", f"{month_count}-month average"),
-        ("Avg CV (Variability)", "avg_cv", "-", "High safety stock needed"),
-        ("Total CBM", "cbm_total", f"{_format_share(class_a['cbm_total'].sum() / abc_xyz['cbm_total'].sum())} of total CBM", "Slotting space priority"),
+    for abc_class in ["A", "B", "C"]:
+        values = [abc_class, int(matrix_freq.loc[abc_class, "A"]), int(matrix_freq.loc[abc_class, "B"]), int(matrix_freq.loc[abc_class, "C"]), int(matrix_freq.loc[abc_class].sum()), _format_share(_safe_float(volume_share.get(abc_class))), _format_share(_safe_float(freq_share.get(abc_class))), implications[abc_class]]
+        for col, value in enumerate(values, start=2):
+            ws.cell(r, col, value)
+        _style_range(ws, r, 2, 9, fill=CLASS_FILLS[abc_class], alignment=LEFT)
+        r += 1
+    total_values = ["TOTAL", int(matrix_freq["A"].sum()), int(matrix_freq["B"].sum()), int(matrix_freq["C"].sum()), int(matrix_freq.values.sum()), "", "", ""]
+    for col, value in enumerate(total_values, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=CENTER)
+    r += 1
+
+    r += 1
+    # ── F. FAST-MOVING SKU GROUP (AA class) ───────────────────────────────
+    class_a = abc_xyz[abc_xyz["abc_quantity"].eq("A")].copy()
+    fast_moving = abc_xyz[abc_xyz["abc_quantity"].eq("A") & abc_xyz["abc_frequency"].eq("A")].copy()
+    ws.merge_cells(f"B{r}:I{r}")
+    ws[f"B{r}"] = "F.  FAST-MOVING GROUP (A-A: ABC_Qty=A AND ABC_Freq=A)"
+    _style_range(ws, r, 2, 9, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Metric", "Value", "% of Total", "Formula", "Operational Meaning", "", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 9, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    total_qty = abc_xyz["quantity"].sum()
+    total_freq = abc_xyz["order_frequency"].sum()
+    total_skus = abc_xyz["sku_code"].nunique()
+    fm_skus = fast_moving["sku_code"].nunique()
+    fm_qty = _safe_float(fast_moving["quantity"].sum())
+    fm_freq = _safe_float(fast_moving["order_frequency"].sum())
+    fm_avg_monthly = fm_qty / month_count if month_count else 0
+    top10 = ", ".join(fast_moving.sort_values("quantity", ascending=False)["sku_code"].astype(str).head(10).tolist())
+    fm_rows = [
+        ("Số SKU",          f"{fm_skus}",          f"{fm_skus/total_skus:.1%} SKU",   "COUNT(ABC_Qty=A AND ABC_Freq=A)",    "~4% SKU nhưng chi phối vận hành"),
+        ("Sản lượng (pcs)", f"{round(fm_qty):,}",  f"{fm_qty/total_qty:.1%} qty",     "SUM(Total_Qty) nhóm A-A",           "Chiếm ~58% tổng xuất kho"),
+        ("Tần suất đơn",    f"{round(fm_freq):,}", f"{fm_freq/total_freq:.1%} freq",  "SUM(Order_Freq) nhóm A-A",          "~26% pick events"),
+        ("Nhu cầu TB/tháng",f"{round(fm_avg_monthly):,}", "—",                        "SUM(Total_Qty)/7",                  "Input cho Safety Stock"),
+        ("Top 10 Fast-Moving SKU", top10,           "—",                               "Sort by Total_Qty desc",            "Assign to nearest pick-face slots"),
     ]
-    for metric, key, pct_text, priority_text in metrics:
+    for metric, value, pct, formula, meaning_txt in fm_rows:
         ws.cell(r, 2, metric)
-        for col_idx, subgroup in enumerate(["AX", "AY", "AZ"], start=3):
-            value = subgroup_values[subgroup].get(key) if key else "-"
-            if key in {"quantity", "order_frequency", "cbm_total"}:
-                value = f"{round(_safe_float(value)):,}"
-            elif key == "avg_cv":
-                value = f"{_safe_float(value):.2f}"
-            elif key == "sku_count":
-                value = str(value)
-            ws.cell(r, col_idx, value)
-        total_value = "-"
-        if key == "sku_count":
-            total_value = str(int(class_a["sku_code"].nunique()))
-        elif key == "quantity":
-            total_value = f"{round(class_a['quantity'].sum()):,}"
-        elif key == "order_frequency":
-            total_value = f"{round(class_a['order_frequency'].sum()):,}"
-        elif key == "avg_cv":
-            total_value = f"{class_a['demand_cv'].mean():.2f}"
-        elif key == "cbm_total":
-            total_value = f"{round(class_a['cbm_total'].sum()):,}"
-        elif metric == "Avg Monthly Demand":
-            total_value = f"{round(class_a['quantity'].sum() / month_count):,}"
-        ws.cell(r, 6, total_value)
-        ws.cell(r, 7, pct_text)
-        ws.cell(r, 8, priority_text)
-        _style_range(ws, r, 2, 8, fill=SUBHEADER_FILL if r % 2 == 0 else None, alignment=LEFT)
+        ws.cell(r, 3, value)
+        ws.cell(r, 4, pct)
+        ws.cell(r, 5, formula)
+        ws.cell(r, 6, meaning_txt)
+        _style_range(ws, r, 2, 9, fill=SUBHEADER_FILL if r % 2 == 0 else None, alignment=LEFT)
         r += 1
 
-    predictable = int(class_a["abc_xyz_volatility"].isin(["AX", "AY"]).sum())
-    volatile = int(class_a["abc_xyz_volatility"].eq("AZ").sum())
     key_finding = (
-        f"KEY FINDING: {int(class_a['sku_code'].nunique())} Class A SKUs "
-        f"({_format_share(class_a['sku_code'].nunique() / abc_xyz['sku_code'].nunique())} of portfolio) account for "
-        f"{_format_share(class_a['quantity'].sum() / abc_xyz['quantity'].sum())} of outbound volume and "
-        f"{_format_share(class_a['order_frequency'].sum() / abc_xyz['order_frequency'].sum())} of order frequency. "
-        f"Of these, {predictable} SKUs (AX+AY) are predictable enough for fixed slotting and ROP-based replenishment. "
-        f"The {volatile} AZ SKUs require demand buffering and escalation protocols."
+        f"KEY FINDING: {fm_skus} Fast-Moving SKUs ({fm_skus/total_skus:.1%} of portfolio) account for "
+        f"{fm_qty/total_qty:.1%} of outbound volume and {fm_freq/total_freq:.1%} of order frequency. "
+        f"These should occupy pick-face ground-level slots nearest the packing station."
     )
     ws.merge_cells(f"B{r}:I{r}")
     ws[f"B{r}"] = key_finding
     _style_range(ws, r, 2, 9, fill=TITLE_FILL, font=Font(bold=True, color="FFFFFF"), alignment=LEFT)
-    r += 1
+    r += 2
+
+    ws.freeze_panes = "B3"
 
 def _write_full_sku_ranking(ws, abc_xyz: pd.DataFrame) -> None:
     widths = [3, 10, 14, 15, 10, 11, 10, 10, 10, 10, 11, 10, 12, 10, 8, 10, 22, 28]
@@ -919,3 +932,742 @@ def _write_q31_travel_time_summary_sheet(
         else:
             _style_range(ws, r, 2, 9, fill=SUBHEADER_FILL if r % 2 == 0 else None, font=BOLD_FONT if col_idx == 2 else None, alignment=None)
         r += 1
+
+def _write_q12_heatmap_summary_sheet(
+    ws,
+    warehouse_region_summary: pd.DataFrame,
+    q12_top_demand_provinces_summary: pd.DataFrame,
+    warehouse_imbalance_summary: pd.DataFrame,
+) -> None:
+    ws.column_dimensions[get_column_letter(1)].width = 3
+    for col in range(2, 12):
+        ws.column_dimensions[get_column_letter(col)].width = 18
+    ws.column_dimensions[get_column_letter(12)].width = 30
+    _apply_title(ws, "B1", 11, "LOGage 2026 — QUESTION 1.2 | HEATMAP SUMMARY")
+
+    r = 3
+    ws.merge_cells(f"B{r}:K{r}")
+    ws[f"B{r}"] = "A. WAREHOUSE BALANCE (My Phuoc vs Vinh Loc)"
+    _style_range(ws, r, 2, 11, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Warehouse", "Quantity (pcs)", "% Total Qty", "CBM (m3)", "% Total CBM", "Order Count", "% Total Orders", "Transaction Rows", "% Total Rows", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 11, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    wh_summary = (
+        warehouse_region_summary.groupby("source_warehouse")
+        .agg(quantity=("quantity", "sum"), cbm=("cbm_total", "sum"), orders=("orders", "sum"), rows=("shipment_lines", "sum"))
+        .reset_index()
+    )
+    total_qty = wh_summary["quantity"].sum()
+    total_cbm = wh_summary["cbm"].sum()
+    total_orders = wh_summary["orders"].sum()
+    total_rows = wh_summary["rows"].sum()
+    for _, row in wh_summary.iterrows():
+        values = [row["source_warehouse"], round(row["quantity"]), row["quantity"] / total_qty if total_qty else 0,
+                  round(row["cbm"], 2), row["cbm"] / total_cbm if total_cbm else 0,
+                  int(row["orders"]), row["orders"] / total_orders if total_orders else 0,
+                  int(row["rows"]), row["rows"] / total_rows if total_rows else 0]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = CENTER
+            if col in {3, 5, 7, 9}:
+                cell.number_format = "0.0%"
+            elif col in {4}:
+                cell.number_format = "0.00"
+        r += 1
+
+    r += 2
+    ws.merge_cells(f"B{r}:K{r}")
+    ws[f"B{r}"] = "B. DEMAND BY REGION"
+    _style_range(ws, r, 2, 11, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Region", "Quantity (pcs)", "% Total", "CBM (m3)", "% Total CBM", "Orders", "% Total Orders", "Qty/Order", "Customers", "Rows", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 11, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    region_agg = (
+        warehouse_region_summary.groupby("region")
+        .agg(quantity=("quantity", "sum"), cbm=("cbm_total", "sum"), orders=("orders", "sum"), customers=("customers", "nunique"), rows=("shipment_lines", "sum"))
+        .reset_index()
+        .sort_values("quantity", ascending=False)
+    )
+    tot_qty = region_agg["quantity"].sum()
+    tot_cbm = region_agg["cbm"].sum()
+    tot_ord = region_agg["orders"].sum()
+    for _, row in region_agg.iterrows():
+        qty_per_order = row["quantity"] / row["orders"] if row["orders"] else 0
+        values = [row["region"], round(row["quantity"]), row["quantity"] / tot_qty if tot_qty else 0,
+                  round(row["cbm"], 2), row["cbm"] / tot_cbm if tot_cbm else 0,
+                  int(row["orders"]), row["orders"] / tot_ord if tot_ord else 0,
+                  round(qty_per_order, 1), int(row["customers"]), int(row["rows"])]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = CENTER
+            if col in {3, 5, 7}:
+                cell.number_format = "0.0%"
+            elif col == 8:
+                cell.number_format = "0.0"
+        r += 1
+
+    r += 2
+    ws.merge_cells(f"B{r}:K{r}")
+    ws[f"B{r}"] = "C. TOP 15 PROVINCES BY QUANTITY"
+    _style_range(ws, r, 2, 11, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Rank", "Province", "Quantity (pcs)", "% Total", "Cum %", "Orders", "Qty/Order", "Dist. MP (km)", "Dist. VL (km)", "Region", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 11, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    top_provs = (
+        warehouse_region_summary.groupby("province")
+        .agg(quantity=("quantity", "sum"), orders=("orders", "sum"), region=("region", "first"))
+        .reset_index()
+        .sort_values("quantity", ascending=False)
+        .head(15)
+    )
+    top_prov_total_qty = top_provs["quantity"].sum()
+    cum_share = 0.0
+    for rank, (_, row) in enumerate(top_provs.iterrows(), 1):
+        cum_share += row["quantity"] / top_prov_total_qty if top_prov_total_qty else 0
+        qty_per_order = row["quantity"] / row["orders"] if row["orders"] else 0
+        values = [rank, row["province"], round(row["quantity"]),
+                  row["quantity"] / top_prov_total_qty if top_prov_total_qty else 0,
+                  cum_share, int(row["orders"]), round(qty_per_order, 1), "", "", row["region"]]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col in {3, 11} else CENTER
+            if col in {4, 5}:
+                cell.number_format = "0.0%"
+            elif col == 7:
+                cell.number_format = "0.0"
+        r += 1
+
+    ws.freeze_panes = "B3"
+
+
+def _write_q13_order_profile_summary_sheet(
+    ws,
+    q13_segment_profile_summary: pd.DataFrame,
+    q13_segment_packaging_summary: pd.DataFrame,
+) -> None:
+    for idx, width in enumerate([3, 22, 16, 16, 14, 14, 16, 16, 14, 14, 14, 14, 14, 14], start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    _apply_title(ws, "B1", 14, "LOGage 2026 — QUESTION 1.3 | ORDER PROFILE SUMMARY")
+
+    r = 3
+    ws.merge_cells(f"B{r}:N{r}")
+    ws[f"B{r}"] = "A. CUSTOMER SEGMENT COMPARISON TABLE"
+    _style_range(ws, r, 2, 14, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = [
+        "Tieu chi", "Formula", "Modern Trade", "Traditional Trade",
+        "MT vs TT", "Operational Meaning",
+        "", "", "", "", "", "", "", ""
+    ]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 14, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+
+    mt = q13_segment_profile_summary[q13_segment_profile_summary["customer_segment"] == "Modern Trade"]
+    tt = q13_segment_profile_summary[q13_segment_profile_summary["customer_segment"] == "Traditional Trade / Distributor"]
+    mt_row = mt.iloc[0] if not mt.empty else None
+    tt_row = tt.iloc[0] if not tt.empty else None
+
+    def _mtv(key):
+        return mt_row[key] if mt_row is not None else "N/A"
+    def _ttv(key):
+        return tt_row[key] if tt_row is not None else "N/A"
+
+    rows_data = [
+        ("Active Customers", "COUNT(DISTINCT customer_key)", _mtv("customers"), _ttv("customers"), "", "Khach hang lon (MT) vs nhieu khach le (TT)"),
+        ("Total Orders", "COUNT(DISTINCT document_no)", _mtv("orders"), _ttv("orders"), "", "MT dat don lon, TT dat don nho le nhieu lan"),
+        ("Avg Order Quantity (pcs)", "AVG(SUM quantity per order)", f'{_mtv("avg_order_quantity"):.1f}', f'{_ttv("avg_order_quantity"):.1f}', "", "MT mua so luong lon/don; TT mua nhot giot"),
+        ("Median Order Quantity (pcs)", "MEDIAN(SUM quantity per order)", f'{_mtv("median_order_quantity"):.1f}', f'{_ttv("median_order_quantity"):.1f}', "", "Phan phoi lech phai o TT"),
+        ("Avg Order CBM (m3)", "AVG(SUM CBM per order)", f'{_mtv("avg_order_cbm"):.3f}', f'{_ttv("avg_order_cbm"):.3f}', "", "MT don hang chiem khoi luong lon hon"),
+        ("Median Order CBM (m3)", "MEDIAN(SUM CBM per order)", f'{_mtv("median_order_cbm"):.3f}', f'{_ttv("median_order_cbm"):.3f}', "", ""),
+        ("Avg SKU Breadth/Order", "AVG(COUNT DISTINCT SKU per order)", f'{_mtv("avg_sku_breadth"):.2f}', f'{_ttv("avg_sku_breadth"):.2f}', "", "TT order nhieu SKU hon phan loai phuc tap"),
+        ("Avg Lines per Order", "AVG(COUNT line per order)", f'{_mtv("avg_lines_per_order"):.2f}', f'{_ttv("avg_lines_per_order"):.2f}', "", ""),
+        ("Avg Orders/Customer/Month", "Orders / Customers / 7 months", f'{_mtv("avg_orders_per_customer_month"):.2f}', f'{_ttv("avg_orders_per_customer_month"):.2f}', "", "TT tan suat cao hon"),
+        ("Active Month Frequency", "Orders / active months", f'{_mtv("active_month_frequency"):.2f}', f'{_ttv("active_month_frequency"):.2f}', "", ""),
+        ("Geographic Spread", "COUNT(DISTINCT province)", f'{_mtv("province_count")} provinces', f'{_ttv("province_count")} provinces', "", "TT phu rong toan quoc"),
+        ("Avg Delivery Distance (km)", "AVG(distance_km per order)", f'{_mtv("avg_distance_km"):.1f}', f'{_ttv("avg_distance_km"):.1f}', "", "MT xa hon do kho tap trung o trung tam"),
+        ("Lead Time Sensitivity", "Z x sigma_daily x sqrt(LT)", str(_mtv("lead_time_sensitivity")), str(_ttv("lead_time_sensitivity")), "", "MT nhay hon (SLA khat khe)"),
+    ]
+    for metric, formula, mt_val, tt_val, mt_vs_tt, meaning in rows_data:
+        values = [metric, formula, mt_val, tt_val, mt_vs_tt, meaning, "", "", "", "", "", "", "", ""]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT
+        r += 1
+
+    r += 2
+    ws.merge_cells(f"B{r}:N{r}")
+    ws[f"B{r}"] = "B. PACK UNIT MIX BY SEGMENT"
+    _style_range(ws, r, 2, 14, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Segment", "Pallet Qty", "Pallet %", "Carton Qty", "Carton %", "Loose Qty", "Loose %", "Total Qty", "", "", "", "", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 14, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    for segment_name in ["Modern Trade", "Traditional Trade / Distributor"]:
+        pkg = q13_segment_packaging_summary[q13_segment_packaging_summary["customer_segment"] == segment_name]
+        total_q = pkg["quantity"].sum() if not pkg.empty else 0
+        pallet_q = pkg[pkg["packaging_unit"] == "pallet"]["quantity"].sum() if not pkg.empty else 0
+        carton_q = pkg[pkg["packaging_unit"] == "carton"]["quantity"].sum() if not pkg.empty else 0
+        loose_q = pkg[pkg["packaging_unit"] == "loose"]["quantity"].sum() if not pkg.empty else 0
+        values = [segment_name, round(pallet_q), pallet_q / total_q if total_q else 0,
+                  round(carton_q), carton_q / total_q if total_q else 0,
+                  round(loose_q), loose_q / total_q if total_q else 0,
+                  round(total_q)]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col == 2 else CENTER
+            if col in {4, 6, 8}:
+                cell.number_format = "0.0%"
+        r += 1
+
+    ws.freeze_panes = "B3"
+
+
+def _write_q22_lead_time_sheet(ws, lead_time_table: pd.DataFrame) -> None:
+    ws.column_dimensions[get_column_letter(1)].width = 3
+    for col in range(2, 10):
+        ws.column_dimensions[get_column_letter(col)].width = 20
+    ws.column_dimensions[get_column_letter(10)].width = 35
+    _apply_title(ws, "B1", 10, "LOGage 2026 — QUESTION 2.2 | MILE-WEIGHTED AVERAGE LEAD TIME")
+
+    r = 3
+    ws.merge_cells(f"B{r}:J{r}")
+    ws[f"B{r}"] = (
+        "Methodology: LT_avg = Sigma(LT_r x Orders_r) / Sigma(Orders_r) "
+        "mile-weighted by order count per region. Transit benchmarks follow GHN/VTP/GHTK standards."
+    )
+    ws[f"B{r}"].alignment = Alignment(wrap_text=True, vertical="center")
+    r += 1
+
+    ws.merge_cells(f"B{r}:J{r}")
+    ws[f"B{r}"] = "A. REGION-LEVEL LEAD TIME TABLE"
+    _style_range(ws, r, 2, 10, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Region", "Route Type", "LT (days)", "Orders", "Weight", "Quantity", "LT x Orders", "Benchmark Source", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 10, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+
+    for _, row in lead_time_table.iterrows():
+        values = [
+            row.get("region", ""),
+            row.get("route_type", ""),
+            row.get("lt_days") if pd.notna(row.get("lt_days")) else "",
+            int(row["orders"]) if pd.notna(row["orders"]) else "",
+            row.get("weight") if pd.notna(row.get("weight")) else "",
+            row.get("quantity") if pd.notna(row.get("quantity")) else "",
+            row["lt_x_orders"] if pd.notna(row["lt_x_orders"]) else "",
+            row.get("benchmark_source", ""),
+        ]
+        is_total = str(row.get("region", "")).strip() == "TOTAL"
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col in {2, 3, 9} else CENTER
+            if col == 5:
+                cell.number_format = "0.00%"
+            if is_total:
+                cell.font = BOLD_FONT
+        if is_total:
+            _style_range(ws, r, 2, 10, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=None)
+        r += 1
+
+    r += 2
+    ws.merge_cells(f"B{r}:J{r}")
+    ws[f"B{r}"] = "B. RESULT MILE-WEIGHTED AVERAGE LEAD TIME"
+    _style_range(ws, r, 2, 10, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    total_row = lead_time_table[lead_time_table["region"] == "TOTAL"]
+    if not total_row.empty:
+        bench = total_row.iloc[0].get("benchmark_source", "")
+        ws.cell(r, 2, "LT_avg result:")
+        ws.cell(r, 2).font = BOLD_FONT
+        ws.cell(r, 3, bench)
+        ws.cell(r, 3).font = BOLD_FONT
+        ws.merge_cells(f"B{r}:C{r}")
+        _style_range(ws, r, 2, 10, fill=TITLE_FILL, font=Font(bold=True, color="FFFFFF"), alignment=LEFT)
+
+    ws.freeze_panes = "B3"
+
+
+def _write_q22_safety_stock_sheet(ws, safety_stock_class_a: pd.DataFrame) -> None:
+    for idx, width in enumerate([3, 14, 16, 14, 16, 16, 14, 14, 12, 12, 16, 16], start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    _apply_title(ws, "B1", 12, "LOGage 2026 — QUESTION 2.2 | SAFETY STOCK CLASS A SKUs")
+
+    r = 3
+    ws.merge_cells(f"B{r}:L{r}")
+    ws[f"B{r}"] = "FORMULAS:  SS = Z x sigma_daily x sqrt(LT_avg)    |    ROP = mu_daily x LT_avg + SS"
+    _style_range(ws, r, 2, 12, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    ws.merge_cells(f"B{r}:L{r}")
+    ws[f"B{r}"] = "Parameters: Z = 1.645 (95% service level), LT_avg = 1.94 days, sqrt(LT) = 1.393, ddof=1 over 7 months (Jun Dec 2025)"
+    _style_range(ws, r, 2, 12, fill=SUBHEADER_FILL, alignment=LEFT)
+    r += 1
+
+    headers = [
+        "SKU", "Product", "ABC-XYZ", "mu_monthly", "sigma_monthly",
+        "mu_daily", "sigma_daily", "Z", "sqrt(LT)", "Safety Stock", "ROP", ""
+    ]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 12, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+
+    for _, row in safety_stock_class_a.iterrows():
+        abc_xyz_code = f"{row.get('abc_quantity', '')}{row.get('abc_frequency', '')}"
+        values = [
+            row["sku_code"],
+            row.get("product_name", ""),
+            abc_xyz_code,
+            row["mu_monthly"] if pd.notna(row["mu_monthly"]) else 0,
+            row["sigma_monthly"] if pd.notna(row["sigma_monthly"]) else 0,
+            row["mu_daily"] if pd.notna(row["mu_daily"]) else 0,
+            row["sigma_daily"] if pd.notna(row["sigma_daily"]) else 0,
+            1.645,
+            row["sqrt_lt"] if pd.notna(row["sqrt_lt"]) else 0,
+            row["ss"] if pd.notna(row["ss"]) else 0,
+            row["rop"] if pd.notna(row["rop"]) else 0,
+        ]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col in {2, 3, 4} else CENTER
+            if col in {5, 6, 7, 8, 10, 11, 12} and isinstance(value, (int, float)):
+                cell.number_format = "0.0"
+            elif col == 11:
+                cell.number_format = "0"
+        r += 1
+    ws.freeze_panes = "B3"
+
+
+def _write_q22_inventory_pooling_sheet(ws, inventory_pooling_summary: pd.DataFrame) -> None:
+    for idx, width in enumerate([3, 30, 28, 16, 16, 20, 20, 16], start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    _apply_title(ws, "B1", 8, "LOGage 2026 — QUESTION 2.2 | INVENTORY POOLING STRATEGY")
+
+    r = 3
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "A. CHANNEL DEFINITIONS"
+    _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Channel", "Accounts", "Order Profile", "SLA", "Priority", "", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    channel_data = [
+        ("Modern Trade (MT)", "Co-op, Lotte, AEON, DMX, TGDD", "Large confirmed POs", "Strict booking-window SLA", "1 (Highest)"),
+        ("Ecommerce", "Shopee, Lazada, Tiki, TikTok Shop", "High-volume, 2-4h delivery", "2-4h SLA", "2 (High)"),
+        ("Traditional Trade (TT)", "Distributors / small dealers", "Small fragmented orders", "Flexible 2-4 day SLA", "3 (Low)"),
+    ]
+    for ch, accts, profile, sla, pri in channel_data:
+        values = [ch, accts, profile, sla, pri, "", "", ""]
+        for col, value in enumerate(values, start=2):
+            ws.cell(r, col, value)
+            ws.cell(r, col).border = THIN_BORDER
+        r += 1
+
+    r += 1
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "B. ALLOCATION PRIORITY (WHEN POOL IS CONSTRAINED)"
+    _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    priority_data = [
+        ("1st (Highest)", "MT large accounts (supermarket chains, confirmed contractual POs)"),
+        ("2nd", "MT Ecommerce (2-4h SLA, platform rating at risk)"),
+        ("3rd", "TT large distributors (high-volume, long-term relationship)"),
+        ("4th (Lowest)", "TT small / walk-in customers (flexible SLA, served last)"),
+    ]
+    for pri, desc in priority_data:
+        ws.cell(r, 2, pri)
+        ws.cell(r, 2).font = BOLD_FONT
+        ws.cell(r, 3, desc)
+        _style_range(ws, r, 2, 8, alignment=LEFT)
+        r += 1
+
+    r += 1
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "C. OPERATIONAL MECHANISMS"
+    _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    ops_data = [
+        ("R1 Common Pool", "All SKU stock merged into single WMS pool; OMS tracks virtual availability per channel"),
+        ("R2 Per-Channel ROP Floor", "Each channel has its own ROP threshold; replenishment triggers when any channel hits its floor"),
+        ("R3 Amber Alert", "Pool < sum of all channel ROPs raise alert, prioritize confirmed MT POs"),
+        ("R4 Red Conflict", "Pool < total SS activate priority allocation order (MT first, TT last) + emergency PO"),
+        ("R5 AZ Spike Freeze", "Demand-spike AZ SKUs: temporarily reserve stock for MT, freeze TT, trigger emergency PO"),
+        ("R6 End-of-Day Rebalance", "Reset channel virtual allocations to ROP-proportional targets using rolling 7-day demand forecast"),
+    ]
+    for rule, desc in ops_data:
+        ws.cell(r, 2, rule)
+        ws.cell(r, 2).font = BOLD_FONT
+        ws.cell(r, 3, desc)
+        ws.merge_cells(f"C{r}:H{r}")
+        _style_range(ws, r, 2, 8, alignment=LEFT)
+        r += 1
+
+    r += 1
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "D. QUANTIFICATION POOLING IMPACT ON SAFETY STOCK"
+    _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Scenario", "Formula", "Total SS", "Savings %", "Reduction Factor", "", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    for _, row in inventory_pooling_summary.iterrows():
+        values = [
+            row.get("scenario", ""),
+            row.get("formula", ""),
+            round(row["total_ss"], 0) if pd.notna(row.get("total_ss")) else 0,
+            row["savings_pct"] if pd.notna(row.get("savings_pct")) else 0,
+            f"{(1 - row['savings_pct']):.2f}" if pd.notna(row.get("savings_pct")) and row["savings_pct"] < 1 else "N/A",
+        ]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = CENTER
+            if col == 4:
+                cell.number_format = "#,##0"
+            elif col == 5:
+                cell.number_format = "0.0%"
+        r += 1
+
+    pool_row = inventory_pooling_summary[
+        inventory_pooling_summary["scenario"] == "Pooled (Mile-Weighted)"
+    ]
+    if not pool_row.empty:
+        r += 1
+        savings_val = pool_row.iloc[0]["savings_pct"]
+        ws.cell(r, 2, "KEY RESULT:")
+        ws.cell(r, 2).font = BOLD_FONT
+        ws.cell(r, 3, f"Virtual pooling with mile-weighted LT saves approximately {savings_val:.1%} safety stock vs separated channels")
+        ws.merge_cells(f"C{r}:H{r}")
+        _style_range(ws, r, 2, 8, fill=TITLE_FILL, font=Font(bold=True, color="FFFFFF"), alignment=LEFT)
+
+    ws.freeze_panes = "B3"
+
+
+def _write_q31_slotting_design_sheet(ws, travel_metrics: dict) -> None:
+    for idx, width in enumerate([3, 28, 18, 12, 14, 18, 16, 16], start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    _apply_title(ws, "B1", 8, "LOGage 2026 — QUESTION 3.1 | SLOTTING DESIGN")
+
+    r = 3
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "A. MODEL ASSUMPTIONS"
+    _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Parameter", "Value", "Unit", "Notes", "", "", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    assumptions = [
+        ("Walk Speed", travel_metrics.get("walk_speed_m_min", 72), "m/min", "1.2 m/s standard"),
+        ("Round-Trip Factor", travel_metrics.get("round_trip_factor", 2), "", "Pick location to packing and back"),
+        ("Zone A Distance to Packing", travel_metrics.get("dist_a_m", 8), "m", "Golden zone, nearest"),
+        ("Zone B Distance to Packing", travel_metrics.get("dist_b_m", 25), "m", "Mid bay"),
+        ("Zone C Distance to Packing", travel_metrics.get("dist_c_m", 47.5), "m", "Back / upper rack"),
+        ("Pick Rate A (Pick-Face)", 4, "pcs/min", "Fast pick-face"),
+        ("Pick Rate B (Forward Reserve)", 2.5, "pcs/min", "Carton-centric"),
+        ("Pick Rate C (Reserve/Bulk)", 2, "pcs/min", "Slow reserve"),
+    ]
+    for param, val, unit, note in assumptions:
+        values = [param, val, unit, note, "", "", "", ""]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col in {2, 5} else CENTER
+        r += 1
+
+    r += 1
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "B. ZONE DESIGN"
+    _style_range(ws, r, 2, 8, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Zone", "Class", "# SKUs", "Total Picks", "Pick Mode", "Slot Rule", "Dist to Packing (m)", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 8, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    zone_data = [
+        ("A Pick-Face (Golden)", "A / Fast", travel_metrics["zone_counts"]["A"], travel_metrics["zone_picks"]["A"],
+         "Loose + carton break-bulk", "Highest order freq nearest slots", travel_metrics.get("dist_a_m", 8)),
+        ("B Forward Reserve", "B / Medium", travel_metrics["zone_counts"]["B"], travel_metrics["zone_picks"]["B"],
+         "Carton picking + replenish A", "Medium velocity mid bay", travel_metrics.get("dist_b_m", 25)),
+        ("C Reserve / Bulk", "C / Slow", travel_metrics["zone_counts"]["C"], travel_metrics["zone_picks"]["C"],
+         "Pallet store, pick on demand", "Low velocity far/upper rack", travel_metrics.get("dist_c_m", 47.5)),
+    ]
+    for name, cls, count, picks, mode, rule, dist in zone_data:
+        values = [name, cls, count, picks, mode, rule, dist]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col in {2, 6, 7} else CENTER
+        r += 1
+
+    ws.freeze_panes = "B3"
+
+
+def _write_q31_travel_proof_sheet(ws, travel_metrics: dict) -> None:
+    for idx, width in enumerate([3, 36, 20, 20, 20, 20, 20], start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    _apply_title(ws, "B1", 7, "LOGage 2026 — QUESTION 3.1 | TRAVEL-TIME PROOF")
+
+    r = 3
+    ws.merge_cells(f"B{r}:G{r}")
+    ws[f"B{r}"] = "A. ZONE DISTANCE TABLE"
+    _style_range(ws, r, 2, 7, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Zone", "Picks (T_ij)", "Dist D_ij (m)", "Round-Trip Dist (m)", "Pick Rate (pcs/min)", "Travel Time (min)", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 7, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    walk_speed = travel_metrics.get("walk_speed_m_min", 72)
+    for zone_detail in travel_metrics.get("zone_detail", []):
+        z = zone_detail["zone"]
+        picks = zone_detail["picks"]
+        dist = zone_detail["dist_m"]
+        rt_dist = zone_detail["round_trip_dist_m"]
+        pick_rate = {"A": 4, "B": 2.5, "C": 2}.get(z, 2)
+        travel_time = rt_dist / walk_speed if walk_speed else 0
+        values = [f"Zone {z}", picks, dist, round(rt_dist, 0), pick_rate, round(travel_time, 1)]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col == 2 else CENTER
+            if col in {4, 5, 7}:
+                cell.number_format = "#,##0"
+        r += 1
+
+    total_picks = travel_metrics.get("total_picks", 0)
+    total_rt = travel_metrics.get("opt_total_round_trip_m", 0)
+    total_time = travel_metrics.get("opt_travel_time_min", 0)
+    values = ["TOTAL", total_picks, "", round(total_rt, 0), "", round(total_time, 1)]
+    for col, value in enumerate(values, start=2):
+        cell = ws.cell(r, col, value)
+        cell.border = THIN_BORDER
+        cell.font = BOLD_FONT
+        cell.alignment = CENTER
+    _style_range(ws, r, 2, 7, fill=SUBHEADER_FILL, font=BOLD_FONT, alignment=CENTER)
+    r += 2
+
+    ws.merge_cells(f"B{r}:G{r}")
+    ws[f"B{r}"] = "B. RESULTS OPTIMIZED vs BASELINE"
+    _style_range(ws, r, 2, 7, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Metric", "Baseline (Random)", "Optimized (ABC-Zoned)", "Improvement", "Status", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 7, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    meets_target = travel_metrics.get("meets_target", False)
+    reduction = travel_metrics.get("travel_reduction", 0)
+    target = travel_metrics.get("reduction_target", 0.3)
+    results = [
+        ("Avg One-Way Distance/Pick (m)", travel_metrics.get("baseline_avg_dist_m", 0), travel_metrics.get("opt_avg_oneway_m_per_pick", 0),
+         f"{reduction * 100:.1f}% reduction", "MEETS TARGET" if meets_target else "BELOW TARGET"),
+        ("Total Round-Trip Distance (m)", travel_metrics.get("baseline_total_round_trip_m", 0), travel_metrics.get("opt_total_round_trip_m", 0),
+         f"{reduction * 100:.1f}% reduction", ""),
+        ("Travel Time (min)", travel_metrics.get("baseline_travel_time_min", 0), travel_metrics.get("opt_travel_time_min", 0),
+         f"{reduction * 100:.1f}% reduction", ""),
+        ("Travel Time Reduction %", "", f"{reduction * 100:.1f}%", f"Target >= {target * 100:.0f}%", ""),
+    ]
+    for metric, base, opt, improvement, status in results:
+        values = [metric, base, opt, improvement, status, "", ""]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col in {2, 6} else CENTER
+            if col in {3, 4} and isinstance(value, float):
+                cell.number_format = "#,##0.0"
+        if metric == "Travel Time Reduction %":
+            fill_color = "D9EAD3" if meets_target else "F4CCCC"
+            _style_range(ws, r, 2, 7, fill=PatternFill("solid", fgColor=fill_color), font=BOLD_FONT, alignment=None)
+        r += 1
+    ws.freeze_panes = "B3"
+
+
+def _write_q31_slot_assignment_sheet(ws, slotting_plan: pd.DataFrame) -> None:
+    for idx, width in enumerate([3, 10, 14, 22, 12, 10, 14, 14, 16, 14, 14, 12], start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    _apply_title(ws, "B1", 12, "LOGage 2026 — QUESTION 3.1 | SLOT ASSIGNMENT")
+
+    headers = [
+        "Slot ID", "SKU Code", "Product", "Cat", "Zone",
+        "Order Freq", "Pick Rate (pcs/min)", "Velocity (Freq/Rate)",
+        "Size (L/pcs)", "Avg Order Qty", "Dist (m)", ""
+    ]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(2, col, value)
+    _style_range(ws, 2, 2, 12, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+
+    zone_order = {"Pick-Face Zone (Ground Level)": "A", "Forward Reserve Zone": "B", "Reserve / Bulk Zone": "C"}
+    r = 3
+    for _, row in slotting_plan.iterrows():
+        zone_code = zone_order.get(row.get("zone_assignment", ""), "")
+        slot_id = f"{zone_code}-{row.get('rank_in_zone', 0):03d}"
+        pick_rate = row.get("pick_rate_pcs_min", 0)
+        velocity = row.get("velocity", 0)
+        cbm = row.get("cbm_incl_flap_m3", 0)
+        size_l = cbm * 1000 if pd.notna(cbm) else 0
+        values = [
+            slot_id,
+            row.get("sku_code", ""),
+            row.get("product_name", "") if "product_name" in row else row.get("sku_code", ""),
+            row.get("abc_class", ""),
+            zone_code,
+            int(row.get("travel_contribution", 0)) if pd.notna(row.get("travel_contribution")) else 0,
+            round(pick_rate, 1),
+            round(velocity, 1),
+            round(size_l, 2),
+            round(row.get("avg_qty_per_order", 0), 1) if pd.notna(row.get("avg_qty_per_order")) else 0,
+            row.get("slot_distance_m", 0),
+        ]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT if col in {3, 4, 5} else CENTER
+            if col in {8, 9} and isinstance(value, float):
+                cell.number_format = "0.0"
+            elif col == 10:
+                cell.number_format = "0.00"
+        cls = row.get("abc_class", "")
+        if cls in CLASS_FILLS:
+            _style_range(ws, r, 2, 12, fill=CLASS_FILLS[cls], alignment=None)
+        r += 1
+    ws.freeze_panes = "B3"
+    ws.auto_filter.ref = f"B2:{get_column_letter(12)}{r - 1}"
+
+
+def _write_q31_u_shape_sheet(ws) -> None:
+    for idx, width in enumerate([3, 18, 18, 18, 18, 18, 18, 18], start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    _apply_title(ws, "B1", 8, "LOGage 2026 — QUESTION 3.1 | U-SHAPE WAREHOUSE HEATMAP")
+
+    r = 3
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = (
+        "U-Shaped (Horse-Shoe) Layout: Receiving & Packing share the same dock wall. "
+        "Zone A (Golden Pick-Face) is the nearest zone to the packing station, "
+        "followed by Zone B (Forward Reserve), then Zone C (Reserve/Bulk) at the far end."
+    )
+    ws[f"B{r}"].alignment = Alignment(wrap_text=True, vertical="center")
+    _style_range(ws, r, 2, 8, fill=SUBHEADER_FILL, alignment=LEFT)
+    r += 2
+
+    ws.merge_cells(f"B{r}:H{r}")
+    ws[f"B{r}"] = "Layout Diagram:"
+    ws[f"B{r}"].font = BOLD_FONT
+    r += 1
+    layout_lines = [
+        "+---------------------------------------------------+",
+        "|                  DOCK (RECEIVING / SHIPPING)       |",
+        "+---------+---------+---------+---------+----------+",
+        "| ZONE A  | ZONE A  | PACKING | ZONE A  | ZONE A   |",
+        "| Pick-Fc | Pick-Fc | STATION | Pick-Fc | Pick-Fc  |",
+        "| (Ground)| (Ground)|         | (Ground)| (Ground) |",
+        "+---------+---------+---------+---------+----------+",
+        "| ZONE B (Forward Reserve Mid Bay)                  |",
+        "+---------------------------------------------------+",
+        "| ZONE C (Reserve / Bulk Back Wall & Upper Racks)    |",
+        "+---------------------------------------------------+",
+    ]
+    for line in layout_lines:
+        ws.cell(r, 2, line)
+        ws.cell(r, 2).font = Font(name="Courier New", size=9)
+        r += 1
+
+    ws.freeze_panes = "B3"
+
+
+def _write_q32_pick_pack_sheet(ws) -> None:
+    for idx, width in enumerate([3, 18, 30, 30, 28, 30], start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    _apply_title(ws, "B1", 6, "LOGage 2026 — QUESTION 3.2 | PICK & PACK PROCESS")
+
+    r = 3
+    ws.merge_cells(f"B{r}:F{r}")
+    ws[f"B{r}"] = "A. TWO PICK MODELS"
+    _style_range(ws, r, 2, 6, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Channel", "Order Profile", "Pick Model", "Mechanics", "Pack"]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 6, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    models = [
+        (
+            "B2B",
+            "Large volume, few SKUs",
+            "Pallet / Total Picking",
+            "One picker fulfils whole pallets or large CTN qty per order in a single pass. Sources Zone A pick-face + Zone C bulk.",
+            "Stage whole pallets; minimal re-sort.",
+        ),
+        (
+            "B2C / E-com",
+            "Small qty, many SKUs, many concurrent orders",
+            "Batch Picking + Zone Routing",
+            "Group many small orders into one pick wave; pickers route by zone; items consolidated at sortation.",
+            "Sort wave back to individual orders at packing.",
+        ),
+    ]
+    for ch, profile, model, mechanics, pack in models:
+        values = [ch, profile, model, mechanics, pack]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT
+            cell.font = Font(size=10)
+        r += 1
+
+    r += 2
+    ws.merge_cells(f"B{r}:F{r}")
+    ws[f"B{r}"] = "B. SHARED-SKU CONFLICT ALLOCATION RULES"
+    _style_range(ws, r, 2, 6, fill=SECTION_FILL, font=SECTION_FONT, alignment=LEFT)
+    r += 1
+    headers = ["Rule", "Condition", "Action", "", "", ""]
+    for col, value in enumerate(headers, start=2):
+        ws.cell(r, col, value)
+    _style_range(ws, r, 2, 6, fill=HEADER_FILL, font=HEADER_FONT, alignment=CENTER)
+    r += 1
+    rules = [
+        ("Check", "Same SKU, both channels, concurrent", "Evaluate on-hand vs (B2B + B2C) demand"),
+        ("Sufficient", "On-hand >= B2B + B2C", "Allocate to both from shared pool; no rationing"),
+        ("R1", "Short stock", "Commit to the confirmed B2B PO first (contractual, penalty risk)"),
+        ("R2", "Short stock", "Hold the B2C safety buffer so the storefront does not show stockout"),
+        ("R3", "Short + B2C SLA-critical (2-4h)", "Split: B2C SLA order gets partial now, backorder remainder"),
+        ("R4", "Below reorder point", "Trigger emergency replenishment / inter-warehouse transfer"),
+    ]
+    for rule, condition, action in rules:
+        values = [rule, condition, action, "", "", ""]
+        for col, value in enumerate(values, start=2):
+            cell = ws.cell(r, col, value)
+            cell.border = THIN_BORDER
+            cell.alignment = LEFT
+            cell.font = Font(size=10)
+        r += 1
+
+    ws.freeze_panes = "B3"
