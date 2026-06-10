@@ -2,15 +2,17 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 
-SKU_MASTER_FILE = ROOT_DIR / "[LOGage2026] File 01_SKU Master Data.xlsx"
+SKU_MASTER_FILE = ROOT_DIR / "data" / "raw" / "[LOGage2026] File 01_SKU Master Data.xlsx"
 TRANSACTION_FILE = (
     ROOT_DIR
+    / "data"
+    / "raw"
     / "[LOGage2026] File 02_Transaction Log (My Phuoc & Vinh Loc Warehouses).xlsx"
 )
-DISTRIBUTOR_FILE = ROOT_DIR / "[LOGage 2026] File 03_Distributor Network.xlsx"
+DISTRIBUTOR_FILE = ROOT_DIR / "data" / "raw" / "[LOGage 2026] File 03_Distributor Network.xlsx"
 
-OUTPUT_DIR = ROOT_DIR / "outputs" / "round2"
-CLEANED_DIR = OUTPUT_DIR / "cleaned"
+OUTPUT_DIR = ROOT_DIR / "outputs"
+CLEANED_DIR = ROOT_DIR / "data" / "cleaned"
 TABLES_DIR = OUTPUT_DIR / "tables"
 CHARTS_DIR = OUTPUT_DIR / "charts"
 NOTES_DIR = OUTPUT_DIR / "notes"
@@ -36,7 +38,7 @@ Q11_KEEP_MISSING_SKU_MASTER = True
 Q11_ABC_A_THRESHOLD = 0.70
 Q11_ABC_B_THRESHOLD = 0.90
 FAST_MOVING_ABC_QUANTITY = "A"
-FAST_MOVING_XYZ_FREQUENCY = "X"
+FAST_MOVING_ABC_FREQUENCY = "A"
 
 Q11_XYZ_CV_X_MAX = 0.50
 Q11_XYZ_CV_Y_MAX = 1.00

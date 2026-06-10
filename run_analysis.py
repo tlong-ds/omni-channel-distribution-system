@@ -195,7 +195,7 @@ def main() -> None:
     from openpyxl.utils import get_column_letter
     
     print("Exporting cleaned data to cleaned_data.xlsx...")
-    cleaned_path = OUTPUT_DIR / "cleaned_data.xlsx"
+    cleaned_path = CLEANED_DIR / "cleaned_data.xlsx"
     with pd.ExcelWriter(cleaned_path, engine='openpyxl') as writer:
         pipeline_summary_data = [
             {"Dataset": "SKU Master", "Pipeline Stage": "Standardization", "Details": "Stripped whitespace, converted missing values to proper nulls, normalized strings to uppercase."},
@@ -304,7 +304,7 @@ def main() -> None:
             
     wb.save(cleaned_path)
             
-    print("Exporting summary tables to summary_tables.xlsx...")
+    print("Exporting summary tables to summary_table.xlsx...")
     write_summary_workbook(
         abc_xyz=abc_xyz,
         abc_xyz_matrix=abc_xyz_matrix_frequency,
@@ -322,7 +322,7 @@ def main() -> None:
         hcm_district_summary=hcm_district_summary,
         network_model_evaluation=network_model_evaluation,
         shipments=shipments,
-        output_path=OUTPUT_DIR / "summary_tables.xlsx",
+        output_path=OUTPUT_DIR / "summary_table.xlsx",
     )
 
     save_charts(
@@ -410,6 +410,15 @@ def main() -> None:
 
     print("Writing Part 3 LaTeX report ...")
     write_part3_notes(shipments, sku_master, abc_xyz)
+    
+    print("Cleaning up temporary LaTeX files (.aux, .log, etc.) in notes/ ...")
+    for pattern in ["*.aux", "*.log", "*.toc", "*.out"]:
+        for temp_file in NOTES_DIR.glob(pattern):
+            try:
+                temp_file.unlink()
+            except Exception as e:
+                print(f"Warning: could not delete {temp_file}: {e}")
+                
     print("Part 3 complete.")
 
 

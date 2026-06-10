@@ -5,8 +5,11 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 import os
 import unicodedata
+from pathlib import Path
 
-os.environ.setdefault("MPLCONFIGDIR", "outputs/round2/.matplotlib")
+mpl_config_dir = Path(__file__).resolve().parents[2] / "outputs" / ".matplotlib"
+mpl_config_dir.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", str(mpl_config_dir))
 
 import matplotlib.pyplot as plt
 import numpy as np

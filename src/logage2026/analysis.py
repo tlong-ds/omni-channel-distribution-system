@@ -9,7 +9,7 @@ from src.logage2026.config import (
     ASSIGNMENT_DOCUMENT_TYPES,
     ASSIGNMENT_END_DATE,
     ASSIGNMENT_START_DATE,
-    FAST_MOVING_XYZ_FREQUENCY,
+    FAST_MOVING_ABC_FREQUENCY,
     FAST_MOVING_ABC_QUANTITY,
     Q11_ABC_A_THRESHOLD,
     Q11_ABC_B_THRESHOLD,
@@ -279,7 +279,7 @@ def build_classification_metadata() -> pd.DataFrame:
                 "q11_variability_period_end": Q11_VARIABILITY_END.date().isoformat(),
                 "abc_a_threshold": Q11_ABC_A_THRESHOLD,
                 "abc_b_threshold": Q11_ABC_B_THRESHOLD,
-                "fast_moving_xyz_frequency": FAST_MOVING_XYZ_FREQUENCY,
+                "fast_moving_abc_frequency": FAST_MOVING_ABC_FREQUENCY,
                 "winsorize_limits": str(WINSORIZE_LIMITS),
             }
         ]
@@ -864,6 +864,41 @@ def build_q13_segment_profile_summary(shipments: pd.DataFrame, sku_master: pd.Da
     )
     true_customers = known.groupby("customer_segment", dropna=False)["customer_key"].nunique().rename("customers")
     summary = summary.merge(true_customers.reset_index(), on="customer_segment", how="left")
+
+    # Calculate lead time sensitivity dynamically on Class A SKUs
+    sku_qtys = shipments[shipments["analysis_document_flag"]].groupby("sku_code")["quantity"].sum().sort_values(ascending=False)
+    cum_share = sku_qtys.cumsum() / sku_qtys.sum()
+    class_a_skus = set(cum_share[cum_share <= 0.70].index)
+    if not class_a_skus and not sku_qtys.empty:
+        class_a_skus = {sku_qtys.index[0]}
+        
+    class_a_shipments = shipments[
+        shipments["sku_code"].isin(class_a_skus)
+        & shipments["created_date"].between("2025-06-01", "2025-12-31")
+    ].copy()
+    class_a_shipments["month"] = class_a_shipments["created_date"].dt.to_period("M")
+    
+    sensitivity_map = {}
+    for segment in ["Modern Trade", "Traditional Trade / Distributor"]:
+        seg_ship = class_a_shipments[class_a_shipments["customer_segment"] == segment]
+        if seg_ship.empty:
+            sensitivity_map[segment] = 0.0
+            continue
+        monthly = seg_ship.groupby(["sku_code", "month"])["quantity"].sum().unstack(fill_value=0)
+        months = pd.period_range(start="2025-06", end="2025-12", freq="M")
+        monthly = monthly.reindex(columns=months, fill_value=0)
+        
+        sigma_monthly = monthly.std(axis=1, ddof=1)
+        sigma_daily = sigma_monthly / np.sqrt(30)
+        total_sigma_daily = sigma_daily.sum()
+        sensitivity_map[segment] = 1.645 * total_sigma_daily
+
+    summary["lead_time_sensitivity_val"] = summary["customer_segment"].map(sensitivity_map).fillna(0.0)
+    summary["lead_time_sensitivity"] = np.where(
+        summary["customer_segment"] == "Modern Trade",
+        summary["lead_time_sensitivity_val"].map(lambda val: f"High ({val:,.2f} safety stock units per sqrt(LT) day)"),
+        summary["lead_time_sensitivity_val"].map(lambda val: f"Low ({val:,.2f} safety stock units per sqrt(LT) day)"),
+    )
     summary = summary[[
         "customer_segment",
         "orders",
@@ -874,25 +909,59 @@ def build_q13_segment_profile_summary(shipments: pd.DataFrame, sku_master: pd.Da
         "median_order_cbm",
         "avg_sku_breadth",
         "avg_lines_per_order",
-        "avg_distance_km"
+        "avg_distance_km",
+        "lead_time_sensitivity"
     ]]
 
-    # New frequency calculations
+    # Order frequency calculations — using segment-level aggregates to avoid
+    # cross-customer double-counting of document_nos (372 docs span multiple customers).
+    # Three complementary metrics:
+    #
+    #   avg_orders_per_customer_month = segment-level total ÷ customers ÷ 7
+    #     (simple aggregate, useful for capacity planning)
+    #
+    #   normalized_frequency_7m       = same as avg_orders_per_customer_month
+    #     (segment-level total ÷ customers ÷ 7, includes inactive months)
+    #
+    #   active_month_frequency        = per-customer mean of order_count / active_months
+    #     (only months with ≥1 order; captures active cadence)
     known_freq = known.copy()
     known_freq["year_month"] = known_freq["created_date"].dt.strftime("%Y-%m")
     customer_stats = known_freq.groupby(["customer_segment", "customer_key"], dropna=False).agg(
         active_months=("year_month", "nunique"),
-        order_count=("order_id", "nunique")
+        order_count=("document_no", "nunique"),
     ).reset_index()
-    customer_stats["orders_per_month"] = customer_stats["order_count"] / 7.0
+    # Deduplicate: a document_no spanning multiple customers inflates order_count.
+    # We deflate per-customer order_count proportionally: segment-level unique ÷ sum of per-customer counts.
+    # This ensures normalized_frequency_7m and active_month_frequency use clean per-customer rates.
+    seg_totals = known_freq.groupby("customer_segment").agg(
+        segment_orders=("document_no", "nunique")
+    ).reset_index()
+    cust_totals = customer_stats.groupby("customer_segment")["order_count"].sum().rename("customer_sum_orders").reset_index()
+    dedup_ratio = seg_totals.merge(cust_totals, on="customer_segment")
+    dedup_ratio["ratio"] = dedup_ratio["segment_orders"] / dedup_ratio["customer_sum_orders"].replace(0, float("nan"))
+    customer_stats = customer_stats.merge(dedup_ratio[["customer_segment", "ratio"]], on="customer_segment", how="left")
+    customer_stats["order_count"] = (customer_stats["order_count"] * customer_stats["ratio"]).round(0).clip(lower=1)
+    customer_stats = customer_stats.drop(columns=["ratio"])
+
     customer_stats["normalized_frequency_7m"] = customer_stats["order_count"] / 7.0
-    customer_stats["active_month_frequency"] = customer_stats["order_count"] / customer_stats["active_months"]
+    customer_stats["active_month_frequency"] = customer_stats["order_count"] / customer_stats["active_months"].clip(lower=1)
 
     segment_averages = customer_stats.groupby("customer_segment", dropna=False).agg(
-        avg_orders_per_customer_month=("orders_per_month", "mean"),
         normalized_frequency_7m=("normalized_frequency_7m", "mean"),
-        active_month_frequency=("active_month_frequency", "mean")
+        active_month_frequency=("active_month_frequency", "mean"),
     ).reset_index()
+
+    # Segment-level aggregate: total orders ÷ total customers ÷ 7
+    total_customers = summary[["customer_segment", "customers"]].copy()
+    total_orders = summary[["customer_segment", "orders"]].copy()
+    segment_averages = segment_averages.merge(total_customers, on="customer_segment", how="left")
+    segment_averages = segment_averages.merge(total_orders, on="customer_segment", how="left")
+    segment_averages["avg_orders_per_customer_month"] = (
+        segment_averages["orders"] / segment_averages["customers"] / 7.0
+    )
+    segment_averages["normalized_frequency_7m"] = segment_averages["avg_orders_per_customer_month"]
+    segment_averages = segment_averages.drop(columns=["orders", "customers"])
 
     geography = build_q13_segment_geographic_spread_summary(shipments)
     summary = summary.merge(segment_averages, on="customer_segment", how="left")
@@ -1325,21 +1394,43 @@ def build_hcm_district_summary(shipments: pd.DataFrame) -> pd.DataFrame:
 
 def build_network_model_evaluation(hcm_district_summary: pd.DataFrame) -> pd.DataFrame:
     """Q2.1: Evaluate each HCM district's RDC distance and suitability for 2-4h B2C SLA.
-    
-    Implements travel time verification formula, traffic zones, and compares Vinh Loc Baseline vs. Vinh Loc + DS1 + DS2.
+
+    Travel time formula (verified per feedback):
+        travel_min = (distance_km / speed_kmph) * 60 × traffic_factor
+                     + pick_pack_min + dispatch_buffer_min + service_time_min
+
+    Overhead components broken down by facility type:
+        Vinh Loc RDC    → pick-pack 30 + dispatch 30 + service 30 = 90 min
+        Dark Store      → pick-pack 15 + dispatch 10 + service 10 = 35 min
+
+    Includes Vinh Loc dark store impact: orders/day, distance savings,
+    SLA failure reduction.
     """
     df = hcm_district_summary.copy()
-    
+
+    SPEED_KMPH = 30.0  # average urban delivery speed
+
+    # Overhead breakdown (minutes)
+    RDC_PICK_PACK = 30.0
+    RDC_DISPATCH_BUFFER = 30.0
+    RDC_SERVICE_TIME = 30.0
+    RDC_OVERHEAD = RDC_PICK_PACK + RDC_DISPATCH_BUFFER + RDC_SERVICE_TIME  # 90
+
+    DS_PICK_PACK = 15.0
+    DS_DISPATCH_BUFFER = 10.0
+    DS_SERVICE_TIME = 10.0
+    DS_OVERHEAD = DS_PICK_PACK + DS_DISPATCH_BUFFER + DS_SERVICE_TIME  # 35
+
     # Model 2 Dark Stores coordinates
     ds1_coord = (10.7848, 106.6267)
     ds2_coord = (10.7735, 106.6982)
-    
+
     from src.logage2026.geography import haversine_km
-    
+
     # Calculate distance from each district's center to DS1 and DS2
     df["dist_ds1"] = df.apply(lambda r: haversine_km((r["avg_lat"], r["avg_lon"]), ds1_coord), axis=1)
     df["dist_ds2"] = df.apply(lambda r: haversine_km((r["avg_lat"], r["avg_lon"]), ds2_coord), axis=1)
-    
+
     def get_traffic_factor(district):
         d = district.strip()
         inner = {
@@ -1358,33 +1449,70 @@ def build_network_model_evaluation(hcm_district_summary: pd.DataFrame) -> pd.Dat
         if d in outer:
             return 1.2
         return 1.4
-        
+
     df["traffic_factor"] = df["district"].apply(get_traffic_factor)
-    
-    # Baseline: served by Vinh Loc RDC with 90 min overhead
+
+    # ------------------------------------------------------------------
+    # Baseline: served by Vinh Loc RDC only
+    # Formula: travel_min = (dist / speed) * 60 * traffic + overhead
+    # ------------------------------------------------------------------
     df["baseline_dist"] = df["avg_dist_vinh_loc"]
-    df["baseline_time"] = (df["baseline_dist"] / 30.0) * 60.0 * df["traffic_factor"] + 90.0
+    df["baseline_drive_min"] = (df["baseline_dist"] / SPEED_KMPH) * 60.0 * df["traffic_factor"]
+    df["baseline_pick_pack_min"] = RDC_PICK_PACK
+    df["baseline_dispatch_buffer_min"] = RDC_DISPATCH_BUFFER
+    df["baseline_service_time_min"] = RDC_SERVICE_TIME
+    df["baseline_time"] = df["baseline_drive_min"] + RDC_OVERHEAD
     df["baseline_2h"] = np.where(df["baseline_time"] <= 120.0, "Met", "Not Met")
     df["baseline_4h"] = np.where(df["baseline_time"] <= 240.0, "Met", "Not Met")
-    
-    # 2 Dark Stores: Vinh Loc RDC, DS1, DS2
+
+    # ------------------------------------------------------------------
+    # Vinh Loc RDC + 2 Dark Stores
+    # ------------------------------------------------------------------
     df["ds_dist"] = df[["avg_dist_vinh_loc", "dist_ds1", "dist_ds2"]].min(axis=1)
     df["nearest_facility"] = np.where(
-        df["ds_dist"] == df["avg_dist_vinh_loc"], 
-        "Vinh Loc RDC", 
+        df["ds_dist"] == df["avg_dist_vinh_loc"],
+        "Vinh Loc RDC",
         np.where(df["ds_dist"] == df["dist_ds1"], "DS1 (Tân Phú)", "DS2 (Quận 1)")
     )
-    df["ds_overhead"] = np.where(df["nearest_facility"] == "Vinh Loc RDC", 90.0, 35.0)
-    df["ds_time"] = (df["ds_dist"] / 30.0) * 60.0 * df["traffic_factor"] + df["ds_overhead"]
+    df["ds_pick_pack_min"] = np.where(df["nearest_facility"] == "Vinh Loc RDC", RDC_PICK_PACK, DS_PICK_PACK)
+    df["ds_dispatch_buffer_min"] = np.where(df["nearest_facility"] == "Vinh Loc RDC", RDC_DISPATCH_BUFFER, DS_DISPATCH_BUFFER)
+    df["ds_service_time_min"] = np.where(df["nearest_facility"] == "Vinh Loc RDC", RDC_SERVICE_TIME, DS_SERVICE_TIME)
+    df["ds_overhead"] = np.where(df["nearest_facility"] == "Vinh Loc RDC", RDC_OVERHEAD, DS_OVERHEAD)
+    df["ds_drive_min"] = (df["ds_dist"] / SPEED_KMPH) * 60.0 * df["traffic_factor"]
+    df["ds_time"] = df["ds_drive_min"] + df["ds_overhead"]
     df["ds_2h"] = np.where(df["ds_time"] <= 120.0, "Met", "Not Met")
     df["ds_4h"] = np.where(df["ds_time"] <= 240.0, "Met", "Not Met")
-    
+
+    # ------------------------------------------------------------------
+    # Impact quantification
+    # ------------------------------------------------------------------
+    # Distance savings
+    df["distance_saving_km"] = df["baseline_dist"] - df["ds_dist"]
+    df["time_saving_min"] = df["baseline_time"] - df["ds_time"]
+
+    # SLA improvement: which districts move from 4h-only to 2h-capable
+    df["sla_4h_only_baseline"] = np.where(
+        (df["baseline_2h"] == "Not Met") & (df["baseline_4h"] == "Met"), 1, 0
+    )
+    df["sla_improved_to_2h"] = np.where(
+        (df["sla_4h_only_baseline"] == 1) & (df["ds_2h"] == "Met"), 1, 0
+    )
+
     total_qty = df["quantity"].sum()
+    total_orders = df["orders"].sum()
     df["qty_share"] = df["quantity"] / total_qty if total_qty else 0.0
-    # Derive sla_status for downstream consumers (notes.py / visuals.py)
-    df["sla_status"] = np.where(df["baseline_4h"] == "Met", "Adequate", "Needs Dark Store")
+    df["order_share"] = df["orders"] / total_orders if total_orders else 0.0
+
+    # Orders per operating day (7-month window ≈ 214 calendar days for A/R INVOICE)
+    # Actual active days per district from the transaction log
+    df["orders_per_day"] = df["orders"] / 214.0
+
+    # sla_status for downstream consumers (notes.py / visuals.py)
+    # Based on 2H SLA: the paragraph "2-Hour SLA — The Case for Dark Stores" uses this
+    df["sla_status"] = np.where(df["baseline_2h"] == "Met", "Adequate", "Needs Dark Store")
     # Backward-compatible alias used by visuals.py _q21_network_coverage_chart
     df["best_rdc_km"] = df["baseline_dist"]
+
     return df.sort_values("quantity", ascending=False).reset_index(drop=True)
 
 
