@@ -583,17 +583,40 @@ def write_notes(
     ]
     
     text2 = [
+        r"% Options for packages loaded elsewhere",
+        r"\PassOptionsToPackage{unicode}{hyperref}",
+        r"\PassOptionsToPackage{hyphens}{url}",
+        r"%",
         r"\documentclass[11pt]{article}",
-        r"\usepackage[utf8]{inputenc}",
-        r"\usepackage[margin=1in]{geometry}",
-        r"\usepackage{graphicx}",
-        r"\usepackage{float}",
+        r"\usepackage{amsmath,amssymb}",
+        r"\usepackage{iftex}",
+        r"\ifPDFTeX",
+        r"  \usepackage[T1]{fontenc}",
+        r"  \usepackage[utf8]{inputenc}",
+        r"  \usepackage{textcomp}",
+        r"\else",
+        r"  \usepackage{unicode-math}",
+        r"  \defaultfontfeatures{Scale=MatchLowercase}",
+        r"  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}",
+        r"\fi",
+        r"\usepackage{lmodern}",
         r"\usepackage{xcolor}",
         r"\usepackage{booktabs}",
+        r"\usepackage{array}",
+        r"\usepackage{graphicx}",
+        r"\usepackage{float}",
         r"\usepackage{caption}",
         r"\usepackage{makecell}",
         r"\usepackage{enumitem}",
-        r"\usepackage{hyperref}",
+        r"\usepackage{geometry}",
+        r"\geometry{a4paper, margin=1in}",
+        r"\usepackage{bookmark}",
+        r"\hypersetup{",
+        r"  hidelinks,",
+        r"  pdfcreator={LaTeX}",
+        r"}",
+        r"\author{}",
+        r"\date{}",
         r"",
         r"\title{\textbf{LOGage 2026: Round 2 — Part 2 Summary}}",
         r"\author{Omni-Channel Strategy Analysis}",
@@ -859,23 +882,17 @@ def write_part3_notes(
 ) -> None:
     """Generate the Part 3 LaTeX report (Q3.1 Slotting + Q3.2 Pick-Pack) and compile to PDF."""
     from src.logage2026.analysis import (
-        build_sku_pick_profile,
-        build_slotting_plan,
         compute_travel_time_metrics,
+        DIST_A_M, DIST_B_M, DIST_C_M,
+        PICK_RATE_A_PCS_MIN, PICK_RATE_B_PCS_MIN, PICK_RATE_C_PCS_MIN,
+        WALK_SPEED_M_MIN, ROUND_TRIP_FACTOR, REDUCTION_TARGET,
     )
 
     NOTES_DIR.mkdir(parents=True, exist_ok=True)
 
-    slotting = build_slotting_plan(shipments, sku_master, abc_xyz)
-    profile  = build_sku_pick_profile(shipments, sku_master, abc_xyz)
     metrics  = compute_travel_time_metrics(abc_xyz)
 
-    # ── Derived metrics (physical-distance model) ────────────────────────
-    from src.logage2026.analysis import (
-        DIST_A_M, DIST_B_M, DIST_C_M,
-        PICK_RATE_A_PCS_MIN, PICK_RATE_B_PCS_MIN, PICK_RATE_C_PCS_MIN,
-        WALK_SPEED_M_MIN, REDUCTION_TARGET,
-    )
+    # ── Derived metrics (physical-distance model) ────────────────────────────
     N = metrics["N"]
     Na, Nb, Nc = metrics["zone_counts"]["A"], metrics["zone_counts"]["B"], metrics["zone_counts"]["C"]
     picks_a      = metrics["zone_picks"]["A"]
@@ -891,12 +908,6 @@ def write_part3_notes(
     red_pct         = metrics["travel_reduction"] * 100
     meets_target    = metrics["meets_target"]
 
-    # AX fast-movers
-    ax_skus     = abc_xyz[(abc_xyz["abc_quantity"] == "A") & (abc_xyz["abc_frequency"] == "A")]
-    ax_count    = len(ax_skus)
-    ax_freq_share = ax_skus["order_frequency"].sum() / abc_xyz["order_frequency"].sum() * 100
-    ax_qty_share  = ax_skus["quantity"].sum() / abc_xyz["quantity"].sum() * 100
-
     # Top 5 Class A by frequency for the table
     top_a = (
         abc_xyz[abc_xyz["abc_quantity"] == "A"]
@@ -904,9 +915,6 @@ def write_part3_notes(
         .head(5)[["sku_code", "product_name", "abc_quantity", "abc_frequency", "order_frequency", "quantity"]]
         .reset_index(drop=True)
     )
-
-    def pct(v: float) -> str:
-        return f"{v * 100:.2f}\\%"
 
     # Build LaTeX rows for top-5 table
     top5_rows = []
@@ -918,6 +926,27 @@ def write_part3_notes(
         )
     top5_tex = "\n".join(top5_rows)
 
+    # ── Velocity-based slot assignment (top 3 per zone) ───────────────────────
+    _zone_pick_rate = {"A": PICK_RATE_A_PCS_MIN, "B": PICK_RATE_B_PCS_MIN, "C": PICK_RATE_C_PCS_MIN}
+    _zone_dist_m    = {"A": DIST_A_M, "B": DIST_B_M, "C": DIST_C_M}
+    vel_df = abc_xyz[["sku_code", "product_name", "abc_quantity", "order_frequency"]].copy()
+    vel_df["pick_rate"] = vel_df["abc_quantity"].map(_zone_pick_rate)
+    vel_df["velocity"] = vel_df["order_frequency"] / vel_df["pick_rate"]
+    vel_df = vel_df.sort_values(["abc_quantity", "velocity"], ascending=[True, False])
+    vel_top3 = vel_df.groupby("abc_quantity").head(3)
+
+    vel_rows = []
+    for zone_code in ["A", "B", "C"]:
+        subset = vel_top3[vel_top3["abc_quantity"] == zone_code]
+        for i, (_, row) in enumerate(subset.iterrows(), 1):
+            name = str(row["product_name"])[:35].replace("&", "\\&").replace("_", "\\_")
+            dist = _zone_dist_m[zone_code]
+            vel_rows.append(
+                f"        {zone_code}-{i:03d} & {row['sku_code']} & {name} & Zone {zone_code} "
+                f"& {int(row['order_frequency']):,} & {row['pick_rate']:.1f} & {row['velocity']:.1f} & {dist:.0f} \\\\"
+            )
+    vel_tex = "\n".join(vel_rows)
+
     # Zone summary table rows — physical distances from Excel model assumptions
     zone_rows = [
         f"        Pick-Face Zone \\textbf{{(Golden Zone)}} & A & {Na} & {picks_a:,} & {DIST_A_M:.0f} m & {PICK_RATE_A_PCS_MIN:.0f} pcs/min \\\\",
@@ -925,16 +954,6 @@ def write_part3_notes(
         f"        Reserve / Bulk Zone & C & {Nc} & {picks_c:,} & {DIST_C_M:.0f} m & {PICK_RATE_C_PCS_MIN:.0f} pcs/min \\\\",
     ]
     zone_tex = "\n".join(zone_rows)
-
-    # Sub-tier counts from slotting plan
-    tier_counts = slotting["sub_tier"].value_counts().to_dict()
-    def tc(t): return tier_counts.get(t, 0)
-
-    # Pick-mix summary by zone from profile
-    zone_mix = (
-        profile.groupby("abc_quantity")[["pallet_share", "carton_share", "loose_share"]].mean()
-    )
-    def pmix(cls, col): return f"{zone_mix.loc[cls, col] * 100:.0f}\\%" if cls in zone_mix.index else "---"
 
     tex = [
         r"% Options for packages loaded elsewhere",
@@ -976,12 +995,26 @@ def write_part3_notes(
         r"\subsection{Question 3.1: Slotting Optimization}\label{q3.1}",
         r"",
         f"Using the ABC-XYZ classification from Part 1 and the physical SKU attributes from the",
-        f"Master Data, we assigned all {N} classified SKUs to three warehouse zones.",
-        r"We present two models: \textbf{Model 1} (ABC-only baseline) and",
-        r"\textbf{Model 2} (ABC + Ergonomics + Pick-Mix), which achieves the",
-        r"\textbf{30\% peak-time improvement target} through ergonomic sub-tiering.",
+        f"Master Data, we assigned all {N} classified SKUs to three warehouse zones using a",
+        r"velocity-based ABC slotting model. The design delivers a",
+        r"\textbf{$\geq$30\% reduction in picker travel distance} vs.\ a random-placement baseline.",
         r"",
-        r"\subsubsection{Model 1 --- ABC-Only Baseline}\label{model1}",
+        r"\paragraph{Terminology used in this section.}",
+        r"Three distinct concepts appear in the analysis below and must not be conflated:",
+        r"\begin{itemize}",
+        r"    \item \textbf{ABC-Only Slotting Model (the proposal)} --- the slotting strategy designed here.",
+        r"          It assigns SKUs to zones based solely on ABC class (quantity velocity), without further",
+        r"          splitting by XYZ demand variability. It is called \emph{ABC-only} to distinguish it from",
+        r"          a more advanced ABC$\times$XYZ cross-matrix model that could be added in a later iteration.",
+        r"    \item \textbf{Random Baseline (the comparator)} --- a hypothetical scenario in which all",
+        r"          SKUs are placed in random slots, so every pick travels the SKU-count-weighted average",
+        r"          distance across all zones. This is the \emph{before} state used to quantify the gain.",
+        r"    \item \textbf{Optimized Result (the outcome)} --- the travel-time and distance figures",
+        r"          actually achieved by applying the ABC-Only Slotting Model. The optimized result is",
+        r"          compared against the Random Baseline to prove the $\geq$30\% target is met.",
+        r"\end{itemize}",
+        r"",
+        r"\subsubsection{Proposed ABC-Only Slotting Model}\label{model1}",
         r"",
         r"\begin{itemize}",
         r"    \item \textbf{Pick-Face Zone (Ground Level)} --- Class A SKUs: lowest racks at",
@@ -991,80 +1024,52 @@ def write_part3_notes(
         r"    \item \textbf{Reserve / Bulk Zone} --- Class C SKUs: upper racks and pallet block-stack.",
         r"\end{itemize}",
         r"",
+        r"\paragraph{Model assumptions.}",
+        r"Velocity (pick-frequency load) decides the storage zone in a U-shaped layout where receiving and packing share the same front side, creating a golden pick-face adjacent to the packing station.",
+        r"",
         r"\begin{table}[H]",
         r"\centering",
-        r"\caption{Model 1 --- Zone Summary (ABC-Only)}",
-        r"\begin{tabular}{lccccc}",
+        r"\caption{Model Assumptions (Physical-Distance Parameters)}",
+        r"\begin{tabular}{lll}",
         r"\toprule",
-        r"Zone & Class & \# SKUs & Total Picks & Dist to Packing & Pick Rate \\",
+        r"Parameter & Value & Notes \\",
         r"\midrule",
-        zone_tex,
+        f"        Walk speed & {WALK_SPEED_M_MIN:.0f} m/min & 1.2 m/s standard \\\\",
+        f"        Round-trip factor & {ROUND_TRIP_FACTOR:.0f} & pick location to packing and back \\\\",
+        f"        Dist: A Pick-face to packing & {DIST_A_M:.0f} m & golden zone, nearest \\\\",
+        f"        Dist: B Intermediate to packing & {DIST_B_M:.0f} m & mid bay \\\\",
+        f"        Dist: C Reserve to packing & {DIST_C_M:.1f} m & back / upper rack \\\\",
+        f"        Pick rate A & {PICK_RATE_A_PCS_MIN:.0f} pcs/min & fast pick-face \\\\",
+        f"        Pick rate B & {PICK_RATE_B_PCS_MIN:.1f} pcs/min & carton-centric \\\\",
+        f"        Pick rate C & {PICK_RATE_C_PCS_MIN:.0f} pcs/min & slow reserve \\\\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+        r"",
+        r"\begin{table}[H]",
+        r"\centering",
+        r"\caption{Model 1 --- Zone Design, Pick Mode \& Slot Rule (Velocity-Based)}",
+        r"\small",
+        r"\begin{tabular}{l l r r r >{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{4.2cm}}",
+        r"\toprule",
+        r"Zone & ABC Class & SKUs & Order Freq & Dist & Pick Mode & Slot Rule \\",
+        r"\midrule",
+        f"        A --- Pick-Face & A / Fast & {Na} & {picks_a:,} & {DIST_A_M:.0f}\\,m & Loose + carton break-bulk & Highest order freq $\\rightarrow$ nearest slots; golden zone next to packing. \\\\",
+        r"        \addlinespace",
+        f"        B --- Fwd Reserve & B & {Nb} & {picks_b:,} & {DIST_B_M:.0f}\\,m & Carton picking + replenish A & Medium velocity $\\rightarrow$ mid bay; min/max replenishment feeds the A pick-face. \\\\",
+        r"        \addlinespace",
+        f"        C --- Reserve/Bulk & C / Slow & {Nc} & {picks_c:,} & {DIST_C_M:.1f}\\,m & Pallet store, pick on demand & Low velocity $\\rightarrow$ far/upper rack, bulk block-stack. \\\\",
         r"\bottomrule",
         r"\end{tabular}",
         r"\end{table}",
         r"",
         f"The Pick-Face Zone contains {Na} SKUs ({Na / N * 100:.1f}\\% of the assortment) but generates",
-        f"\\textbf{{{picks_a / total_picks * 100:.1f}\\%}} of all pick transactions and",
-        f"\\textbf{{{abc_xyz[abc_xyz['abc_quantity'] == 'A']['quantity'].sum() / abc_xyz['quantity'].sum() * 100:.1f}\\%}} of total volume.",
-        f"Within this zone, the \\textbf{{{ax_count} Class AA fast-movers}} occupy the first {ax_count} rank slots",
-        f"and drive \\textbf{{{ax_freq_share:.2f}\\%}} of pick frequency and \\textbf{{{ax_qty_share:.2f}\\%}} of volume.",
+        f"\\textbf{{{picks_a / total_picks * 100:.1f}\\%}} of all pick transactions.",
         r"",
-        r"\subsubsection{Model 2 --- ABC + Ergonomics + Pick-Mix}\label{model2}",
-        r"",
-        r"\paragraph{Observed pick-unit mix.}",
-        r"Analysis of the transaction log (Jun--Dec 2025) reveals that Class A pick orders are",
-        r"\textbf{predominantly carton picks (58\%)} rather than pallet picks, and the two sub-populations",
-        r"have fundamentally different handling requirements:",
-        r"",
-        r"\begin{table}[H]",
-        r"\centering",
-        r"\caption{Pick-Unit Mix by ABC Zone (avg. order-line share)}",
-        r"\begin{tabular}{lrrr}",
-        r"\toprule",
-        r"Zone & Pallet pick & Carton pick & Loose pick \\",
-        r"\midrule",
-        f"        Pick-Face Zone (A) & {pmix('A','pallet_share')} & {pmix('A','carton_share')} & {pmix('A','loose_share')} \\\\",
-        f"        Forward Reserve (B) & {pmix('B','pallet_share')} & {pmix('B','carton_share')} & {pmix('B','loose_share')} \\\\",
-        f"        Reserve / Bulk (C) & {pmix('C','pallet_share')} & {pmix('C','carton_share')} & {pmix('C','loose_share')} \\\\",
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"\end{table}",
-        r"",
-        r"\paragraph{Sub-tier logic.}",
-        r"Model 2 splits each ABC zone into sub-tiers based on pick-unit mix and physical dimensions:",
-        r"",
-        r"\begin{table}[H]",
-        r"\centering",
-        r"\caption{Model 2 --- Sub-Tier Assignment Rules and SKU Counts}",
-        r"\begin{tabular}{llp{6cm}r}",
-        r"\toprule",
-        r"Sub-Tier & Name & Assignment Rule & SKUs \\",
-        r"\midrule",
-        f"        A1 & Pallet Lane & pallet\\_share $\\geq$ 40\\% AND CBM $\\geq$ 0.07\\,m$^3$ --- ground-level forklift slots & {tc('A1')} \\\\",
-        f"        A2 & Big-Face Shelf & pallet\\_share $<$ 40\\% AND carton\\_share $\\geq$ 80\\% --- waist-height shelving & {tc('A2')} \\\\",
-        f"        A3 & Mixed-Pick & remaining Class A & {tc('A3')} \\\\",
-        r"        \midrule",
-        f"        B1 & Bulk-Replen & pallet\\_share $\\geq$ 30\\% OR CBM $\\geq$ 0.07\\,m$^3$ --- mid-aisle ground storage & {tc('B1')} \\\\",
-        f"        B2 & Two-Bin & remaining Class B --- standard two-bin forward pick-face & {tc('B2')} \\\\",
-        r"        \midrule",
-        f"        C1 & Upper Rack & CBM $<$ 0.05\\,m$^3$ --- small/light slow-movers & {tc('C1')} \\\\",
-        f"        C2 & Pallet Block & CBM $\\geq$ 0.05\\,m$^3$ --- floor block-stack behind Zone B & {tc('C2')} \\\\",
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"\end{table}",
-        r"",
-        r"\paragraph{Composite intra-zone score.}",
-        r"Within each sub-tier, slots are ranked by a multi-criteria composite score (adapted from Tompkins et al., 2010):",
-        r"\[",
-        r"score = 0.50 \times v_{rank} + 0.30 \times ergo_{penalty} + 0.20 \times size_{score}",
-        r"\]",
-        r"where $v_{rank}$ is the normalised velocity rank (0=fastest), $ergo_{penalty}$ is the handling weight penalty (0 / 0.5 / 1.0 for unit weight $\leq$3\,kg, 3--8\,kg, and $>$8\,kg, based on ISO 11228-1 and NIOSH manual handling guidelines), and $size_{score}$ is the CBM relative to the median of the class.",
-        r"",
-        r"\paragraph{Pick-Time Benchmarks.}",
-        r"The model uses standard pick-times (6.0\,sec/piece for loose picking from shelves, 12.0\,sec/carton for manual hand-carry, and 120.0\,sec/pallet for forklift retrieval), verified against industrial engineering MOST/MTM standards and Vietnam logistics benchmarks (1--3 minutes for forklift pallet moves; Mecalux, 2024).",
-        r"",
-        r"\paragraph{A-Door Rule.}",
-        r"The top-10 velocity SKUs are pinned to the first 10 bays adjacent to the outbound dock (dock-adjacent slotting; Frazelle, 2002), neutralizing travel time for peak throughput bursts.",
+        r"\paragraph{Slot assignment rule.}",
+        r"Within each zone, individual slots are ranked by \textbf{order frequency descending}",
+        r"(i.e.\ highest-frequency SKU gets the nearest slot to the packing station).",
+        r"Size (unit cube, L/pcs) serves as a secondary tiebreaker within ties.",
         r"",
         r"\subsubsection{Top Pick-Face SKUs (Class A, by Frequency)}\label{top-a}",
         r"",
@@ -1073,12 +1078,39 @@ def write_part3_notes(
         r"\caption{Top 5 Class-A SKUs assigned to Pick-Face Zone}",
         r"\begin{tabular}{clllrr}",
         r"\toprule",
-        r"Rank & SKU Code & Product & Class & Picks (6M) & Volume (units) \\",
+        r"Rank & SKU Code & Product & Class & Order Frequency & Volume (units) \\",
         r"\midrule",
         top5_tex,
         r"\bottomrule",
         r"\end{tabular}",
         r"\end{table}",
+        r"",
+        r"\subsubsection{Slot Assignment (Velocity-Sorted)}\label{slot-assignment}",
+        r"",
+        r"Within each zone, individual slots are assigned by \textbf{velocity}",
+        r"defined as the ratio of order frequency to pick rate:",
+        r"\[",
+        r"\text{Velocity} = \frac{\text{Order frequency}}{\text{Pick rate (pcs/min)}}",
+        r"\]",
+        r"Higher velocity SKUs occupy slots nearest the packing station within their zone.",
+        r"Table~\ref{tab:slot-assignment} shows the top 3 SKUs per zone by velocity.",
+        r"",
+        r"\begin{table}[H]",
+        r"\centering",
+        r"\caption{Slot Assignment Sample --- Top 3 per Zone by Velocity}",
+        r"\label{tab:slot-assignment}",
+        r"\small",
+        r"\begin{tabular}{c l >{\raggedright\arraybackslash}p{3.2cm} l r r r r}",
+        r"\toprule",
+        r"Slot ID & SKU & Product & Zone & Order freq & Pick rate & Velocity & Dist (m) \\",
+        r"\midrule",
+        vel_tex,
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+        r"",
+        r"The full 470-SKU ranked assignment follows the same logic: sort each zone by order frequency descending,",
+        r"with unit size (L/pcs) as the secondary tiebreaker.",
         r"",
         r"\subsubsection{Quantitative Analysis: Travel-Time Proof}\label{travel-time}",
         r"",
@@ -1111,10 +1143,10 @@ def write_part3_notes(
         r"",
         r"\begin{table}[H]",
         r"\centering",
-        r"\caption{Optimized vs Baseline: Summary}",
+        r"\caption{Travel-Time Summary: Random Baseline vs.\ ABC-Only Optimized Result}",
         r"\begin{tabular}{lrr}",
         r"\toprule",
-        r"Metric & Baseline (Random) & Optimized (ABC-Zoned) \\",
+        r"Metric & Random Baseline (no slotting) & ABC-Only Optimized Result \\",
         r"\midrule",
         f"        Avg one-way distance / pick (m) & {baseline_avg_m:.1f} & \\textbf{{{opt_avg_m:.1f}}} \\\\",
         f"        Total round-trip distance (m) & {baseline_rt:,.0f} & \\textbf{{{opt_rt:,.0f}}} \\\\",
@@ -1126,51 +1158,63 @@ def write_part3_notes(
         r"\end{table}",
         r"",
         f"The ABC velocity-zoned layout achieves a \\textbf{{{red_pct:.1f}\\% reduction}} in total picker travel distance",
-        f"(vs. random placement baseline avg. \\textbf{{{baseline_avg_m:.1f}\\,m/pick}} $\\rightarrow$ optimized \\textbf{{{opt_avg_m:.1f}\\,m/pick}}),",
+        rf"(baseline random avg. \textbf{{{baseline_avg_m:.1f}\,m/pick}} $\rightarrow$ optimized \textbf{{{opt_avg_m:.1f}\,m/pick}}),",
         f"well {'above' if meets_target else 'below'} the $\\geq{REDUCTION_TARGET*100:.0f}\\%$ target.",
-        r"This comes from concentrating the highest-frequency Class~A SKUs (5{,}767 picks) at 8\,m,",
-        r"versus placing them randomly at the warehouse average 43.3\,m.",
-        r"\textbf{Model 2 (ABC + Ergonomics)} adds sub-tier rules (A1 pallet lane, A2 big-face, B1 bulk-replen)",
-        r"that further reduce MHE conflicts and ergonomic penalties, yielding an additional estimated",
-        r"15--40\% pick-throughput improvement on top of the distance savings (industry benchmark: Dematic, MHI).",
-        r"This additional throughput gain comes from three mechanisms:",
-        r"\begin{itemize}",
-        r"  \item \textbf{Forklift separation} (A1 sub-tier): pallet-dominant SKUs are slotted in a",
-        r"        dedicated ground-level forklift lane, preventing MHE from blocking carton pickers",
-        r"        during peak waves --- estimated +8--10\% throughput.",
-        r"  \item \textbf{Big-face ergonomics} (A2 sub-tier): carton-dominant Class AA SKUs at waist height",
-        r"        eliminate bending/overhead reach; at 800+ picks/day peak this saves $\approx$3--5\,sec/pick.",
-        r"  \item \textbf{A-door pinning}: top-10 velocity SKUs within 5 rack bays of the dock",
-        r"        reduce travel by $\approx$5--8\% on peak-hour bursts.",
-        r"\end{itemize}",
+        f"This reduction is driven by concentrating the highest-frequency Class~A SKUs ({picks_a:,} picks) at {DIST_A_M:.0f}\\,m,",
+        f"compared to the warehouse-average \\textbf{{{baseline_avg_m:.1f}\\,m}} each pick would travel under random placement.",
         r"",
         r"\begin{figure}[H]",
         r"\centering",
         r"\includegraphics[width=0.97\linewidth]{../charts/q31_slotting_analysis.png}",
-        r"\caption{Q3.1 Slotting Analysis: Sub-tier distribution, pick-mix by zone, and 5-scenario travel-time comparison}",
+        r"\caption{Q3.1 Slotting Analysis: SKU zone distribution and travel-time comparison (optimized vs.\ baseline random)}",
         r"\label{fig:q31-slotting}",
         r"\end{figure}",
         r"",
         r"\subsubsection{Layout Recommendations}\label{layout}",
+        r"",
+        r"\paragraph{U-Shaped Warehouse Heatmap.}",
+        r"The ABC velocity-zoned layout follows a U-shaped flow: receiving and packing share the same front wall, creating a natural golden pick-face (Zone A) adjacent to the packing station. Zone A (red, highest pick density) occupies the ground-level bays nearest the dock; Zone B (amber, medium velocity) the mid-bay area; Zone C (blue, slow movers) the far back wall and upper racks. This configuration minimizes cross-traffic between replenishment and pick paths.",
+        r"Figure~\ref{fig:q31-u-shape} illustrates the ABC velocity heatmap layout.",
+        r"",
+        r"\begin{figure}[H]",
+        r"\centering",
+        r"\includegraphics[width=0.75\linewidth]{../charts/q31_u_shape_heatmap.png}",
+        r"\caption{U-Shaped Warehouse Heatmap --- ABC Velocity Zones}",
+        r"\label{fig:q31-u-shape}",
+        r"\end{figure}",
+        r"",
         r"\begin{itemize}",
-        r"    \item \textbf{U-flow configuration}: Receiving and shipping docks on the same wall;",
-        r"          highest-convenience slots cluster at the dock end.",
-        r"    \item \textbf{A1 Pallet Lane}: dedicated forklift aisle along the dock wall for",
-        r"          pallet-dominant AZ/AY SKUs --- separates MHE from manual pickers.",
-        r"    \item \textbf{A2 Big-Face Shelf}: AX carton-dominant SKUs at waist-to-shoulder height",
-        r"          (0.8--1.6\,m), full-carton facing, eliminates bending and overhead reach.",
-        r"    \item \textbf{B1 Bulk-Replen Lane}: B-class pallet/large-CBM items stored at",
-        r"          mid-aisle ground level with a dedicated replenishment travel path.",
-        r"    \item \textbf{Two-bin for B2}: Forward pick-face bin replenished from bulk",
-        r"          reserve when on-hand drops below ROP (WMS-triggered).",
-        r"    \item \textbf{C1 Upper Rack / C2 Floor Block}: slow-movers segregated by size;",
-        r"          small SKUs overhead, large SKUs block-stacked at floor level behind Zone B.",
+        r"    \item \textbf{U-flow configuration}: Receiving and shipping docks share the same front wall;",
+        r"          highest-frequency slots cluster at the dock end (Zone A golden pick-face).",
+        r"    \item \textbf{Zone A --- Pick-Face (Ground Level)}: Class A SKUs at ergonomic height",
+        r"          (lower rack levels), nearest the I/O dock and packing station.",
+        r"          High-frequency Class AA SKUs occupy the first rank slots.",
+        r"    \item \textbf{Zone B --- Forward Reserve}: Class B SKUs in the mid-bay area;",
+        r"          two-bin replenishment logic feeds the Zone A pick-face (WMS-triggered min/max).",
+        r"    \item \textbf{Zone C --- Reserve / Bulk}: Class C SKUs in upper racks and pallet block-stacks",
+        r"          at the far back wall. Slow-movers are consolidated here; picked on demand.",
         r"\end{itemize}",
         r"",
         r"\subsection{Question 3.2: Omni-Channel Pick-and-Pack Process Design}\label{q3.2}",
         r"",
         r"The outbound fulfillment process uses distinct operational pathways for B2B and B2C",
         r"channels, unified by a structured inventory allocation policy when stock is contested.",
+        r"",
+        r"\paragraph{Two pick models.}",
+        r"",
+        r"\begin{table}[H]",
+        r"\centering",
+        r"\caption{Two Pick Models --- B2B vs B2C / E-Commerce}",
+        r"\begin{tabular}{>{\raggedright\arraybackslash}p{1.8cm} >{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}p{4.8cm} >{\raggedright\arraybackslash}p{2.8cm}}",
+        r"\toprule",
+        r"Channel & Order Profile & Pick Model & Mechanics & Pack \\",
+        r"\midrule",
+        r"        B2B & Large volume, few SKUs & Pallet / Total Picking & One picker fulfils whole pallets or large CTN qty per order in a single pass. Sources Zone A pick-face + Zone C bulk. & Stage whole pallets; minimal re-sort. \\\\",
+        r"        \addlinespace",
+        r"        B2C / E-com & Small qty, many SKUs, many concurrent orders & Batch Picking + Zone Routing & Group many small orders into one pick wave; pickers route by zone; items consolidated at sortation. & Sort wave back to individual orders at packing. \\\\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
         r"",
         r"\subsubsection{B2B Pathway — Pallet / Total Picking}\label{b2b-path}",
         r"\begin{enumerate}",
@@ -1200,28 +1244,25 @@ def write_part3_notes(
         r"\subsubsection{Stock Allocation Conflict and Escalation Policy}\label{conflict}",
         r"",
         r"When the same SKU is ordered simultaneously by a B2B client and a B2C customer",
-        r"and on-hand stock is insufficient for both, the system resolves the shortage in two stages:",
+        r"and on-hand stock is insufficient for both, the system resolves the shortage through",
+        r"the following structured rules (stock is held in ONE shared pool per the Q2.2 pooling strategy, not physically split):",
         r"",
-        r"\paragraph{Stage 1 — Automated Allocation (WMS).}",
-        r"\begin{itemize}",
-        r"    \item \textit{Rule 1 (SLA Protection)}: Allocate the full contractual quantity to",
-        r"          the B2B order first, preventing penalty fees for under-delivery.",
-        r"    \item \textit{Rule 2 (Pro-rata B2C)}: Distribute remaining stock to B2C orders",
-        r"          pro-rata, with priority to orders with the shortest delivery windows.",
-        r"\end{itemize}",
-        r"",
-        r"\paragraph{Stage 2 — Managerial Escalation (if Stage 1 insufficient).}",
-        r"The WMS raises a critical ticket to the \textbf{Inventory Control \& Demand Planning Manager},",
-        r"who can execute one or more of:",
-        r"\begin{itemize}",
-        r"    \item \textit{Action 1 (Safety Stock Draw)}: Release uncommitted buffer safety stock",
-        r"          from the common pool (pre-computed for all Class A SKUs in Q2.2).",
-        r"    \item \textit{Action 2 (Emergency Transfer)}: Initiate an inter-hub transfer",
-        r"          between My Phuoc and Vinh Loc warehouses, leveraging their proximity",
-        r"          within the Greater Ho Chi Minh City area.",
-        r"    \item \textit{Action 3 (Partial Shipment)}: Contact the B2B client to obtain approval",
-        r"          for a partial fulfillment; B2C customers notified of delay with revised ETA.",
-        r"\end{itemize}",
+        r"\begin{table}[H]",
+        r"\centering",
+        r"\caption{Shared-SKU Conflict --- Allocation \& Escalation Rules}",
+        r"\begin{tabular}{lp{4cm}p{6.5cm}}",
+        r"\toprule",
+        r"Rule & Condition & Action \\",
+        r"\midrule",
+        r"        Check & Same SKU, both channels, concurrent & Evaluate on-hand vs (B2B + B2C) demand. \\\\",
+        r"        Sufficient & On-hand $\geq$ B2B + B2C & Allocate to both from shared pool; no rationing. \\\\",
+        r"        R1 & Short stock & Commit to the confirmed B2B PO first (contractual, penalty risk). \\\\",
+        r"        R2 & Short stock & Hold the B2C safety buffer so the storefront does not show stockout. \\\\",
+        r"        R3 & Short + B2C SLA-critical (2--4\,h) & Split: B2C SLA order gets partial now, backorder remainder. \\\\",
+        r"        R4 & Below reorder point & Trigger emergency replenishment / inter-warehouse transfer. \\\\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
         r"",
         r"Upon resolution, ERP and WMS records are updated and adjusted pick lists are",
         r"released to the warehouse floor. Figure \ref{fig:q32-flowchart} illustrates the",
@@ -1241,11 +1282,9 @@ def write_part3_notes(
     tex_path.write_text("\n".join(tex) + "\n", encoding="utf-8")
     print(f"Written {tex_path.name}")
 
-    # Compile to PDF (try pdflatex, fall back to xelatex)
+    # Compile to PDF using xelatex (for Unicode / Vietnamese character support)
     import shutil
-    compiler = shutil.which("pdflatex") or "/Library/TeX/texbin/pdflatex"
-    if not Path(compiler).exists():
-        compiler = shutil.which("xelatex") or "/Library/TeX/texbin/xelatex"
+    compiler = shutil.which("xelatex") or "/Library/TeX/texbin/xelatex"
     if Path(compiler).exists():
         print(f"Compiling {NOTE3_FILENAME} with {Path(compiler).name} ...")
         for _ in range(2):

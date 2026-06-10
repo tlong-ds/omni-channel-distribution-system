@@ -865,10 +865,10 @@ def save_q31_slotting_chart(
         ax2.set_ylim(0, 1.25)
         ax2.legend(loc="upper right", fontsize=8)
         for i, (pv, cv, lv) in enumerate(zip(pal_vals, ctn_vals, lse_vals)):
-            ax2.text(i, pv / 2, f"{pv:.0%}", ha="center", va="center", fontsize=8, color="white", fontweight="bold")
-            ax2.text(i, pv + cv / 2, f"{cv:.0%}", ha="center", va="center", fontsize=8, color="white", fontweight="bold")
+            ax2.text(i, pv / 2, f"{pv:.1%}", ha="center", va="center", fontsize=8, color="white", fontweight="bold")
+            ax2.text(i, pv + cv / 2, f"{cv:.1%}", ha="center", va="center", fontsize=8, color="white", fontweight="bold")
             if lv > 0.03:
-                ax2.text(i, pv + cv + lv / 2, f"{lv:.0%}", ha="center", va="center", fontsize=8, color="white", fontweight="bold")
+                ax2.text(i, pv + cv + lv / 2, f"{lv:.1%}", ha="center", va="center", fontsize=8, color="white", fontweight="bold")
     else:
         probs = [metrics["zone_probs"]["A"], metrics["zone_probs"]["B"], metrics["zone_probs"]["C"]]
         ax2.bar(["A", "B", "C"], probs, color=["#27ae60", "#f39c12", "#95a5a6"])
@@ -906,137 +906,30 @@ def save_q31_slotting_chart(
     print(f"Saved {out_path.name}")
 
 
+def save_q31_u_shape_heatmap() -> None:
+    """Extract the U-shaped warehouse heatmap from the reference Excel file."""
+    import openpyxl
+    from pathlib import Path
+    ref_path = Path(__file__).resolve().parents[2] / "references" / "LOGage2026_Part3_Complete.xlsx"
+    wb = openpyxl.load_workbook(ref_path)
+    ws = wb["Q3.1 Heatmap (U-shape)"]
+    img_data = ws._images[0]._data()
+    out_path = CHARTS_DIR / "q31_u_shape_heatmap.png"
+    out_path.write_bytes(img_data)
+    print(f"Extracted reference heatmap to {out_path.name}")
 
 
 def save_q32_flowchart_image() -> None:
-    """Render the B2B/B2C pick-and-pack conflict-resolution flowchart as a PNG."""
-    from matplotlib.patches import FancyBboxPatch, Polygon
-    import matplotlib.patches as mpatches
-
-    fig, ax = plt.subplots(figsize=(16, 22))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 23)
-    ax.axis("off")
-    fig.patch.set_facecolor("#f8f9fa")
-
-    def _box(x, y, w, h, text, ec="#2c3e50", fc="#ecf0f1", fs=8.5, bold=False, tc=None):
-        rect = FancyBboxPatch(
-            (x - w / 2, y - h / 2), w, h,
-            boxstyle="round,pad=0.1", facecolor=fc, edgecolor=ec, linewidth=1.5,
-        )
-        ax.add_patch(rect)
-        col = tc if tc else ec
-        ax.text(x, y, text, ha="center", va="center", fontsize=fs,
-                color=col, fontweight="bold" if bold else "normal", multialignment="center")
-
-    def _diamond(x, y, w, h, text, ec="#e67e22", fc="#fef9e7", fs=8):
-        pts = [(x, y + h / 2), (x + w / 2, y), (x, y - h / 2), (x - w / 2, y)]
-        poly = Polygon(pts, closed=True, facecolor=fc, edgecolor=ec, linewidth=1.5)
-        ax.add_patch(poly)
-        ax.text(x, y, text, ha="center", va="center", fontsize=fs,
-                color=ec, fontweight="bold", multialignment="center")
-
-    def _arr(x1, y1, x2, y2, label="", lx=0.15, ly=0):
-        ax.annotate(
-            "", xy=(x2, y2), xytext=(x1, y1),
-            arrowprops=dict(arrowstyle="->", color="#7f8c8d", lw=1.5),
-        )
-        if label:
-            mx, my = (x1 + x2) / 2 + lx, (y1 + y2) / 2 + ly
-            ax.text(mx, my, label, fontsize=8, color="#555")
-
-    ax.set_title("Q3.2 — Omni-Channel Pick-and-Pack Process Flowchart",
-                 fontsize=14, fontweight="bold", color="#2c3e50", pad=10)
-
-    # ── START ───────────────────────────────────────────────────────────────
-    _box(5, 22.3, 4.5, 0.65, "ORDER RECEIVED", ec="#1a252f", fc="#2c3e50", fs=11, bold=True, tc="white")
-    _arr(5, 21.97, 5, 21.35)
-    _diamond(5, 20.8, 4.5, 0.9, "Order Type?")
-    # B2B branch (left)
-    _arr(2.75, 20.8, 1.5, 20.8, label="B2B", lx=0, ly=0.15)
-    _box(1.5, 20.0, 2.8, 0.95, "WMS validates stock\nvs PO qty", ec="#1abc9c", fc="#d5f5e3", fs=8)
-    _arr(1.5, 19.52, 1.5, 18.85)
-    _box(1.5, 18.35, 2.8, 0.95, "Pallet / Total Pick\nForklift — Zone 2 or 3\nFull CTN/pallet pass", ec="#1abc9c", fc="#d5f5e3", fs=7.5)
-    _arr(1.5, 17.87, 1.5, 17.2)
-    _box(1.5, 16.7, 2.8, 0.95, "B2B QC Station\nWrap · Label · Verify", ec="#1abc9c", fc="#d5f5e3", fs=8)
-    _arr(1.5, 16.22, 1.5, 15.55)
-    _box(1.5, 15.05, 2.8, 0.95, "Stage at Dock\nFTL Loading → Dispatch", ec="#1abc9c", fc="#d5f5e3", fs=8)
-    # B2C branch (right)
-    _arr(7.25, 20.8, 8.5, 20.8, label="B2C", lx=0, ly=0.15)
-    _box(8.5, 20.0, 2.8, 0.95, "Batch Wave Release\nmulti-order grouping", ec="#3498db", fc="#d6eaf8", fs=8)
-    _arr(8.5, 19.52, 8.5, 18.85)
-    _box(8.5, 18.35, 2.8, 0.95, "Batch Pick-to-Cart\nZone 1 (Pick-Face)\nSingle aisle pass", ec="#3498db", fc="#d6eaf8", fs=7.5)
-    _arr(8.5, 17.87, 8.5, 17.2)
-    _box(8.5, 16.7, 2.8, 0.95, "Sort & Consolidate\nper order\nat Sort Station", ec="#3498db", fc="#d6eaf8", fs=8)
-    _arr(8.5, 16.22, 8.5, 15.55)
-    _box(8.5, 15.05, 2.8, 0.95, "QC + Pack\nBubble wrap / polybag\n+ Shipping label", ec="#3498db", fc="#d6eaf8", fs=7.5)
-    _arr(8.5, 14.57, 8.5, 13.9)
-    _box(8.5, 13.4, 2.8, 0.95, "Hand to Last-Mile\nCourier → Dispatch", ec="#3498db", fc="#d6eaf8", fs=8)
-
-    # ── CONFLICT ZONE ───────────────────────────────────────────────────────
-    ax.axhline(y=13.1, color="#e74c3c", linestyle="--", linewidth=1.5, xmin=0.03, xmax=0.97)
-    ax.text(5, 12.82, "── SAME-SKU CONFLICT SCENARIO ──",
-            ha="center", va="center", fontsize=9.5, color="#e74c3c", fontweight="bold")
-
-    _box(5, 12.2, 7.5, 0.85,
-         "Same SKU ordered simultaneously by B2B & B2C — stock insufficient for both",
-         ec="#e74c3c", fc="#fdedec", fs=8.5, bold=True)
-    _arr(5, 11.77, 5, 11.2)
-
-    _box(5, 10.65, 7.5, 1.0,
-         "STAGE 1 — AUTOMATED ALLOCATION (WMS)\n"
-         "Rule 1: Allocate full qty to B2B first (SLA/penalty protection)\n"
-         "Rule 2: Remaining stock → B2C pro-rata, shortest delivery window first",
-         ec="#8e44ad", fc="#f5eef8", fs=7.8)
-    _arr(5, 10.15, 5, 9.55)
-    _diamond(5, 9.0, 4.8, 0.95, "All orders\nsatisfied?")
-
-    # Yes → right
-    _arr(7.4, 9.0, 8.8, 9.0, label="Yes", lx=0, ly=0.2)
-    _box(8.8, 9.0, 2.2, 0.8, "Update ERP & WMS\nRelease pick lists", ec="#27ae60", fc="#eafaf1", fs=8)
-
-    # No → down escalation
-    _arr(5, 8.52, 5, 7.9, label="No")
-    _box(5, 7.35, 7.5, 1.0,
-         "STAGE 2 — MANAGERIAL ESCALATION\n"
-         "WMS raises critical ticket → Inventory Control Manager",
-         ec="#e74c3c", fc="#fdedec", fs=8, bold=True)
-    _arr(5, 6.85, 5, 6.3)
-
-    _box(1.8, 5.75, 3.2, 0.95, "Action 1\nDraw Safety Stock\nfrom buffer pool", ec="#e67e22", fc="#fef9e7", fs=7.5)
-    _box(5.0, 5.75, 3.2, 0.95, "Action 2\nEmergency Transfer\nMy Phuoc ↔ Vinh Loc", ec="#e67e22", fc="#fef9e7", fs=7.5)
-    _box(8.2, 5.75, 3.2, 0.95, "Action 3\nPartial Shipment\n(client approval)", ec="#e67e22", fc="#fef9e7", fs=7.5)
-
-    ax.annotate("", xy=(1.8, 6.22), xytext=(3.5, 6.85), arrowprops=dict(arrowstyle="->", color="#7f8c8d", lw=1.2))
-    ax.annotate("", xy=(5.0, 6.22), xytext=(5.0, 6.85), arrowprops=dict(arrowstyle="->", color="#7f8c8d", lw=1.2))
-    ax.annotate("", xy=(8.2, 6.22), xytext=(6.5, 6.85), arrowprops=dict(arrowstyle="->", color="#7f8c8d", lw=1.2))
-
-    _arr(1.8, 5.27, 1.8, 4.7)
-    _arr(5.0, 5.27, 5.0, 4.7)
-    _arr(8.2, 5.27, 8.2, 4.7)
-
-    _box(5, 4.2, 7.5, 0.85,
-         "Resolution: Update ERP & WMS records — Release adjusted pick lists to floor",
-         ec="#27ae60", fc="#eafaf1", fs=8)
-    _arr(5, 3.77, 5, 3.2)
-    _box(5, 2.7, 5.5, 0.8, "END — All channels dispatched",
-         ec="#1a252f", fc="#2c3e50", fs=10, bold=True, tc="white")
-
-    legend_items = [
-        mpatches.Patch(color="#1abc9c", label="B2B Path"),
-        mpatches.Patch(color="#3498db", label="B2C Path"),
-        mpatches.Patch(color="#8e44ad", label="Auto Allocation Rules"),
-        mpatches.Patch(color="#e74c3c", label="Conflict / Escalation"),
-        mpatches.Patch(color="#e67e22", label="Manager Actions"),
-        mpatches.Patch(color="#27ae60", label="Resolution"),
-    ]
-    ax.legend(handles=legend_items, loc="lower right", fontsize=8.5, framealpha=0.85)
-
-    plt.tight_layout()
+    """Extract the pick-and-pack decision flowchart from the reference Excel file."""
+    import openpyxl
+    from pathlib import Path
+    ref_path = Path(__file__).resolve().parents[2] / "references" / "LOGage2026_Part3_Complete.xlsx"
+    wb = openpyxl.load_workbook(ref_path)
+    ws = wb["Q3.2 Pick & Pack"]
+    img_data = ws._images[0]._data()
     out_path = CHARTS_DIR / "q32_pick_pack_flowchart.png"
-    fig.savefig(out_path, dpi=150, bbox_inches="tight")
-    plt.close(fig)
-    print(f"Saved {out_path.name}")
+    out_path.write_bytes(img_data)
+    print(f"Extracted reference flowchart to {out_path.name}")
 
 
 if __name__ == "__main__":

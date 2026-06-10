@@ -49,7 +49,7 @@ from src.logage2026.loading import (
 )
 from src.logage2026.notes import write_notes, write_part3_notes
 from src.logage2026.excel_reports import write_summary_workbook
-from src.logage2026.visuals import boundary_province_names, save_charts, save_q31_slotting_chart, save_q32_flowchart_image
+from src.logage2026.visuals import boundary_province_names, save_charts, save_q31_slotting_chart, save_q31_u_shape_heatmap, save_q32_flowchart_image
 
 
 EXPECTED_ASSIGNMENT_ROWS = 43_894
@@ -410,6 +410,7 @@ def main() -> None:
 
     print("Rendering Part 3 charts ...")
     save_q31_slotting_chart(abc_xyz, travel_metrics, slotting_plan=slotting_plan)
+    save_q31_u_shape_heatmap()
     save_q32_flowchart_image()
 
     print("Writing Part 3 LaTeX report ...")
